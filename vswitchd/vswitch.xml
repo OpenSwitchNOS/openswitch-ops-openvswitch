@@ -1334,7 +1334,8 @@
       This entry identifies whether this specific table entry is
       an individual BGP neighbor or is a BGP peer group.  A value
       of True implies a peer group.  Otherwise, the entry represents
-      a BGP neighbor.
+      a BGP neighbor.  If the value is not set, it implies false
+      (a bgp peer object).
       </column>
 
       <column name="name">
@@ -1348,7 +1349,8 @@
       </column>
 
       <column name="shutdown">
-      Specifies whether neighbor is shut down. If not specified, the default is false.
+      Specifies whether the neighbor has been administratively shut down.
+      If not specified, the default is false.
       </column>
 
       <column name="bgp_peer_group">
@@ -1383,10 +1385,6 @@
       This is the weight for routes from this neighbor.
       </column>
 
-      <column name="active">
-      This shows if this entry is active or not.
-      </column>
-
       <column name="tcp_port_number">
       This is the BGP neighbor's tcp port number.  Default value is 179.
       </column>
@@ -1412,8 +1410,13 @@
       Allow inbound soft reconfiguration for this neighbor.
       </column>
 
+      <column name="remove_private_as">
+      Specifies whether private AS should be removed.
+      If not specified, the default value is false.
+      </column>
+
       <column name="passive">
-      Don't send open messages to this neighbor.
+      Indicates if open messages should NOT be sent to this neighbor.
       </column>
 
       <column name="password">
@@ -1447,7 +1450,7 @@
     </group>
 
    <group title="Status">
-      <column name="status" >
+      <column name="status">
       </column>
    </group>
 
