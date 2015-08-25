@@ -1331,10 +1331,10 @@
       </column>
 
       <column name="is_peer_group">
-      This entry identifies whether this specific table entry is
+      This is a flag which identifies whether this specific entry is
       an individual BGP neighbor or is a BGP peer group.  A value
-      of True implies a peer group.  Otherwise, the entry represents
-      a BGP neighbor.
+      of true implies a peer group.  Otherwise, the entry represents
+      a BGP neighbor.  If the value is not set, it implies false.
       </column>
 
       <column name="name">
@@ -1348,7 +1348,8 @@
       </column>
 
       <column name="shutdown">
-      Specifies whether neighbor is shut down. If not specified, the default is false.
+      Specifies whether the neighbor has been administratively shut down.
+      If not specified, the default is false.
       </column>
 
       <column name="bgp_peer_group">
@@ -1383,10 +1384,6 @@
       This is the weight for routes from this neighbor.
       </column>
 
-      <column name="active">
-      This shows if this entry is active or not.
-      </column>
-
       <column name="tcp_port_number">
       This is the BGP neighbor's tcp port number.  Default value is 179.
       </column>
@@ -1412,8 +1409,13 @@
       Allow inbound soft reconfiguration for this neighbor.
       </column>
 
+      <column name="remove_private_as">
+      Specifies whether private AS should be removed.
+      If not specified, the default value is false.
+      </column>
+
       <column name="passive">
-      Don't send open messages to this neighbor.
+      Indicates that open messages should NOT be sent to this neighbor.
       </column>
 
       <column name="password">
@@ -1426,10 +1428,6 @@
 
       <column name="timers">
       BGP per neighbor timers - Connect timer/Keep-alive Interval.
-      </column>
-
-      <column name="statistics">
-      Statistics per neighbor.
       </column>
 
       <column name="route_maps">
@@ -1447,7 +1445,21 @@
     </group>
 
    <group title="Status">
-      <column name="status" >
+      <column name="status">
+      These values describe various status information about this
+      BGP neighbor or BGP Peer group entry.
+      </column>
+   </group>
+
+   <group title="BGP Neighbor or Peer group Status Info">
+      <p>
+        The <code>status</code> column contains key-value pairs which
+	report the various informational states about this entry.
+      </p>
+      <column name="status" key="bgp_peer_state">
+	  For BGP Neighbor entries, this represents the BGP neighbor
+	  state.  This can be one of Idle, Connect, Active, OpenSent,
+	  OpenConfirm, Established, Clearing or Deleted.
       </column>
    </group>
 
@@ -1460,7 +1472,47 @@
 
       <column name="external_ids">
       </column>
+   </group>
 
+   <group title="BGP Neighbor Statistics">
+     <p>
+       The <code>statistics</code> column contains key-count pairs which
+       show various statistics about this entry.
+     </p>
+      <column name="statistics" key="bgp-peer-established-count">
+      </column>
+      <column name="statistics" key="bgp-peer-dropped-count">
+      </column>
+      <column name="statistics" key="bgp-peer-open_in-count">
+      </column>
+      <column name="statistics" key="bgp-peer-open_out-count">
+      </column>
+      <column name="statistics" key="bgp-peer-update_in-count">
+      </column>
+      <column name="statistics" key="bgp-peer-update_out-count">
+      </column>
+      <column name="statistics" key="bgp-peer-keepalive_in-count">
+      </column>
+      <column name="statistics" key="bgp-peer-keepalive_out-count">
+      </column>
+      <column name="statistics" key="bgp-peer-notify_in-count">
+      </column>
+      <column name="statistics" key="bgp-peer-notify_out-count">
+      </column>
+      <column name="statistics" key="bgp-peer-refresh_in-count">
+      </column>
+      <column name="statistics" key="bgp-peer-refresh_out-count">
+      </column>
+      <column name="statistics" key="bgp-peer-dynamic_cap_in-count">
+      </column>
+      <column name="statistics" key="bgp-peer-dynamic_cap_out-count">
+      </column>
+      <column name="statistics" key="bgp-peer-uptime">
+      </column>
+      <column name="statistics" key="bgp-peer-readtime">
+      </column>
+      <column name="statistics" key="bgp-peer-resettime">
+      </column>
    </group>
 
   </table>
