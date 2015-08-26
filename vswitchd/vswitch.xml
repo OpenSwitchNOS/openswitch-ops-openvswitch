@@ -1351,6 +1351,11 @@
       Specifies whether neighbor is shut down. If not specified, the default is false.
       </column>
 
+      <column name="remove_private_as">
+      Specifies whether private AS should be removed. If not specified, the
+      default value is false.
+      </column>
+
       <column name="bgp_peer_group">
       This column is used only if the entry is a BGP neighbor.  It represents
       the peer group this BGP neighbor is a member of.
