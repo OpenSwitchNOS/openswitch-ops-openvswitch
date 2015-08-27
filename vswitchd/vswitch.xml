@@ -1248,6 +1248,140 @@
    </group>
   </table>
 
+  <table name="BGP_Route" title="BGP Routes Information Base">
+    <p>
+      BGP routes information base within an <ref table="Open_vSwitch"/>.
+    </p>
+    <p>
+        A <ref table="BGP_Route"/> record represents a route. This is a unique
+        record per (vrf, prefix, peer) set.
+    </p>
+    <group title="BGP Routes Configuration">
+      <column name="vrf">
+        Reference to the VRF table, to which this route belongs.
+      </column>
+      <column name="prefix">
+          IPv4 or IPv6 destination prefix and mask in the address/mask
+          format. Example 192.168.0.0/16
+      </column>
+      <column name="address_family">
+        Represents the address family for this entry.
+        Default value is <code>ipv4</code>.
+      </column>
+      <column name="sub_address_family">
+        Represents more information regarding this entry.
+        Default is <code>unicast</code>.
+      </column>
+      <column name="distance">
+          Administrative distance for the route entry. This value is populated
+          every time a protocol or a user adds a new entry.
+          The default value is 1 which is the default distance for static
+          routes.
+      </column>
+      <column name="metric">
+          This is the BGP Multi Exit Discriminator (MED) attribute used in best
+          path selection. The MED provides a dynamic way to influence another AS
+          in the way to reach a certain route when there are multiple entry points
+          for that AS.  BGP decision process takes weight, local preference, AS path,
+          Origin and MED into account.  For selection, if all other factors are equal,
+          the exit point with the lowest MED is preferred.
+          Default value is 0
+      </column>
+      <column name="bgp_nexthop">
+          Represents nexthops for this entry. Each entry in the <ref table="BGP_Route"/>
+          can have a reference to one or many(for ECMP) entries in this table.
+      </column>
+   </group>
+   <group title="Protocol Specific">
+      <p>
+          The <code>protocol_specific</code> column contains key-value pairs that
+          represent route attributes.
+      </p>
+      <column name="protocol_specific" key="bgp_flags"
+          type='{"type": "string"}'>
+          Route status flags. Allowed values are <code>history</code>,
+          <code>damped</code>,<code>multipath</code>
+      </column>
+      <column name="protocol_specific" key="bgp_as_path"
+          type='{"type": "string"}'>
+          List of AS path number for a route. Example: 200,300,400
+      </column>
+      <column name="protocol_specific" key="bgp_origin"
+          type='{"type": "string"}'>
+          Indicates whether a route is <code>IGP</code>, <code>EGP</code>
+          or <code>incomplete</code>.
+      </column>
+      <column name="protocol_specific" key="bgp_loc_pref"
+          type='{"type": "string"}'>
+          Local preference path attribute. Used by BGP to influence in the
+          best path selectionUsed by BGP to influence in the
+          best path selection..
+      </column>
+   </group>
+  </table>
+
+  <table name="BGP_Nexthop" title="BGP Nexthops">
+    <p>
+      List of all nexthops as used by the <ref table="BGP_Route"/> table.
+      Each entry in the <ref table="BGP_Route"/> can have a reference to one or
+      many (for ECMP) entries in this table.
+    </p>
+    <group title="Configuration">
+      <column name="ip_address">
+          IP address of the nexthop device.
+      </column>
+      <column name="ports">
+          List of outgoing ports. Nexthop entries of type <code>unicast</code>
+          can have atmost 1 port.
+      </column>
+      <column name="type">
+          Type of the nexthop.
+          Default is <code>unicast</code>.
+      </column>
+      <column name="selected">
+          Indicates if this nexthop is actively participating in forwarding.
+          Multiple nexthops can exist for each route entry but the routing protocol
+          can indicate if a particular nexthop should not be used in forwarding.
+          Default is <code>true</code>.
+      </column>
+      <column name="weight">
+          Weight is used to differentially balance the packets. Example: For a route
+          if there are 2 nexthops nh1 with weight 5 and nh2 with weight 1, then
+          for every 5 packets that uses nh1, one packet will use nh2.
+          In the first release, the above case is not supported. Only ECMP is
+          supported.
+          Default is 0 (for static routes).
+      </column>
+    </group>
+   <group title="Status">
+      <p>
+        Status information to indicate the current state of the nexthop.
+      </p>
+      <column name="status" key="arp_resolved"
+          type='{"type": "boolean"}'>
+          Indicate if ARP is resolved for this entry. If the ARP entry is
+          missing, this value is <code>false</code>
+      </column>
+      <column name="status" key="hw_configured"
+          type='{"type": "boolean"}'>
+          Indicate if nexthop programmed in the asic. If the ARP entry is
+          missing, this value is <code>false</code>
+      </column>
+      <column name="status" key="error">
+          Human readable error string.
+      </column>
+   </group>
+   <group title="Common Columns">
+      The overall purpose of these columns is described under <code>Common
+      Columns</code> at the beginning of this document.
+
+      <column name="other_config">
+      </column>
+      <column name="external_ids">
+      </column>
+   </group>
+  </table>
+
   <table name="BGP_Router" title="BGP high level configuration">
     <group title="Configuration">
       BGP_router includes all bgp config related information. The entries are
