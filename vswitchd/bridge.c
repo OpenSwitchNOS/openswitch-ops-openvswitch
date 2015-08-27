@@ -5999,7 +5999,7 @@ neighbor_set_l3_host_entry(struct vrf *vrf, struct neighbor *neighbor)
         return 0;
     }
     else {
-        VLOG_ERR("ofproto_add_l3_host_entry failed");
+        VLOG_DBG("ofproto_add_l3_host_entry failed");
 
         /* if l3_intf not configured yet or any failure,
         ** delete from hash */
@@ -6037,7 +6037,7 @@ neighbor_delete_l3_host_entry(struct vrf *vrf, struct neighbor *neighbor)
         return 0;
     }
     else {
-        VLOG_ERR("ofproto_delete_l3_host_entry failed");
+        VLOG_DBG("ofproto_delete_l3_host_entry failed");
         return 1;
     }
 } /* neighbor_delete_l3_host_entry */
@@ -6303,8 +6303,7 @@ run_neighbor_update(void)
         return;
     }
 
-    /* TODO: Add the timer-internval in some table/column */
-    /* And decide on the interval */
+    /* OPS TODO: Add the timer-internval in some table/column */
     /* const struct ovsrec_open_vswitch *idl_ovs =
     **                            ovsrec_open_vswitch_first(idl);
     ** neighbor_interval = MAX(smap_get_int(&idl_ovs->other_config,
@@ -6322,22 +6321,31 @@ run_neighbor_update(void)
 
         txn = ovsdb_idl_txn_create(idl);
 
-        /* Rate limit the update.  Do not start a new update if the
+        /* OPS TODO: Rate limit the update.  Do not start a new update if the
         ** previous one is not done. */
         OVSREC_NEIGHBOR_FOR_EACH(idl_neighbor, idl) {
             VLOG_DBG(" Checking hit-bit for %s", idl_neighbor->ip_address);
 
             vrf = vrf_lookup(idl_neighbor->vrf->name);
+
+            /* For provider not configured, just return */
+            if (vrf->up.ofproto->ofproto_class->get_l3_host_hit == NULL) {
+                VLOG_DBG("No ofproto registered");
+                neighbor_timer = -1;
+                ovsdb_idl_txn_destroy(txn);
+                return;
+            }
+
             neighbor = neighbor_hash_lookup(vrf, idl_neighbor->ip_address);
             if (neighbor == NULL) {
-                VLOG_ERR("Neighbor not found in local hash");
+                VLOG_DBG("Neighbor not found in local hash");
                 continue;
             }
 
             /* Get port/ofproto info */
             port = port_lookup(&neighbor->vrf->up, neighbor->port_name);
             if (port == NULL) {
-                VLOG_ERR("Failed to get port cfg for %s", neighbor->port_name);
+                VLOG_DBG("Failed to get port cfg for %s", neighbor->port_name);
                 continue;
             }
 
@@ -6362,7 +6370,7 @@ run_neighbor_update(void)
                 smap_destroy(&smap);
             }
             else {
-                VLOG_ERR("!ofproto_get_l3_host_hit failed");
+                VLOG_DBG("!ofproto_get_l3_host_hit failed");
                 continue;
             }
         } /* For each */
