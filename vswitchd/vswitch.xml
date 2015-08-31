@@ -947,6 +947,10 @@
       <column name="ports">
         Ports included in the VRF.
       </column>
+
+      <column name="bgp_routers">
+        BGP routers keyed by ASN value.
+      </column>
     </group>
    <group title="Common Columns">
       The overall purpose of these columns is described under <code>Common
@@ -988,6 +992,9 @@
       <column name="name">
         Reference to the VRF table, to which this route belongs.
       </column>
+      <column name="route_map_entries">
+        Route map entries keyed by preference value.
+      </column>
     </group>
    <group title="Status">
       <column name="status" >
@@ -1003,15 +1010,9 @@
       </column>
    </group>
   </table>
-  <table name="Route_Map_Entries" title="Route Map Entries">
+  <table name="Route_Map_Entry" title="Route Map Entry">
     <group title="Global Route Map Entries Configuration">
-      <column name="route_map">
-        These are references to the route map in the route map table.
-      </column>
       <column name="description">
-      </column>
-      <column name="preference">
-        This is the order that route map is processed.
       </column>
       <column name="action">
         There are three types, permit, deny, and any.
@@ -1052,6 +1053,9 @@
       <column name="name">
         Name of the prefix list.
       </column>
+      <column name="prefix_list_entries">
+        Prefix list entries keyed by preference value.
+      </column>
       <column name="description">
       </column>
    </group>
@@ -1066,13 +1070,8 @@
    </group>
   </table>
 
-  <table name="Prefix_List_Entries" title="Prefix List Entries">
+  <table name="Prefix_List_Entry" title="Prefix List Entry">
     <group title="Global Prefix List Entries Configuration">
-      <column name="prefix_list">
-        These are references to the route map in the route map table.
-      </column>
-      <column name="sequence">
-      </column>
       <column name="le">
       </column>
       <column name="ge">
@@ -1252,11 +1251,6 @@
     <group title="Configuration">
       BGP_router includes all bgp config related information. The entries are
       created on per asn basis.
-      <column name="asn">
-      Specifies the autonomous system number for given bgp router. Single BGP instance
-      can have configuration for single asn.
-      ASN Range: 1-4294967295.
-      </column>
       <column name="router_id">
       Specifies the router-id for given ASN.
       </column>
@@ -1296,8 +1290,9 @@
       Range: 1-3600 seconds.
       Default value is 360 seconds.
       </column>
-      <column name="vrf">
-      Provides VRF reference to given bgp router.
+      <column name="bgp_neighbors">
+        BGP neighbors or neighbor groups, keyed by IP for the former or any
+	string name for the latter.
       </column>
     </group>
    <group title="Status">
@@ -1321,39 +1316,31 @@
 
     <group title="Neighbor Configuration">
 
-      <column name="bgp_router">
-      This identifies the BGP router instance this entry belongs to.
-      All entries belong to a BGP router instance.
-      </column>
-
       <column name="is_peer_group">
-      This entry identifies whether this specific table entry is
+      This is a flag which identifies whether this specific entry is
       an individual BGP neighbor or is a BGP peer group.  A value
-      of True implies a peer group.  Otherwise, the entry represents
-      a BGP neighbor.
-      </column>
-
-      <column name="name">
-      For a row which is a BGP neighbor, this is the peer IP address.
-      If however, the row represents a peer group, then it is the name
-      of that peer group.
+      of true implies a peer group.  Otherwise, the entry represents
+      a BGP neighbor.  If the value is not set, it implies false.
       </column>
 
       <column name="description">
       This is an optional string which can be used for describing this entry.
+      Default is empty.
       </column>
 
       <column name="shutdown">
-      Specifies whether neighbor is shut down. If not specified, the default is false.
+      Specifies whether the neighbor has been administratively shut down.
+      If not specified, the default is false.
       </column>
 
       <column name="bgp_peer_group">
       This column is used only if the entry is a BGP neighbor.  It represents
-      the peer group this BGP neighbor is a member of.
+      the peer group this BGP neighbor is a member of.  Default is none.
       </column>
 
       <column name="local_interface">
       Reference to the corresponding interface.  This is used only for ipv6.
+      Default is none.
       </column>
 
       <column name="remote_as">
@@ -1377,10 +1364,6 @@
 
       <column name="weight">
       This is the weight for routes from this neighbor.
-      </column>
-
-      <column name="active">
-      This shows if this entry is active or not.
       </column>
 
       <column name="tcp_port_number">
@@ -1408,8 +1391,14 @@
       Allow inbound soft reconfiguration for this neighbor.
       </column>
 
+      <column name="remove_private_as">
+      Specifies whether private AS should be removed.
+      If not specified, the default value is false.
+      </column>
+
       <column name="passive">
-      Don't send open messages to this neighbor.
+      Indicates that open messages should NOT be sent to this neighbor.
+      Default is false.
       </column>
 
       <column name="password">
@@ -1422,10 +1411,6 @@
 
       <column name="timers">
       BGP per neighbor timers - Connect timer/Keep-alive Interval.
-      </column>
-
-      <column name="statistics">
-      Statistics per neighbor.
       </column>
 
       <column name="route_maps">
@@ -1443,7 +1428,23 @@
     </group>
 
    <group title="Status">
-      <column name="status" >
+      <column name="status">
+      These values describe various status information about this
+      BGP neighbor or BGP Peer group entry.
+      </column>
+   </group>
+
+   <group title="BGP Neighbor or Peer group Status Info">
+      <p>
+        The <code>status</code> column contains one or more
+        informational entries indicating various status
+        values for this BGP neighbor.
+      </p>
+      <column name="status" key="bgp_peer_state">
+          This represents the BGP neighbor state at this specific
+          instance in time.  The value can be one of Idle, Connect,
+          Active, OpenSent, OpenConfirm, Established, Clearing or
+          Deleted and can change any time.  Default is Idle.
       </column>
    </group>
 
@@ -1456,7 +1457,67 @@
 
       <column name="external_ids">
       </column>
+   </group>
 
+   <group title="BGP Neighbor Statistics">
+     <p>
+       The <code>statistics</code> column contains various counters
+       about this BGP neighbor.
+     </p>
+      <column name="statistics" key="bgp-peer-established-count">
+      This indicates the number of times peers have been established.
+      </column>
+      <column name="statistics" key="bgp-peer-dropped-count">
+      This indicates the number of times peers have been dropped
+      from the established state.
+      </column>
+      <column name="statistics" key="bgp-peer-open_in-count">
+      This indicates how many times an open message has been received.
+      </column>
+      <column name="statistics" key="bgp-peer-open_out-count">
+      This indicates how many times an open message has been sent.
+      </column>
+      <column name="statistics" key="bgp-peer-update_in-count">
+      This indicates how many times an update message has been received.
+      </column>
+      <column name="statistics" key="bgp-peer-update_out-count">
+      This indicates how many times an update message has been sent.
+      </column>
+      <column name="statistics" key="bgp-peer-keepalive_in-count">
+      This indicates how many times a keepalive message has been received.
+      </column>
+      <column name="statistics" key="bgp-peer-keepalive_out-count">
+      This indicates how many times a keepalive message has been sent.
+      </column>
+      <column name="statistics" key="bgp-peer-notify_in-count">
+      This indicates how many times a notify message has been received.
+      </column>
+      <column name="statistics" key="bgp-peer-notify_out-count">
+      This indicates how many times a notify message has been sent.
+      </column>
+      <column name="statistics" key="bgp-peer-refresh_in-count">
+      This indicates how many times a frefresh message has been received.
+      </column>
+      <column name="statistics" key="bgp-peer-refresh_out-count">
+      This indicates how many times a refresh message has been sent.
+      </column>
+      <column name="statistics" key="bgp-peer-dynamic_cap_in-count">
+      This indicates how many times a dynamic cap message has been received.
+      </column>
+      <column name="statistics" key="bgp-peer-dynamic_cap_out-count">
+      This indicates how many times a dynamic cap message has been sent.
+      </column>
+      <column name="statistics" key="bgp-peer-uptime">
+      This indicates how long since peer has been in the established state,
+      or since the last route update was received.
+      </column>
+      <column name="statistics" key="bgp-peer-readtime">
+      This indicates the last time an update or keepalive message has been
+      received.
+      </column>
+      <column name="statistics" key="bgp-peer-resettime">
+      Indicates the last time peer was reset.
+      </column>
    </group>
 
   </table>
