@@ -55,7 +55,8 @@
              "type": "string",
              "minLength": 17,
              "maxLength": 17
-            }
+            },
+            "min": 0
           }
         },
         "system_mac": {
@@ -65,7 +66,8 @@
              "type": "string",
              "minLength": 17,
              "maxLength": 17
-            }
+            },
+            "min": 0
           }
         },
         "daemons": {
@@ -138,7 +140,10 @@
         },
         "boot_time": {
           "category": "status",
-          "type": "integer"
+          "type": {
+            "key": "integer",
+            "min": 0
+          }
         },
         "switch_version": {
           "category": "status",
@@ -401,12 +406,16 @@
              "type": "string",
              "minLength": 17,
              "maxLength": 17
-            }
+            },
+            "min": 0
           }
         },
         "macs_remaining": {
           "category": "status",
-          "type": "integer"
+          "type": {
+            "key": "integer",
+            "min": 0
+          }
         },
         "hw_desc_dir": {
           "type": "string"
@@ -480,7 +489,10 @@
         },
         "datapath_version": {
           "category": "status",
-          "type": "string"
+          "type": {
+            "key": "string",
+            "min": 0
+          }
         },
         "datapath_id": {
           "category": "status",
@@ -1945,7 +1957,8 @@
                   "down"
                 ]
               ]
-            }
+            },
+            "min": 0
           }
         },
         "oper_state_reason": {
@@ -1962,7 +1975,8 @@
                   "no_member_port"
                 ]
               ]
-            }
+            },
+            "min": 0
           }
         },
         "internal_usage": {
@@ -2595,7 +2609,8 @@
                   "fault"
                 ]
               ]
-            }
+            },
+            "min": 0
           },
           "ephemeral": true
         },
@@ -2647,7 +2662,8 @@
                   "flashing"
                 ]
               ]
-            }
+            },
+            "min": 0
           }
         },
         "status": {
@@ -2663,7 +2679,8 @@
                   "fault"
                 ]
               ]
-            }
+            },
+            "min": 0
           },
           "ephemeral": true
         },
@@ -2754,7 +2771,8 @@
                     "max"
                 ]
               ]
-            }
+            },
+            "min": 0
           },
           "ephemeral": true
         },
@@ -2813,7 +2831,8 @@
                   "unknown"
                 ]
               ]
-            }
+            },
+            "min": 0
           },
           "ephemeral": true
         },
@@ -2912,7 +2931,10 @@
         },
         "is_connected": {
           "category": "status",
-          "type": "boolean",
+          "type": {
+            "key": "boolean",
+            "min": 0
+          },
           "ephemeral": true
         },
         "status": {
