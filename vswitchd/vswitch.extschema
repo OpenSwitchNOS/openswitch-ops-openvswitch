@@ -230,6 +230,59 @@
             "max": "unlimited"
           }
         },
+        "dhcp_range": {
+          "category": "child",
+          "type": {
+            "key":{
+                "type":"uuid",
+                "refTable":"DHCP_Range"
+            },
+            "min":0,
+            "max":"unlimited"
+          }
+        },
+        "dhcp_host": {
+          "category": "child",
+          "type": {
+            "key":{
+                "type":"uuid",
+                "refTable":"DHCP_Host"
+            },
+            "min":0,
+            "max":"unlimited"
+          }
+        },
+        "dhcp_option": {
+          "category": "child",
+          "type": {
+            "key":{
+                "type":"uuid",
+                "refTable":"DHCP_Option"
+            },
+            "min":0,
+            "max":"unlimited"
+          }
+        },
+        "dhcp_tftp_interfaces": {
+          "category": "child",
+          "type": {
+            "key":{
+                "type":"uuid",
+                "refTable":"DHCP_TFTP_Interfaces"
+            },
+            "min":0,
+            "max":"unlimited"
+          }
+        },
+        "dhcp_tftp_config": {
+          "category": "configuration",
+          "type": {
+            "key": "string",
+            "value": "string",
+            "min": 0,
+            "max": "unlimited"
+          }
+        },
         "mgmt_intf_status": {
           "category": "status",
           "type": {
@@ -920,7 +973,38 @@
       ],
       "isRoot": true
     },
-
+    "DHCP_Range":{
+     "columns":{
+       "dhcp_range" :{
+         "category":"configuration",
+         "type" :"string"
+         }
+       }
+     },
+     "DHCP_Host":{
+     "columns":{
+       "dhcp_host" :{
+         "category":"configuration",
+         "type" :"string"
+         }
+       }
+     },
+     "DHCP_Option":{
+     "columns":{
+       "dhcp_option" :{
+         "category":"configuration",
+         "type" :"string"
+         }
+       }
+     },
+     "DHCP_TFTP_Interfaces" :{
+     "columns":{
+       "dhcp_tftp_interfaces" :{
+         "category":"configuration",
+         "type" :"string"
+         }
+       }
+     },
     "Route": {
       "columns": {
         "vrf": {
