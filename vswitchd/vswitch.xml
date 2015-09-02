@@ -631,6 +631,42 @@
         </column>
     </group>
 
+    <group title="DHCP server configuration">
+        <column name="dhcpsrv_ranges">
+            Specifies DHCP server IP address ranges configuration. See the
+            <ref table="DHCPSrv_Range"/> table for more information.
+        </column>
+
+        <column name="dhcpsrv_hosts">
+            Specifies DHCP server IP address hosts configuration. See the
+            <ref table="DHCPSrv_Host"/> table for more information.
+        </column>
+
+        <column name="dhcpsrv_option">
+            Specifies DHCP server dhcp option configuration. See the
+            <ref table="DHCPSrv_Option"/> table for more information.
+        </column>
+
+        <column name="dhcpsrv_interfaces">
+            Specifies DHCP server include and exclude interfaces configuration.
+            See the <ref table="DHCPSrv_Interface"/> table for more information.
+        </column>
+
+        <column name="dhcpsrv_config" key="max_lease_time"
+                  type='{"type": "string"}'>
+            Specifies DHCP server max lease time configuration in string
+            format.
+        </column>
+    </group>
+
+    <group title="TFTP server configuration">
+        <column name="tftpsrv_config" key="enabled"
+                type='{"type": "boolean"}'>
+            Specifies whether the TFTP server is enabled on the system.
+            False, if the value is not present.
+        </column>
+    </group>
+
     <group title="Bufmon configuration">
       <column name="bufmon_config" key="enabled"
               type='{"type": "boolean"}'>
@@ -1089,6 +1125,61 @@
       <column name="other_config">
       </column>
       <column name="external_ids">
+      </column>
+   </group>
+  </table>
+
+  <table name="DHCPSrv_Range" title="DHCP server dynamic IP address range configuration">
+    <p>
+      Dynamic IP address range configuration within an <ref table="Open_vSwitch"/>.
+    </p>
+    <group title="DHCP server dynamic IP address range allocation to clients">
+      <column name="dhcpsrv_ranges">
+          Indicates the range of IP address from which an IP is choosen
+          to the client.
+          Entries are in the format - Start IP address(IPv4/IPv6),End IP
+          address(IPv4/IPv6),lease duration in hours.
+          Example:  10.0.0.1,10.0.0.100,12h
+      </column>
+   </group>
+  </table>
+
+  <table name="DHCPSrv_Host" title="DHCP server static IP address configuration">
+    <p>
+      Static IP address configuration within an <ref table="Open_vSwitch"/>.
+    </p>
+    <group title="DHCP server static IP address allocation to clients">
+      <column name="dhcpsrv_hosts">
+          Indicates the IP address and MAC address for static allocation.
+          Entries are in the format -  Hardware Address,IP address(IPv4,IPv6),
+          lease duration in hours.
+          Example:  aa:bb:cc:dd:ee:ff,10.0.0.1,12h
+      </column>
+   </group>
+  </table>
+
+  <table name="DHCPSrv_Option" title="DHCP server dhcp option configuration">
+    <p>
+      DHCP option configuration within an <ref table="Open_vSwitch"/>.
+    </p>
+    <group title="DHCP option configuration">
+      <column name="dhcpsrv_option">
+          Indicates the DHCP Options.
+          Entries are in the format - Option,IP address(IPv4/IPv6).
+          Example:  3,10.0.0.100
+      </column>
+   </group>
+  </table>
+
+  <table name="DHCPSrv_Interface" title="DHCP server interfaces configuration">
+    <p>
+      DHCP server innterfaces configuration within an <ref table="Open_vSwitch"/>.
+    </p>
+    <group title="DHCP interfaces configuration">
+      <column name="dhcpsrv_interfaces">
+          Indicates the interfaces on which DHCP Server is listening
+          for requests. Entries are in the format - list of inteface names.
+          Example:  eth1,eth2
       </column>
    </group>
   </table>

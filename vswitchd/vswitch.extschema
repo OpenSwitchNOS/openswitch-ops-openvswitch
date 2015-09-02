@@ -277,6 +277,68 @@
             "max": "unlimited"
           }
         },
+        "dhcpsrv_ranges": {
+          "category": "child",
+          "type": {
+            "key":{
+                "type":"uuid",
+                "refTable":"DHCPSrv_Range"
+            },
+            "min":0,
+            "max":"unlimited"
+          }
+        },
+        "dhcpsrv_hosts": {
+          "category": "child",
+          "type": {
+            "key":{
+                "type":"uuid",
+                "refTable":"DHCPSrv_Host"
+            },
+            "min":0,
+            "max":"unlimited"
+          }
+        },
+        "dhcpsrv_option": {
+          "category": "child",
+          "type": {
+            "key":{
+                "type":"uuid",
+                "refTable":"DHCPSrv_Option"
+            },
+            "min":0,
+            "max":"unlimited"
+          }
+        },
+        "dhcpsrv_interfaces": {
+          "category": "child",
+          "type": {
+            "key":{
+                "type":"uuid",
+                "refTable":"DHCPSrv_Interface"
+            },
+            "min":0,
+            "max":"unlimited"
+          }
+        },
+        "dhcpsrv_config": {
+          "category": "configuration",
+          "type": {
+            "key": "string",
+            "value": "string",
+            "min": 0,
+            "max": "unlimited"
+          }
+        },
+        "tftpsrv_config": {
+        "category": "configuration",
+        "type": {
+            "key": "string",
+            "value": "string",
+            "min": 0,
+            "max": "unlimited"
+          }
+        },
         "bufmon_config": {
           "category": "configuration",
           "type": {
@@ -920,7 +982,38 @@
       ],
       "isRoot": true
     },
-
+    "DHCPSrv_Range":{
+     "columns":{
+       "dhcpsrv_ranges" :{
+         "category":"configuration",
+         "type" :"string"
+         }
+       }
+     },
+     "DHCPSrv_Host":{
+     "columns":{
+       "dhcpsrv_hosts" :{
+         "category":"configuration",
+         "type" :"string"
+         }
+       }
+     },
+     "DHCPSrv_Option":{
+     "columns":{
+       "dhcpsrv_option" :{
+         "category":"configuration",
+         "type" :"string"
+         }
+       }
+     },
+     "DHCPSrv_Interface" :{
+     "columns":{
+       "dhcpsrv_interfaces" :{
+         "category":"configuration",
+         "type" :"string"
+         }
+       }
+     },
     "Route": {
       "columns": {
         "vrf": {
