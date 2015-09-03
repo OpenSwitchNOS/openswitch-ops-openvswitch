@@ -146,6 +146,34 @@
         </p>
       </column>
 
+      <column name="other_config" key="dhcp_server_port"
+              type='{"type": "integer", "minInteger": 0, "maxInteger": 65535}'>
+        <p>
+            This key specifies the UDP port number on which DHCP server
+            would listen for DHCP requests.
+        </p>
+
+        <p>
+            Default value is 0.
+        </p>
+      </column>
+
+      <group title="TFTP Server Configurations">
+        <column name="other_config" key="tftp_server_enable"
+                type='{"type": "boolean"}'>
+          Set this value to <code>true</code> to enable TFTP server
+          and <code>false</code> to disable it. By default, TFTP server
+          is enabled.
+        </column>
+
+        <column name="other_config" key="tftp_server_secure"
+                type='{"type": "boolean"}'>
+          Set this value to <code>true</code> to enable TFTP secure mode
+          and <code>false</code> to disable it. By default, TFTP secure mode
+          is enabled. And this config is valid only if TFTP server is enabled.
+        </column>
+      </group>
+
     <group title="LACP Configurations">
       <column name="lacp_config" key="lacp-system-id">
         The LACP system ID of this <ref table="Bridge"/>.  The system ID of a
@@ -3028,6 +3056,120 @@
         Specifies the status of the counter.
       </column>
     </group>
+  </table>
+
+  <table name="DHCPSrv_Range">
+
+    <p>
+      Dynamic IP address range configuration for the DHCP server.
+    </p>
+
+    <column name="start_ip_address">
+      Specifies the start IPv4/IPv6 address of the dynamic IP address range
+      that will be used to assign IPs for DHCP clients.
+    </column>
+
+    <column name="end_ip_address">
+      Specifies the end IPv4/IPv6 address of the dynamic IP address range
+      that will be used to assign IPs for DHCP clients.
+    </column>
+
+    <column name="tag">
+      Specifies the name of the network to which the configured IP address range would be
+      applied/used. This is optional and if not specified, then the
+      range would be used for all networks.
+    </column>
+
+    <column name="mode">
+      Specifes the mode (either static or dynamic) for assigning IPs to DHCP clients in
+      the configured range. This is optional and if specified, the value should be
+      "static" and the configured IP address range would be used for assigning static
+      IP addresses. If not specified, then the mode is default - dynamic and the configured
+      Ip address range would be used for assigning dynamic IP addresses.
+    </column>
+
+    <column name="lease_duration">
+      Specifies the lease expiry time in minutes. This is optional and if not specified,
+      default value of one hour (60) would be used.
+    </column>
+
+  </table>
+
+  <table name="DHCPSrv_Host">
+
+    <p>
+      Static IP address configuration of the DHCP server.
+    </p>
+
+    <column name="mac_address">
+      Specifies the MAC address of the DHCP host to which static IP address is
+      configured.
+    </column>
+
+    <column name="tag">
+      Specifies the name of the network to which the configured static IP address
+      would be used. This is optional and if not specified, then the
+      static IP configuration would be used for all networks.
+    </column>
+
+    <column name="ip_address">
+      Specifies the static IP address that needs to be assigned to the specific
+      DHCP host.
+    </column>
+
+    <column name="client_hostname">
+      Specifies the client hostname of the DHCP host. This is optional.
+    </column>
+
+    <column name="client_id">
+      Specifies the client id of the DHCP host. This is optional.
+    </column>
+
+  </table>
+
+  <table name="DHCPSrv_Option">
+
+    <p>
+      Configuration to specify extra options (other than standard options) that
+      need to be sent to the DHCP clients.
+    </p>
+
+    <column name="tag">
+      Specifies the name of the network to which the configured DHCP options would be
+      used. This is optional and if not specified, then the configured
+      DHCP options would be used for all networks.
+    </column>
+
+    <column name="option_name">
+      Specifies the name of the extra option that needs to be sent to the
+      DHCP clients.
+    </column>
+
+    <column name="option_value">
+      Specifies the value of the extra option that needs to be sent to the
+      DHCP clients.
+    </column>
+
+  </table>
+
+  <table name="DHCPSrv_Boot">
+
+    <p>
+      Configuration of BOOTP options that need to be sent by the
+      DHCP server to DHCP clients.
+    </p>
+
+    <column name="tag">
+      Specifies the name of the network to which the configured BOOTP options would be
+      sent to the DHCP clients. This is optional and if not specified, then the
+      range would be used for all networks.
+    </column>
+
+    <column name="file_name">
+       Specifies the name of the file that would be used for network booting. This is
+       valid only if TFTP server also is enabled on the switch.
+    </column>
+
   </table>
 
 </database>

@@ -3151,6 +3151,181 @@
         ]
       ],
       "isRoot": true
-    }
+    },
+    "DHCPSrv_Range" : {
+      "columns":{
+         "start_ip_address":{
+           "category":"configuration",
+           "type":{
+              "key":{
+                "type":"string",
+                "maxLength":45
+             }
+           }
+         },
+         "end_ip_address":{
+           "category":"configuration",
+           "type":{
+             "key":{
+               "type":"string",
+               "maxLength":45
+             },
+             "min":0
+           }
+         },
+        "tag":{
+            "category":"configuration",
+            "type":{
+              "key":{
+                "type":"string"
+             },
+            "min":0
+           }
+         },
+        "mode":{
+          "category":"configuration",
+          "type":{
+          "key":{
+              "type":"string"
+            },
+            "min":0
+          }
+        },
+        "lease_duration":{
+          "category":"configuration",
+          "type":{
+            "key":{
+              "type":"integer"
+            },
+            "min":0
+          }
+        }
+      },
+      "indexes": [
+        [
+          "start_ip_address"
+        ]
+      ],
+      "isRoot": true
+    },
+    "DHCPSrv_Host":{
+       "columns":{
+          "mac_address":{
+            "category":"configuration",
+            "type":{
+              "key":{
+                "type":"string",
+               "maxLength":45
+           }
+         }
+       },
+       "tag":{
+         "category":"configuration",
+         "type":{
+           "key":{
+             "type":"string"
+           },
+           "min":0
+         }
+       },
+       "ip_address":{
+         "category":"configuration",
+         "type":{
+           "key":{
+             "type":"string",
+             "maxLength":45
+           }
+         }
+       },
+       "client_hostname": {
+         "category": "status",
+         "type":  {
+             "key": {
+               "type": "string"
+
+             },
+           "min": 0
+          }
+       },
+       "client_id": {
+         "category": "status",
+         "type":  {
+             "key": {
+               "type": "string"
+             },
+          "min":0
+         }
+       }
+   },
+     "indexes": [
+       [
+         "mac_address"
+       ]
+     ],
+     "isRoot": true
+   },
+   "DHCPSrv_Option":{
+     "columns":{
+       "tag":{
+         "category":"configuration",
+         "type":{
+           "key":{
+             "type":"string"
+           }
+         }
+       },
+       "option_name":{
+         "category":"configuration",
+         "type":{
+           "key":{
+             "type":"string"
+           },
+           "min":0
+         }
+       },
+       "option_value":{
+         "category":"configuration",
+         "type":{
+           "key":{
+             "type":"string"
+           },
+           "min":0
+         }
+       }
+     },
+     "indexes": [
+       [
+         "tag"
+       ]
+     ],
+     "isRoot": true
+   },
+ "DHCPSrv_Boot":{
+   "columns":{
+     "tag":{
+         "category":"configuration",
+         "type":{
+           "key":{
+             "type":"string"
+           }
+         }
+     },
+     "file_name":{
+         "category":"configuration",
+         "type":{
+           "key":{
+             "type":"string"
+           },
+           "min":0
+         }
+      }
+     },
+     "indexes": [
+       [
+         "tag"
+       ]
+     ],
+     "isRoot": true
+   }
   }
 }
