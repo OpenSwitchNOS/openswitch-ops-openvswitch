@@ -386,6 +386,7 @@ def ping_vlan(**kwargs):
     assert retCode!=0, "\n##### Ping Passed, Case Failed #####"
     LogOutput('info',"\n##### Failed to do IPv6 ping, Case Passed #####\n\n")
 
+@pytest.mark.skipif(True, reason="RTL Test Cases not supported")
 class Test_vlan_ping:
     def setup_class (cls):
         # Test object will parse command line and formulate the env
