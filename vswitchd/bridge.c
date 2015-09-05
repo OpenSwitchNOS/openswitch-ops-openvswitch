@@ -6128,7 +6128,7 @@ neighbor_modify(struct neighbor *neighbor,
               idl_neighbor->ip_address);
 
     /* TODO: Get status, if failed or incomplete delete the entry */
-    /* OPENSWITCH_TODO : instead of delete/add, reprogram the entry in ofproto */
+    /* OPS_TODO : instead of delete/add, reprogram the entry in ofproto */
 
     if ( (strcmp(neighbor->port_name, idl_neighbor->port->name) != 0) ||
         (strcmp(neighbor->mac, idl_neighbor->mac) != 0 ) ) {
@@ -6192,9 +6192,14 @@ vrf_add_neighbors(struct vrf *vrf)
     struct neighbor *neighbor;
     const struct ovsrec_neighbor *idl_neighbor;
 
+    /* For provider not configured, just return */
+    if (vrf->up->ofproto->ofproto_class->add_l3_host_entry == NULL) {
+        VLOG_DBG("No ofproto registered");
+        return;
+    }
+
     idl_neighbor = ovsrec_neighbor_first(idl);
-    if (idl_neighbor == NULL)
-    {
+    if (idl_neighbor == NULL) {
         VLOG_DBG("No rows in Neighbor table");
         return;
     }
@@ -6221,9 +6226,14 @@ vrf_reconfigure_neighbors(struct vrf *vrf)
     struct shash current_idl_neigbors;
     const struct ovsrec_neighbor *idl_neighbor;
 
+    /* For provider not configured, just return */
+    if (vrf->up->ofproto->ofproto_class->add_l3_host_entry == NULL) {
+        VLOG_DBG("No ofproto registered");
+        return;
+    }
+
     idl_neighbor = ovsrec_neighbor_first(idl);
-    if (idl_neighbor == NULL)
-    {
+    if (idl_neighbor == NULL) {
         VLOG_DBG("No rows in Neighbor table, delete if any in our hash");
 
         /* May be all neighbors got delete, cleanup if any in this vrf hash */
@@ -6238,8 +6248,7 @@ vrf_reconfigure_neighbors(struct vrf *vrf)
 
     if ( (!OVSREC_IDL_ANY_TABLE_ROWS_MODIFIED(idl_neighbor, idl_seqno)) &&
        (!OVSREC_IDL_ANY_TABLE_ROWS_DELETED(idl_neighbor, idl_seqno))  &&
-       (!OVSREC_IDL_ANY_TABLE_ROWS_INSERTED(idl_neighbor, idl_seqno)) )
-    {
+       (!OVSREC_IDL_ANY_TABLE_ROWS_INSERTED(idl_neighbor, idl_seqno)) ) {
         VLOG_DBG("No modification in Neighbor table");
         return;
     }
@@ -6262,21 +6271,27 @@ vrf_reconfigure_neighbors(struct vrf *vrf)
     }
 
     /* Delete the neighbors' that are deleted from the db */
-    VLOG_DBG("Deleting which are no more in idl");
-    HMAP_FOR_EACH_SAFE(neighbor, next, node, &vrf->all_neighbors) {
-        neighbor->cfg = shash_find_data(&current_idl_neigbors,
-                                        neighbor->ip_address);
-        if (!neighbor->cfg) {
-            neighbor_delete(vrf, neighbor);
+    idl_neighbor = ovsrec_neighbor_first(idl);
+    if (OVSREC_IDL_ANY_TABLE_ROWS_DELETED(idl_neighbor, idl_seqno)) {
+        VLOG_DBG("Deleting which are no more in idl");
+        HMAP_FOR_EACH_SAFE(neighbor, next, node, &vrf->all_neighbors) {
+            neighbor->cfg = shash_find_data(&current_idl_neigbors,
+                                            neighbor->ip_address);
+            if (!neighbor->cfg) {
+                neighbor_delete(vrf, neighbor);
+            }
         }
     }
 
     /* Add new neighbors. */
-    VLOG_DBG("Adding newly added idl neighbors");
-    OVSREC_NEIGHBOR_FOR_EACH(idl_neighbor, idl) {
-        neighbor = neighbor_hash_lookup(vrf, idl_neighbor->ip_address);
-        if (!neighbor && idl_neighbor->port) {
-            neighbor_create(vrf, idl_neighbor);
+    idl_neighbor = ovsrec_neighbor_first(idl);
+    if (OVSREC_IDL_ANY_TABLE_ROWS_INSERTED(idl_neighbor, idl_seqno)) {
+        VLOG_DBG("Adding newly added idl neighbors");
+        OVSREC_NEIGHBOR_FOR_EACH(idl_neighbor, idl) {
+            neighbor = neighbor_hash_lookup(vrf, idl_neighbor->ip_address);
+            if (!neighbor) {
+                neighbor_create(vrf, idl_neighbor);
+            }
         }
     }
 
@@ -6317,14 +6332,14 @@ run_neighbor_update(void)
     const struct vrf *vrf;
     struct port *port;
     struct ovsdb_idl_txn *txn;
+    static bool no_provider = false;
 
     /* Skip if nothing to update */
-    if (idl_neighbor ==  NULL) {
+    if ( (idl_neighbor ==  NULL) || (no_provider) ) {
         return;
     }
 
-    /* TODO: Add the timer-internval in some table/column */
-    /* And decide on the interval */
+    /* OPS TODO: Add the timer-internval in some table/column */
     /* const struct ovsrec_open_vswitch *idl_ovs =
     **                            ovsrec_open_vswitch_first(idl);
     ** neighbor_interval = MAX(smap_get_int(&idl_ovs->other_config,
@@ -6338,26 +6353,33 @@ run_neighbor_update(void)
     }
 
     if (time_msec() >= neighbor_timer) {
-        //enum ovsdb_idl_txn_status status;
 
         txn = ovsdb_idl_txn_create(idl);
 
-        /* Rate limit the update.  Do not start a new update if the
-        ** previous one is not done. */
+        /* Go through neighbors and check their hit status */
         OVSREC_NEIGHBOR_FOR_EACH(idl_neighbor, idl) {
             VLOG_DBG(" Checking hit-bit for %s", idl_neighbor->ip_address);
 
             vrf = vrf_lookup(idl_neighbor->vrf->name);
+
+            /* For provider not configured, just return */
+            if (vrf->up->ofproto->ofproto_class->get_l3_host_hit == NULL) {
+                VLOG_DBG("No ofproto registered");
+                no_provider = true;
+                ovsdb_idl_txn_destroy(txn);
+                return;
+            }
+
             neighbor = neighbor_hash_lookup(vrf, idl_neighbor->ip_address);
             if (neighbor == NULL) {
-                VLOG_ERR("Neighbor not found in local hash");
+                VLOG_DBG("Neighbor not found in local hash");
                 continue;
             }
 
             /* Get port/ofproto info */
             port = port_lookup(neighbor->vrf->up, neighbor->port_name);
             if (port == NULL) {
-                VLOG_ERR("Failed to get port cfg for %s", neighbor->port_name);
+                VLOG_DBG("Failed to get port cfg for %s", neighbor->port_name);
                 continue;
             }
 
@@ -6382,7 +6404,6 @@ run_neighbor_update(void)
                 smap_destroy(&smap);
             }
             else {
-                VLOG_ERR("!ofproto_get_l3_host_hit failed");
                 continue;
             }
         } /* For each */
