@@ -951,11 +951,10 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
                 LIST_FOR_EACH (iface, port_elem, &port->ifaces) {
 #ifndef HALON_TEMP
                     iface_set_ofport(iface->cfg, iface->ofp_port);
-#endif
+
                     /* Clear eventual previous errors */
                     ovsrec_interface_set_error(iface->cfg, NULL);
 
-#ifndef HALON_TEMP
                     iface_configure_cfm(iface);
                     iface_configure_qos(iface, port->cfg->qos);
                     iface_set_mac(br, port, iface);
@@ -1011,10 +1010,12 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
                 VLOG_DBG("config port - %s", port->name);
                 port_configure(port);
 
+#ifndef HALON_TEMP
                 LIST_FOR_EACH (iface, port_elem, &port->ifaces) {
                     /* Clear eventual previous errors */
                     ovsrec_interface_set_error(iface->cfg, NULL);
                 }
+#endif
 
                 is_port_configured = true;
             }
@@ -5264,13 +5265,17 @@ iface_set_ofport(const struct ovsrec_interface *if_cfg, ofp_port_t ofport)
  * This is appropriate when 'if_cfg''s interface cannot be created or is
  * otherwise invalid. */
 static void
+#ifndef HALON_TEMP
 iface_clear_db_record(const struct ovsrec_interface *if_cfg, char *errp)
+#else
+iface_clear_db_record(const struct ovsrec_interface *if_cfg, char *errp OVS_UNUSED)
+#endif
 {
     if (!ovsdb_idl_row_is_synthetic(&if_cfg->header_)) {
 #ifndef HALON_TEMP
         iface_set_ofport(if_cfg, OFPP_NONE);
-#endif
         ovsrec_interface_set_error(if_cfg, errp);
+#endif
         ovsrec_interface_set_status(if_cfg, NULL);
         ovsrec_interface_set_admin_state(if_cfg, NULL);
         ovsrec_interface_set_duplex(if_cfg, NULL);
