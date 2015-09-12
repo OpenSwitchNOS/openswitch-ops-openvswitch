@@ -2255,18 +2255,7 @@
         },
         "type": {
           "category": "configuration",
-          "type": {
-            "key": {
-              "type": "string",
-              "enum": [
-                "set",
-                [
-                  "system",
-                  "internal"
-                ]
-              ]
-            }
-          }
+          "type": "string"
         },
         "mac_in_use": {
           "category": "status",
