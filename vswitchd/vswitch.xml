@@ -317,6 +317,10 @@
         the user or populated by the DHCP client.
         The keys of this column is same as that of mgmt_intf column.
       </column>
+      <column name="mgmt_intf_status" key="hostname">
+        Hostname to which system is configured. Hostname could be configured
+        through CLI/DHCP else default value is specified.
+      </column>
       <column name="next_cfg">
         Sequence number for client to increment.  When a client modifies
         any part of the database configuration and wishes to wait for
