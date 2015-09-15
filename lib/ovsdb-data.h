@@ -194,7 +194,7 @@ unsigned int ovsdb_datum_find_key(const struct ovsdb_datum *,
  * given a string key, returns the corresponding int64_t value,
  * but ONLY if function return value is 0 (no error).
  */
-int ovsdb_datum_get_int64_value_given_string_key (struct ovsdb_datum *datum,
+int ovsdb_datum_get_int64_value_given_string_key (const struct ovsdb_datum *datum,
     char *key, int64_t *value_extracted);
 
 unsigned int ovsdb_datum_find_key_value(const struct ovsdb_datum *,

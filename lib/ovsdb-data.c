@@ -1652,7 +1652,7 @@ ovsdb_datum_find_key(const struct ovsdb_datum *datum,
  * non 0 value (error).
  */
 int
-ovsdb_datum_get_int64_value_given_string_key (struct ovsdb_datum *datum,
+ovsdb_datum_get_int64_value_given_string_key (const struct ovsdb_datum *datum,
     char *key, int64_t *value_extracted)
 {
     unsigned int idx;
