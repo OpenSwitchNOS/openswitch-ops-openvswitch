@@ -525,6 +525,7 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define OPEN_VSWITCH_MGMT_INTF_MAP_DEFAULT_GATEWAY_V6   "default-gateway-v6"
 #define OPEN_VSWITCH_MGMT_INTF_MAP_DNS_SERVER_1         "dns-server-1"
 #define OPEN_VSWITCH_MGMT_INTF_MAP_DNS_SERVER_2         "dns-server-2"
+#define OPEN_VSWITCH_MGMT_INTF_MAP_HOSTNAME             "hostname"
 
 /* buffer monitoring statistics config table (bufmon)*/
 #define BUFMON_CONFIG_MAP_ENABLED                               "enabled"
