@@ -210,6 +210,7 @@ struct ofproto_controller {
 
 #ifdef HALON
 
+/* FIXME: Use MAX_NEXTHOPS_PER_ROUTE from common header */
 #define OFPROTO_MAX_NH_PER_ROUTE    32 /* maximum number of nexthops per route.
                                           only consider non-weighted ECMP now */
 enum ofproto_route_family {
@@ -256,6 +257,22 @@ struct ofproto_route {
 #define OFPROTO_ECMP_HASH_SRCIP          0x4     /* source IP v4/v6 */
 #define OFPROTO_ECMP_HASH_DSTIP          0x8     /* source IP v4/v6 */
 
+enum ofproto_host_action {
+    OFPROTO_HOST_ADD,
+    OFPROTO_HOST_DELETE,
+    OFPROTO_NEIGHBOR_ADD,
+    OFPROTO_NEIGHBOR_MODIFY,
+    OFPROTO_NEIGHBOR_DELETE
+};
+
+struct ofproto_l3_host {
+    bool family;                      /* Type of host */
+    char *ip_address;                 /* V4/6 IP address (prefix/len)*/
+    int  rc;                          /* rc = 0 means success */
+    const char *err_str;              /* set if rc != 0 */
+    char *mac;                        /* These are for neighbor, mac */
+    int  l3_egress_id;                /* Egress ID in case if we need */
+};
 #endif
 
 void ofproto_enumerate_types(struct sset *types);
@@ -509,6 +526,10 @@ int ofproto_l3_route_action(struct ofproto *ofproto,
 int ofproto_l3_ecmp_set(struct ofproto *ofproto, bool enable);
 int ofproto_l3_ecmp_hash_set(struct ofproto *ofproto, unsigned int hash,
                              bool enable);
+
+int ofproto_l3_host_action(struct ofproto *ofproto,
+                           enum ofproto_host_action action,
+                           struct ofproto_l3_host *host);
 #endif
 
 /* Configuration of mirrors. */

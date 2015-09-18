@@ -79,6 +79,11 @@ struct ecmp {
     bool dst_ip_enabled;
 };
 
+struct net_address {
+    struct hmap_node addr_node;
+    char *address;
+};
+
 void vrf_reconfigure_routes(struct vrf *vrf);
 void vrf_ofproto_update_route_with_neighbor(struct vrf *vrf,
                                             struct neighbor *neighbor,
@@ -90,4 +95,8 @@ struct neighbor *neighbor_hash_lookup(const struct vrf *vrf,
                                       const char *ip_address);
 int vrf_l3_ecmp_set(struct vrf *vrf, bool enable);
 int vrf_l3_ecmp_hash_set(struct vrf *vrf, unsigned int hash, bool enable);
+void vrf_port_reconfig_ipaddr(struct vrf *vrf, struct port *port);
+int vrf_l3_host_action(struct vrf *vrf, enum ofproto_host_action action,
+                       struct ofproto_l3_host *host);
+bool vrf_has_l3_host_action(struct vrf *vrf);
 #endif /* vrf.h */

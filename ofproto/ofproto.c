@@ -7252,4 +7252,21 @@ ofproto_l3_ecmp_hash_set(struct ofproto *ofproto, unsigned int hash, bool enable
 
     return rc;
 }
+
+/* Local host ip add/modify/delete actions */
+int
+ofproto_l3_host_action(struct ofproto *ofproto,
+                        enum ofproto_host_action action,
+                        struct ofproto_l3_host *host)
+{
+    int rc;
+
+    rc = ofproto->ofproto_class->l3_host_action ?
+         ofproto->ofproto_class->l3_host_action(ofproto, action, host) :
+         EOPNOTSUPP;
+
+    VLOG_DBG("l3_host_action rc=(%d), action %d", rc, action);
+
+    return rc;
+}
 #endif
