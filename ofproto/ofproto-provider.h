@@ -1730,6 +1730,11 @@ struct ofproto_class {
     /* Enable/Disable ECMP hash config */
     int (*l3_ecmp_hash_set)(const struct ofproto *ofproto, unsigned int hash,
                             bool enable);
+
+    /* Add/Delete/Modify host entries (Currently used for local host entries) */
+    int (*l3_host_action)(const struct ofproto *ofproto,
+                          enum ofproto_host_action action,
+                          struct ofproto_l3_host *host);
 #endif
 };
 

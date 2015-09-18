@@ -71,6 +71,7 @@
 #ifdef HALON
 #include <string.h>
 #include <netinet/ether.h>
+#include "vswitchd.h"
 #include "vrf.h"
 #include "openhalon-idl.h"
 #endif
@@ -107,6 +108,8 @@ struct mirror {
     const struct ovsrec_mirror *cfg;
 };
 #endif
+
+#ifndef HALON
 struct port {
     struct hmap_node hmap_node; /* Element in struct bridge's "ports" hmap. */
     struct bridge *bridge;
@@ -121,6 +124,7 @@ struct port {
     int bond_hw_handle;        /* Hardware bond identifier. */
 #endif
 };
+#endif
 
 #ifdef HALON
 struct vlan {
@@ -1011,6 +1015,7 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
                 port_configure(port);
 
                 is_port_configured = true;
+                vrf_port_reconfig_ipaddr(vrf, port);
             }
         }
 
@@ -6418,4 +6423,25 @@ vrf_l3_ecmp_hash_set(struct vrf *vrf, unsigned int hash, bool enable)
 {
     return ofproto_l3_ecmp_hash_set(vrf->up->ofproto, hash, enable);
 }
+
+/*
+** Wrapper function to access ofproto from vrf.c
+*/
+int
+vrf_l3_host_action(struct vrf *vrf,
+                   enum ofproto_host_action action,
+                   struct ofproto_l3_host *host)
+{
+    return ofproto_l3_host_action(vrf->up->ofproto, action, host);
+}
+
+/*
+** Function to check if l3 host action plugin is registered.
+*/
+bool
+vrf_has_l3_host_action(struct vrf *vrf)
+{
+    return vrf->up->ofproto->ofproto_class->l3_host_action ? true : false;
+}
+
 #endif

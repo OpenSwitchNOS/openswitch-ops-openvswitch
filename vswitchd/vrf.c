@@ -15,6 +15,7 @@
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include "vswitchd.h"
 #include "vrf.h"
 #include "hash.h"
 #include "shash.h"
@@ -713,11 +714,303 @@ vrf_reconfigure_routes(struct vrf *vrf)
                     nh->route->from, nh->route->prefix);
         }
     }
-    /* OPS_TODO : for port deletion, delete all routes in ofproto that has
+    /* FIXME : for port deletion, delete all routes in ofproto that has
      * NH as the deleted port. */
-    /* OPS_TODO : for VRF deletion, delete all routes in ofproto that has
+    /* FIXME : for VRF deletion, delete all routes in ofproto that has
      * NH as any of the ports in the deleted VRF */
 }
 
-/* OPS_TODO : move vrf functions from bridge.c to this file */
-/* OPS_TODO : move neighbor functions from bridge.c to this file */
+/* Host Functions */
+/*
+** Function to find if the ipv4 secondary address already exist in the hash.
+*/
+static struct net_address *
+vrf_port_ip4_addr_find(struct port *port, const char *address)
+{
+    struct net_address *addr;
+
+    HMAP_FOR_EACH_WITH_HASH (addr, addr_node, hash_string(address, 0),
+                             &port->secondary_ip4addr) {
+        if (!strcmp(addr->address, address)) {
+            return addr;
+        }
+    }
+
+    return NULL;
+}
+
+/*
+** Function to find if the ipv6 secondary address already exist in the hash.
+*/
+static struct net_address *
+vrf_port_ip6_addr_find(struct port *port, const char *address)
+{
+    struct net_address *addr;
+
+    HMAP_FOR_EACH_WITH_HASH (addr, addr_node, hash_string(address, 0),
+                             &port->secondary_ip6addr) {
+        if (!strcmp(addr->address, address)) {
+            return addr;
+        }
+    }
+
+    return NULL;
+}
+
+/*
+** Function to add port ipv4/ipv6 address as l3 local host entry.
+*/
+static int
+vrf_ofproto_host_add(struct vrf *vrf, bool is_ipv6, char *ip_addr)
+{
+    struct ofproto_l3_host host_info;
+    VLOG_DBG("vrf_ofproto_host_add called for ip %s", ip_addr);
+
+    /* Update the host info for ofproto action */
+    host_info.family = is_ipv6 ? OFPROTO_ROUTE_IPV6 : OFPROTO_ROUTE_IPV4;
+    host_info.ip_address = ip_addr;
+
+    /* Call Provider */
+    if (!vrf_l3_host_action(vrf, OFPROTO_HOST_ADD, &host_info)) {
+        VLOG_DBG("VRF %s: Added host entry for %s", vrf->cfg->name, ip_addr);
+        return 0;
+    } else {
+        VLOG_ERR("!ofproto_l3_host_action failed");
+        return 1;
+    }
+} /* vrf_ofproto_host_add */
+
+/*
+** Function to delete port ipv4/ipv6 l3 local host entry.
+*/
+static int
+vrf_ofproto_host_delete(struct vrf *vrf, bool is_ipv6, char *ip_addr)
+{
+    struct ofproto_l3_host host_info;
+    VLOG_DBG("vrf_ofproto_host_delete called for ip %s", ip_addr);
+
+    /* Update the host info for ofproto action */
+    host_info.family = is_ipv6 ? OFPROTO_ROUTE_IPV6 : OFPROTO_ROUTE_IPV4;
+    host_info.ip_address = ip_addr;
+
+    /* Call Provider */
+    if (!vrf_l3_host_action(vrf, OFPROTO_HOST_DELETE, &host_info)) {
+        VLOG_DBG("VRF %s: Deleted host entry for ip %s",
+                  vrf->cfg->name, ip_addr);
+        return 0;
+    } else {
+        VLOG_ERR("vrf_ofproto_host_delete failed");
+        return 1;
+    }
+} /* vrf_ofproto_host_delete */
+
+/*
+** Function to Add/Delete secondary v6 addresses.
+*/
+static void
+vrf_port_config_secondary_ipv6_addr(struct vrf *vrf, struct port *port)
+{
+    const struct ovsrec_port *idl_row = port->cfg;
+    struct shash new_ip6_list;
+    struct net_address *addr, *next;
+    struct shash_node *addr_node;
+    int i;
+    bool is_ipv6 = true;
+
+    shash_init(&new_ip6_list);
+
+
+    /*
+     * Collect the interested network addresses
+     */
+    for (i = 0; i < idl_row->n_ip6_address_secondary; i++) {
+        if(!shash_add_once(&new_ip6_list, idl_row->ip6_address_secondary[i],
+                           idl_row->ip6_address_secondary[i])) {
+            VLOG_WARN("Duplicate address in secondary list %s\n",
+                      idl_row->ip6_address_secondary[i]);
+        }
+    }
+
+    /*
+     * Parse the existing list of addresses and remove obsolete ones
+     */
+    HMAP_FOR_EACH_SAFE (addr, next, addr_node, &port->secondary_ip6addr) {
+        if (!shash_find_data(&new_ip6_list, addr->address)) {
+            hmap_remove(&port->secondary_ip6addr, &addr->addr_node);
+            vrf_ofproto_host_delete(vrf, is_ipv6, addr->address);
+            free(addr->address);
+            free(addr);
+        }
+    }
+
+    /*
+     * Add the newly added addresses to the list
+     */
+    SHASH_FOR_EACH (addr_node, &new_ip6_list) {
+        struct net_address *addr;
+        const char *address = addr_node->data;
+        if (!vrf_port_ip6_addr_find(port, address)) {
+           /*
+             * Add the new address to the list
+             */
+            addr = xzalloc(sizeof *addr);
+            addr->address = xstrdup(address);
+            hmap_insert(&port->secondary_ip6addr, &addr->addr_node,
+                        hash_string(addr->address, 0));
+            vrf_ofproto_host_add(vrf, is_ipv6, addr->address);
+        }
+    }
+}
+
+/*
+** Function to Add/Delete secondary v4 addresses.
+*/
+static void
+vrf_port_config_secondary_ipv4_addr(struct vrf *vrf, struct port *port)
+{
+    const struct ovsrec_port *idl_row = port->cfg;
+    struct shash new_ip_list;
+    struct net_address *addr, *next;
+    struct shash_node *addr_node;
+    int i;
+    bool is_ipv6 = false;
+
+    shash_init(&new_ip_list);
+
+    /*
+     * Collect the interested network addresses
+     */
+    for (i = 0; i < idl_row->n_ip4_address_secondary; i++) {
+       if(!shash_add_once(&new_ip_list, idl_row->ip4_address_secondary[i],
+                           idl_row->ip4_address_secondary[i])) {
+            VLOG_WARN("Duplicate address in secondary list %s\n",
+                      idl_row->ip4_address_secondary[i]);
+        }
+    }
+
+    /*
+     * Parse the existing list of addresses and remove obsolete ones
+     */
+    HMAP_FOR_EACH_SAFE (addr, next, addr_node, &port->secondary_ip4addr) {
+        if (!shash_find_data(&new_ip_list, addr->address)) {
+            hmap_remove(&port->secondary_ip4addr, &addr->addr_node);
+            vrf_ofproto_host_delete(vrf, is_ipv6, addr->address);
+            free(addr->address);
+            free(addr);
+        }
+    }
+
+    /*
+     * Add the newly added addresses to the list
+     */
+    SHASH_FOR_EACH (addr_node, &new_ip_list) {
+        struct net_address *addr;
+        const char *address = addr_node->data;
+        if (!vrf_port_ip4_addr_find(port, address)) {
+            /*
+             * Add the new address to the list
+             */
+            addr = xzalloc(sizeof *addr);
+            addr->address = xstrdup(address);
+            hmap_insert(&port->secondary_ip4addr, &addr->addr_node,
+                        hash_string(addr->address, 0));
+            vrf_ofproto_host_add(vrf, is_ipv6, addr->address);
+        }
+    }
+}
+
+/*
+** Function to handle add/delete/modify of port ipv4/v6 address.
+*/
+void
+vrf_port_reconfig_ipaddr(struct vrf *vrf, struct port *port)
+{
+    const struct ovsrec_port *idl_port = port->cfg;
+    bool is_ipv6 = 0;
+
+    if (!vrf_has_l3_host_action(vrf)) {
+        VLOG_DBG("No ofproto support to update local host ip's.");
+        return;
+    }
+
+    /* If primary ipv4 got changed */
+    if (OVSREC_IDL_IS_COLUMN_MODIFIED(ovsrec_port_col_ip4_address,
+                                      idl_seqno) ) {
+        if (idl_port->ip4_address) {
+            if (port->ip4_address) {
+                if (strcmp(port->ip4_address, idl_port->ip4_address) != 0) {
+                    /* If current and earlier are different, delete old */
+                    vrf_ofproto_host_delete(vrf, is_ipv6, port->ip4_address);
+                    free(port->ip4_address);
+
+                    /* Add new */
+                    port->ip4_address = xstrdup(idl_port->ip4_address);
+                    vrf_ofproto_host_add(vrf, is_ipv6, port->ip4_address);
+                }
+                /* else no change */
+            } else {
+                /* Earlier primary was not there, just add new */
+                port->ip4_address = xstrdup(idl_port->ip4_address);
+                vrf_ofproto_host_add(vrf, is_ipv6, port->ip4_address);
+            }
+        } else {
+            /* Primary got removed, earlier if it was there then remove it */
+            if (port->ip4_address != NULL) {
+                vrf_ofproto_host_delete(vrf, is_ipv6, port->ip4_address);
+                free(port->ip4_address);
+                port->ip4_address = NULL;
+            }
+        }
+    }
+
+    /* If primary ipv6 got changed */
+    if (OVSREC_IDL_IS_COLUMN_MODIFIED(ovsrec_port_col_ip6_address,
+                                      idl_seqno) ) {
+        is_ipv6 = true;
+        if (idl_port->ip6_address) {
+            if (port->ip6_address) {
+                if (strcmp(port->ip6_address, idl_port->ip6_address) !=0) {
+                    /* If current and earlier are different, delete old */
+                    vrf_ofproto_host_delete(vrf, is_ipv6, port->ip4_address);
+                    free(port->ip6_address);
+
+                    /* Add new */
+                    port->ip6_address = xstrdup(idl_port->ip6_address);
+                    vrf_ofproto_host_add(vrf, is_ipv6, port->ip4_address);
+
+                }
+                /* else no change */
+            } else {
+
+                /* Earlier primary was not there, just add new */
+                port->ip6_address = xstrdup(idl_port->ip6_address);
+                vrf_ofproto_host_add(vrf, is_ipv6, port->ip4_address);
+            }
+        } else {
+            /* Primary got removed, earlier if it was there then remove it */
+            if (port->ip6_address != NULL) {
+                vrf_ofproto_host_delete(vrf, is_ipv6, port->ip4_address);
+                free(port->ip6_address);
+                port->ip6_address = NULL;
+            }
+        }
+    }
+
+    /*
+     * Configure secondary network addresses
+     */
+    if (OVSREC_IDL_IS_COLUMN_MODIFIED(ovsrec_port_col_ip4_address_secondary,
+                                      idl_seqno) ) {
+        VLOG_DBG("ip4_address_secondary modified");
+        vrf_port_config_secondary_ipv4_addr(vrf, port);
+    }
+
+    if (OVSREC_IDL_IS_COLUMN_MODIFIED(ovsrec_port_col_ip6_address_secondary,
+                                      idl_seqno) ) {
+        VLOG_DBG("ip6_address_secondary modified");
+        vrf_port_config_secondary_ipv6_addr(vrf, port);
+    }
+}
+
+/* FIXME : move vrf functions from bridge.c to this file */
+/* FIXME : move neighbor functions from bridge.c to this file */
