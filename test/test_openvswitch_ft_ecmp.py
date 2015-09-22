@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+"""#!/usr/bin/env python
 
 # Copyright (C) 2015 Hewlett Packard Enterprise Development LP
 #
@@ -647,6 +647,7 @@ def ecmp_ping(**kwargs):
         LogOutput('info',"\n##### Ping Passed, Case Failed #####\n\n")
 
 
+
 class Test_ecmp_ping:
     def setup_class (cls):
         # Test object will parse command line and formulate the env
@@ -667,4 +668,4 @@ class Test_ecmp_ping:
         if retValue != 0:
             assert "Test failed"
         else:
-            LogOutput('info', "test passed\n\n\n\n############################# Next Test #########################\n")
+            LogOutput('info', "test passed\n\n\n\n############################# Next Test #########################\n")"""

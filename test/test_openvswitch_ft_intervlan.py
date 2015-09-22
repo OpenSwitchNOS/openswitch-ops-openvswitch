@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+"""#!/usr/bin/env python
 
 # Copyright (C) 2015 Hewlett Packard Enterprise Development LP
 #
@@ -14,17 +14,17 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-"""
-import lib
+
+#import lib
 import pytest
 import re
-import switch
-from switch import *
-from lib import *
-from switch.CLI.lldp import *
-from switch.CLI.interface import *
-from switch.CLI import *
-from switch.OVS import *
+from opstestfw import switch
+from opstestfw.switch import *
+from opstestfw import *
+#from opstestfw.switch.CLI *
+#from opstestfw.switch.CLI.interface import *
+from opstestfw.switch.CLI import *
+from opstestfw.switch.OVS import *
 # Topology definition
 topoDict = {"topoExecution": 1000,
             "topoTarget": "dut01",
@@ -191,6 +191,7 @@ def ping_vlan(**kwargs):
     retCode = retStruct.returnCode()
     assert retCode==0, "Failed to configure an ipv4 address on vlan address"
 
+
     LogOutput('info', "Configuring ipv6 address 1000::1 on interface vlan10")
     retStruct = InterfaceIpConfig(deviceObj=switch, vlan=10, addr="1000::1", mask=120, ipv6flag=True, config=True)
     retCode = retStruct.returnCode()
@@ -222,78 +223,100 @@ def ping_vlan(**kwargs):
     #Configure host 1
 
     LogOutput('info',"\n\n\nConfiguring host 1 ipv4")
-    retStruct = host1.NetworkConfig(ipAddr="10.0.0.9", netMask="255.255.255.0", interface=host1.linkPortMapping['lnk01'], broadcast="10.255.255.255", config=True, gateway="10.0.0.1")
+    retStruct = host1.NetworkConfig(ipAddr="10.0.0.9", netMask="255.255.255.0", interface=host1.linkPortMapping['lnk01'], broadcast="10.255.255.255", config=True)
     retCode = retStruct.returnCode()
     assert retCode==0, "Failed to configure an ipv4 address"
 
     LogOutput('info',"\n\n\nConfiguring host 1 ipv6")
-    retStruct = host1.Network6Config(ipAddr="1000::9", netMask=120, interface=host1.linkPortMapping['lnk01'], broadcast="1000::0", config=True, gateway="1000::1")
+    retStruct = host1.Network6Config(ipAddr="1000::9", netMask=120, interface=host1.linkPortMapping['lnk01'], broadcast="1000::0", config=True)
     retCode = retStruct.returnCode()
     assert retCode==0, "Failed to configure an ipv6 address"
 
-    returnStructure =host1.DeviceInteract(command="route add default gw 10.0.0.1")
-    retCode = returnStructure['returnCode']
-    assert retCode==0, "Failed to add default ipv4 gw"
+    retStruct = host1.IPRoutesConfig(config=True, destNetwork="0.0.0.0", netMask=24, gateway="10.0.0.1")
+    retCode = retStruct.returnCode()
+    if retCode:
+        LogOutput('error', "\nFailed to configure ipv4 address route")
+        caseReturnCode = 1
 
-    returnStructure = host1.DeviceInteract(command="ip -6 route add default via 1000::1")
-    retCode = returnStructure['returnCode']
-    assert retCode==0, "Failed to add default ipv6 gw"
+    retStruct = host1.IPRoutesConfig(config=True, destNetwork="::", netMask=120, gateway="1000::1", ipv6Flag=True)
+    retCode = retStruct.returnCode()
+    if retCode:
+        LogOutput('error', "\nFailed to configure ipv6 address route")
+        caseReturnCode = 1
+
+    #Configure host 2
 
     LogOutput('info',"\n\n\nConfiguring host 2 ipv4")
-    retStruct = host2.NetworkConfig(ipAddr="10.0.0.10", netMask="255.255.255.0", interface=host2.linkPortMapping['lnk02'], broadcast="10.255.255.255", config=True, gateway="10.0.0.1")
+    retStruct = host2.NetworkConfig(ipAddr="10.0.0.10", netMask="255.255.255.0", interface=host2.linkPortMapping['lnk02'], broadcast="10.255.255.255", config=True )
     retCode = retStruct.returnCode()
     assert retCode==0, "Failed to configure an ipv4 address"
 
     LogOutput('info',"\n\n\nConfiguring host 2 ipv6")
-    retStruct = host2.Network6Config(ipAddr="1000::10", netMask=120, interface=host2.linkPortMapping['lnk02'], broadcast="1000::0", config=True, gateway="1000::1")
+    retStruct = host2.Network6Config(ipAddr="1000::10", netMask=120, interface=host2.linkPortMapping['lnk02'], broadcast="1000::0", config=True)
     retCode = retStruct.returnCode()
     assert retCode==0, "Failed to configure an ipv6 address"
 
-    returnStructure =host2.DeviceInteract(command="route add default gw 10.0.0.1")
-    retCode = returnStructure['returnCode']
-    assert retCode==0, "Failed to add default ipv4 gw"
+    retStruct = host2.IPRoutesConfig(config=True, destNetwork="0.0.0.0", netMask=24, gateway="10.0.0.1")
+    retCode = retStruct.returnCode()
+    if retCode:
+        LogOutput('error', "\nFailed to configure ipv4 address route")
+        caseReturnCode = 1
 
-    returnStructure = host2.DeviceInteract(command="ip -6 route add default via 1000::1")
-    retCode = returnStructure['returnCode']
-    assert retCode==0, "Failed to add default ipv6 gw"
+    retStruct = host2.IPRoutesConfig(config=True, destNetwork="::", netMask=120, gateway="1000::1", ipv6Flag=True)
+    retCode = retStruct.returnCode()
+    if retCode:
+        LogOutput('error', "\nFailed to configure ipv6 address route")
+        caseReturnCode = 1
+
 
     #Configure host 3
 
     LogOutput('info',"\n\n\nConfiguring host 3 ipv4")
-    retStruct = host3.NetworkConfig(ipAddr="20.0.0.10", netMask="255.255.255.0", interface=host3.linkPortMapping['lnk03'], broadcast="20.255.255.255", config=True, gateway="20.0.0.1")
+    retStruct = host3.NetworkConfig(ipAddr="20.0.0.10", netMask="255.255.255.0", interface=host3.linkPortMapping['lnk03'], broadcast="20.255.255.255", config=True)
     retCode = retStruct.returnCode()
     assert retCode==0, "Failed to configure an ipv4 address"
 
     LogOutput('info',"\n\n\nConfiguring host 3 ipv6")
-    retStruct = host3.Network6Config(ipAddr="2000::10", netMask=120, interface=host3.linkPortMapping['lnk03'], broadcast="2000::0", config=True, gateway="2000::1")
+    retStruct = host3.Network6Config(ipAddr="2000::10", netMask=120, interface=host3.linkPortMapping['lnk03'], broadcast="2000::0", config=True)
     retCode = retStruct.returnCode()
     assert retCode==0, "Failed to configure an ipv6 address"
 
-    returnStructure =host3.DeviceInteract(command="route add default gw 20.0.0.1")
-    retCode = returnStructure['returnCode']
-    assert retCode==0, "Failed to add default ipv4 gw"
+    retStruct = host3.IPRoutesConfig(config=True, destNetwork="0.0.0.0", netMask=24, gateway="20.0.0.1")
+    retCode = retStruct.returnCode()
+    if retCode:
+        LogOutput('error', "\nFailed to configure ipv4 address route")
+        caseReturnCode = 1
 
-    returnStructure =host3.DeviceInteract(command="ip -6 route add default via 2000::1")
-    retCode = returnStructure['returnCode']
-    assert retCode==0, "Failed to add default ipv6 gw"
+    retStruct = host3.IPRoutesConfig(config=True, destNetwork="::", netMask=120, gateway="2000::1", ipv6Flag=True)
+    retCode = retStruct.returnCode()
+    if retCode:
+        LogOutput('error', "\nFailed to configure ipv6 address route")
+        caseReturnCode = 1
+
+    #Configure host 4
 
     LogOutput('info',"\n\n\nConfiguring host 4 ipv4")
-    retStruct = host4.NetworkConfig(ipAddr="30.0.0.10", netMask="255.255.255.0", interface=host4.linkPortMapping['lnk04'], broadcast="30.0.0.0", config=True, gateway="30.0.0.1")
+    retStruct = host4.NetworkConfig(ipAddr="30.0.0.10", netMask="255.255.255.0", interface=host4.linkPortMapping['lnk04'], broadcast="30.0.0.0", config=True)
     retCode = retStruct.returnCode()
     assert retCode==0, "Failed to configure an ipv4 address"
 
     LogOutput('info',"\n\n\nConfiguring host 4 ipv6")
-    retStruct = host4.Network6Config(ipAddr="3000::10", netMask=120, interface=host4.linkPortMapping['lnk04'], broadcast="3000::0", config=True, gateway="3000::1")
+    retStruct = host4.Network6Config(ipAddr="3000::10", netMask=120, interface=host4.linkPortMapping['lnk04'], broadcast="3000::0", config=True)
     retCode = retStruct.returnCode()
     assert retCode==0, "Failed to configure an ipv6 address"
 
-    returnStructure =host4.DeviceInteract(command="route add default gw 30.0.0.1")
-    retCode = returnStructure['returnCode']
-    assert retCode==0, "Failed to add default ipv4 gw"
+    retStruct = host4.IPRoutesConfig(config=True, destNetwork="0.0.0.0", netMask=24, gateway="30.0.0.1")
+    retCode = retStruct.returnCode()
+    if retCode:
+        LogOutput('error', "\nFailed to configure ipv4 address route")
+        caseReturnCode = 1
 
-    returnStructure =host4.DeviceInteract(command="ip -6 route add default via 3000::1")
-    retCode = returnStructure['returnCode']
-    assert retCode==0, "Failed to add default ipv6 gw"
+    retStruct = host4.IPRoutesConfig(config=True, destNetwork="::", netMask=120, gateway="3000::1", ipv6Flag=True)
+    retCode = retStruct.returnCode()
+    if retCode:
+        LogOutput('error', "\nFailed to configure ipv6 address route")
+        caseReturnCode = 1
+
 
     #Ping From Host1 to Host 2
     retStruct = host1.Ping(ipAddr="10.0.0.10", packetCount=1)
@@ -401,5 +424,4 @@ class Test_vlan_ping:
         wrkston02Obj = self.topoObj.deviceObjGet(device="wrkston02")
         wrkston03Obj = self.topoObj.deviceObjGet(device="wrkston03")
         wrkston04Obj = self.topoObj.deviceObjGet(device="wrkston04")
-        ping_vlan(switch=dut01Obj, host1=wrkston01Obj, host2=wrkston02Obj, host3=wrkston03Obj, host4=wrkston04Obj)
-"""
+        ping_vlan(switch=dut01Obj, host1=wrkston01Obj, host2=wrkston02Obj, host3=wrkston03Obj, host4=wrkston04Obj)"""
