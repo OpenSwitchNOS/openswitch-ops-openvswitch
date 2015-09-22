@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+"""#!/usr/bin/env python
 
 # Copyright (C) 2015 Hewlett Packard Enterprise Development LP
 #
@@ -15,14 +15,16 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import lib
+#import lib
 import pytest
 import re
-import switch
-from lib import *
-from switch.CLI.lldp import *
-from switch.CLI.interface import *
-from switch.CLI import *
+from  opstestfw import *
+from opstestfw.switch.CLI import *
+#import switch
+#from lib import *
+#from opstestfw.switch.CLI.lldp import *
+#from opstestfw.switch.CLI.interface import *
+from opstestfw.switch.CLI import *
 
 # Topology definition
 topoDict = {"topoExecution": 1000,
@@ -188,13 +190,13 @@ def fastpath_ping(**kwargs):
         caseReturnCode = 1
 
     #LogOutput('info',"\n\n\nConfiguring switch 1 and 2 ipv6 routes")
-    retStruct = IpRouteConfig(deviceObj=device1, route="2002::0", mask=120, nexthop="2001::2", config=True, ipv6flag=True)
+    retStruct = IpRouteConfig(deviceObj=device1, route="2002::", mask=120, nexthop="2001::2", config=True, ipv6flag=True)
     retCode = retStruct.returnCode()
     if retCode:
         LogOutput('error', "\nFailed to configure ipv6 address route")
         caseReturnCode = 1
 
-    retStruct = IpRouteConfig(deviceObj=device2, route="2000::0", mask=120, nexthop="2001::1", config=True, ipv6flag=True)
+    retStruct = IpRouteConfig(deviceObj=device2, route="2000::", mask=120, nexthop="2001::1", config=True, ipv6flag=True)
     retCode = retStruct.returnCode()
     if retCode:
         LogOutput('error', "\nFailed to configure ipv6 address route")
@@ -369,13 +371,13 @@ def fastpath_ping(**kwargs):
         LogOutput('error', "\nFailed to unconfigure ipv4 address route")
         caseReturnCode = 1
 
-    retStruct = IpRouteConfig(deviceObj=device1, route="2002::0", mask=120, nexthop="2001::2", config=False, ipv6flag=True)
+    retStruct = IpRouteConfig(deviceObj=device1, route="2002::", mask=120, nexthop="2001::2", config=False, ipv6flag=True)
     retCode = retStruct.returnCode()
     if retCode:
         LogOutput('error', "\nFailed to unconfigure ipv6 address route")
         caseReturnCode = 1
 
-    retStruct = IpRouteConfig(deviceObj=device2, route="2000::0", mask=120, nexthop="2001::1", config=False, ipv6flag=True)
+    retStruct = IpRouteConfig(deviceObj=device2, route="2000::", mask=120, nexthop="2001::1", config=False, ipv6flag=True)
     retCode = retStruct.returnCode()
     if retCode:
         LogOutput('error', "\nFailed to unconfigure ipv6 address route")
@@ -442,21 +444,21 @@ def fastpath_ping(**kwargs):
 
 class Test_fastpath_ping:
     def setup_class (cls):
-        # Test object will parse command line and formulate the env
-        Test_fastpath_ping.testObj = testEnviron(topoDict=topoDict)
-        # Get topology object
-        Test_fastpath_ping.topoObj = Test_fastpath_ping.testObj.topoObjGet()
+	# Test object will parse command line and formulate the env
+	Test_fastpath_ping.testObj = testEnviron(topoDict=topoDict)
+	# Get topology object
+	Test_fastpath_ping.topoObj = Test_fastpath_ping.testObj.topoObjGet()
 
     def teardown_class (cls):
         Test_fastpath_ping.topoObj.terminate_nodes()
     def test_fastpath_ping(self):
-        # GEt Device objects
-        dut01Obj = self.topoObj.deviceObjGet(device="dut01")
-        dut02Obj = self.topoObj.deviceObjGet(device="dut02")
-        wrkston01Obj = self.topoObj.deviceObjGet(device="wrkston01")
-        wrkston02Obj = self.topoObj.deviceObjGet(device="wrkston02")
-        retValue = fastpath_ping(device1=dut01Obj, device2=dut02Obj, device3=wrkston01Obj, device4=wrkston02Obj)
-        if retValue != 0:
+	# GEt Device objects
+	dut01Obj = self.topoObj.deviceObjGet(device="dut01")
+	dut02Obj = self.topoObj.deviceObjGet(device="dut02")
+	wrkston01Obj = self.topoObj.deviceObjGet(device="wrkston01")
+	wrkston02Obj = self.topoObj.deviceObjGet(device="wrkston02")
+	retValue = fastpath_ping(device1=dut01Obj, device2=dut02Obj, device3=wrkston01Obj, device4=wrkston02Obj)
+	if retValue != 0:
             assert "Test failed"
-        else:
-            LogOutput('info', "test passed\n\n\n\n############################# Next Test #########################\n")
+	else:
+	    LogOutput('info', "test passed\n\n\n\n############################# Next Test #########################\n")"""
