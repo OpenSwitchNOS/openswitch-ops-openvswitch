@@ -5,7 +5,7 @@
     "System": {
       "columns": {
         "subsystems": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -16,7 +16,7 @@
           }
         },
         "bridges": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -27,7 +27,7 @@
           }
         },
         "vrfs": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -38,7 +38,6 @@
           }
         },
         "management_vrf": {
-          "category": "child",
           "type": {
             "key": {
               "type": "uuid",
@@ -69,7 +68,7 @@
           }
         },
         "daemons": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -80,7 +79,7 @@
           }
         },
         "ssl": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -174,7 +173,7 @@
           }
         },
         "manager_options": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -240,7 +239,7 @@
           }
         },
         "radius_servers": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -336,7 +335,7 @@
           }
         },
         "interfaces": {
-          "category": "reference",
+          "relationship": "reference",
           "type": {
             "key": {
               "type": "uuid",
@@ -347,7 +346,7 @@
           }
         },
         "leds": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -358,7 +357,7 @@
           }
         },
         "fans": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -369,7 +368,7 @@
           }
         },
         "temp_sensors": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -380,7 +379,7 @@
           }
         },
         "power_supplies": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -453,7 +452,7 @@
           "mutable": false
         },
         "ports": {
-          "category": "reference",
+          "relationship": "reference",
           "type": {
             "key": {
               "type": "uuid",
@@ -464,7 +463,7 @@
           }
         },
         "vlans": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -539,7 +538,7 @@
           "mutable": false
         },
         "ports": {
-          "category": "reference",
+          "relationship": "reference",
           "type": {
             "key": {
               "type": "uuid",
@@ -550,7 +549,7 @@
           }
         },
          "bgp_routers": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "integer",
@@ -566,7 +565,7 @@
           }
         },
         "dhcp_server":{
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -633,7 +632,7 @@
           }
         },
          "route_map_entries": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "integer",
@@ -730,7 +729,7 @@
           }
         },
         "goto_target": {
-          "category": "reference",
+          "relationship": "reference",
           "type": {
             "key": {
               "type": "uuid",
@@ -741,7 +740,7 @@
           }
         },
         "call": {
-          "category": "reference",
+          "relationship": "reference",
           "type": {
             "key": {
               "type": "uuid",
@@ -822,7 +821,7 @@
           }
         },
          "prefix_list_entries": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "integer",
@@ -937,7 +936,7 @@
     "Route": {
       "columns": {
         "vrf": {
-          "category": "parent",
+          "relationship": "m:1",
           "type": {
             "key": {
               "type": "uuid",
@@ -1058,7 +1057,7 @@
           "mutable": false
         },
         "nexthops": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -1102,7 +1101,7 @@
           "mutable": false
         },
         "ports": {
-          "category": "reference",
+          "relationship": "reference",
           "type": {
             "key": {
               "type": "uuid",
@@ -1277,7 +1276,7 @@
           }
         },
          "bgp_neighbors": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "string",
@@ -1376,7 +1375,7 @@
           }
         },
         "bgp_peer_group": {
-          "category": "reference",
+          "relationship": "reference",
           "type": {
             "key": {
               "type": "uuid",
@@ -1567,7 +1566,7 @@
           "ephemeral": true
         },
         "route_maps": {
-          "category": "reference",
+          "relationship": "reference",
           "type": {
             "key": {
               "type": "string",
@@ -1610,7 +1609,7 @@
     "BGP_Route": {
       "columns": {
         "vrf": {
-          "category": "parent",
+          "relationship": "m:1",
           "type": {
             "key": {
               "type": "uuid",
@@ -1703,7 +1702,7 @@
           "mutable": false
         },
         "bgp_nexthops": {
-          "category": "child",
+          "relationship": "1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -1770,7 +1769,7 @@
     "Neighbor": {
       "columns": {
         "vrf": {
-          "category": "parent",
+          "relationship": "m:1",
           "type": {
             "key": {
               "type": "uuid",
@@ -1816,7 +1815,7 @@
           }
         },
         "port": {
-          "category": "reference",
+          "relationship": "reference",
           "type": {
             "key": {
               "type": "uuid",
@@ -1994,7 +1993,7 @@
           "mutable": false
         },
         "interfaces": {
-          "category": "reference",
+          "relationship": "reference",
           "type": {
             "key": {
               "type": "uuid",
@@ -2320,7 +2319,7 @@
           "ephemeral": true
         },
         "split_parent": {
-          "category": "reference",
+          "relationship": "reference",
           "type": {
             "key": {
               "type": "uuid",
@@ -2331,7 +2330,7 @@
           }
         },
         "split_children": {
-          "category": "reference",
+          "relationship": "reference",
           "type": {
             "key": {
               "type": "uuid",
@@ -3181,7 +3180,7 @@
     "DHCP_Server":{
       "columns":{
         "ranges":{
-          "category":"child",
+          "relationship":"1:m",
           "type":{
               "key": {
               "type": "uuid",
@@ -3192,7 +3191,7 @@
           }
         },
         "static_hosts":{
-          "category":"child",
+          "relationship":"1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -3203,7 +3202,7 @@
           }
         },
         "dhcp_options":{
-          "category":"child",
+          "relationship":"1:m",
           "type": {
             "key": {
               "type": "uuid",
@@ -3214,7 +3213,7 @@
           }
         },
         "matches":{
-          "category":"child",
+          "relationship":"1:m",
           "type":{
             "key":{
               "type":"uuid",
@@ -3334,7 +3333,7 @@
          }
         },
         "constructor":{
-         "category":"reference",
+         "relationship":"reference",
          "type":{
            "key":{
               "type": "uuid",
