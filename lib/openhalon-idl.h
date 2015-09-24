@@ -372,6 +372,9 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 
 #define PORT_STATUS_BOND_HW_HANDLE                      "bond_hw_handle"
 #define PORT_HW_CONFIG_MAP_INTERNAL_VLAN_ID             "internal_vlan_id"
+#define PORT_HW_CONFIG_MAP_ENABLE                       "enable"
+#define PORT_HW_CONFIG_MAP_ENABLE_FALSE                 "false"
+#define PORT_HW_CONFIG_MAP_ENABLE_TRUE                  "true"
 
 #define PORT_OTHER_CONFIG_MAP_LACP_TIME                 "lacp-time"
 
@@ -484,26 +487,26 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_UPTIME         "BGP_uptime"
 
 /* BGP Neighbor state, goes into "status" column */
-#define BGP_PEER_STATE                          "bgp-peer-state"
+#define BGP_PEER_STATE                          "bgp_peer_state"
 
 /* BGP Neighbor statistics */
-#define BGP_PEER_ESTABLISHED_COUNT              "bgp-peer-established-count"
-#define BGP_PEER_DROPPED_COUNT                  "bgp-peer-dropped-count"
-#define BGP_PEER_OPEN_IN_COUNT                  "bgp-peer-open_in-count"
-#define BGP_PEER_OPEN_OUT_COUNT                 "bgp-peer-open_out-count"
-#define BGP_PEER_UPDATE_IN_COUNT                "bgp-peer-update_in-count"
-#define BGP_PEER_UPDATE_OUT_COUNT               "bgp-peer-update_out-count"
-#define BGP_PEER_KEEPALIVE_IN_COUNT             "bgp-peer-keepalive_in-count"
-#define BGP_PEER_KEEPALIVE_OUT_COUNT            "bgp-peer-keepalive_out-count"
-#define BGP_PEER_NOTIFY_IN_COUNT                "bgp-peer-notify_in-count"
-#define BGP_PEER_NOTIFY_OUT_COUNT               "bgp-peer-notify_out-count"
-#define BGP_PEER_REFRESH_IN_COUNT               "bgp-peer-refresh_in-count"
-#define BGP_PEER_REFRESH_OUT_COUNT              "bgp-peer-refresh_out-count"
-#define BGP_PEER_DYNAMIC_CAP_IN_COUNT           "bgp-peer-dynamic_cap_in-count"
-#define BGP_PEER_DYNAMIC_CAP_OUT_COUNT          "bgp-peer-dynamic_cap_out-count"
-#define BGP_PEER_UPTIME                         "bgp-peer-uptime"
-#define BGP_PEER_READTIME                       "bgp-peer-readtime"
-#define BGP_PEER_RESETTIME                      "bgp-peer-resettime"
+#define BGP_PEER_ESTABLISHED_COUNT              "bgp_peer_established_count"
+#define BGP_PEER_DROPPED_COUNT                  "bgp_peer_dropped_count"
+#define BGP_PEER_OPEN_IN_COUNT                  "bgp_peer_open_in_count"
+#define BGP_PEER_OPEN_OUT_COUNT                 "bgp_peer_open_out_count"
+#define BGP_PEER_UPDATE_IN_COUNT                "bgp_peer_update_in_count"
+#define BGP_PEER_UPDATE_OUT_COUNT               "bgp_peer_update_out_count"
+#define BGP_PEER_KEEPALIVE_IN_COUNT             "bgp_peer_keepalive_in_count"
+#define BGP_PEER_KEEPALIVE_OUT_COUNT            "bgp_peer_keepalive_out_count"
+#define BGP_PEER_NOTIFY_IN_COUNT                "bgp_peer_notify_in_count"
+#define BGP_PEER_NOTIFY_OUT_COUNT               "bgp_peer_notify_out_count"
+#define BGP_PEER_REFRESH_IN_COUNT               "bgp_peer_refresh_in_count"
+#define BGP_PEER_REFRESH_OUT_COUNT              "bgp_peer_refresh_out_count"
+#define BGP_PEER_DYNAMIC_CAP_IN_COUNT           "bgp_peer_dynamic_cap_in_count"
+#define BGP_PEER_DYNAMIC_CAP_OUT_COUNT          "bgp_peer_dynamic_cap_out_count"
+#define BGP_PEER_UPTIME                         "bgp_peer_uptime"
+#define BGP_PEER_READTIME                       "bgp_peer_readtime"
+#define BGP_PEER_RESETTIME                      "bgp_peer_resettime"
 
 /****************************** VRF TABLE ******************************/
 
@@ -532,6 +535,7 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define SYSTEM_MGMT_INTF_MAP_DNS_SERVER_1         "dns_server_1"
 #define SYSTEM_MGMT_INTF_MAP_DNS_SERVER_2         "dns_server_2"
 #define SYSTEM_MGMT_INTF_MAP_HOSTNAME             "hostname"
+#define SYSTEM_MGMT_INTF_MAP_DHCP_HOSTNAME        "dhcp_hostname"
 
 /* buffer monitoring statistics config table (bufmon)*/
 #define BUFMON_CONFIG_MAP_ENABLED                               "enabled"
