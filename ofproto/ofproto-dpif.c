@@ -5649,5 +5649,6 @@ const struct ofproto_class ofproto_dpif_class = {
     NULL,
     NULL,
     NULL,
+    NULL                        /* l3 host config */
 #endif
 };

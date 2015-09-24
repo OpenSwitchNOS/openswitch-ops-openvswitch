@@ -20,6 +20,7 @@
 #include "hmap.h"
 #include "lib/vswitch-idl.h"
 #include "ofproto/ofproto.h"
+#include "ofproto/ofproto-provider.h"
 
 #define VRF_IPV4_MAX_LEN        32
 #define VRF_IPV6_MAX_LEN        128
@@ -90,4 +91,6 @@ struct neighbor *neighbor_hash_lookup(const struct vrf *vrf,
                                       const char *ip_address);
 int vrf_l3_ecmp_set(struct vrf *vrf, bool enable);
 int vrf_l3_ecmp_hash_set(struct vrf *vrf, unsigned int hash, bool enable);
+void vrf_port_reconfig_ipaddr(struct ofproto *ofproto, struct port *port,
+                              struct ofproto_bundle_settings *bundle_setting);
 #endif /* vrf.h */
