@@ -74,6 +74,15 @@ DISTCLEANFILES += vswitchd/vswitch.gv vswitchd/vswitch.pic
 endif
 endif
 
+# Implicit rule for generating OVS schemas from extended schema file
+%.ovsschema: %.extschema
+	$(PYTHON) vswitchd/sanitize.py $< $@
+
+# vswitch original schema format, generated from the extended
+# schema
+BUILT_SOURCES += vswitchd/vswitch.ovsschema
+DISTCLEANFILES += vswitchd/vswitch.ovsschema
+
 # vswitch schema documentation
 EXTRA_DIST += vswitchd/vswitch.xml
 DISTCLEANFILES += vswitchd/ovs-vswitchd.conf.db.5
