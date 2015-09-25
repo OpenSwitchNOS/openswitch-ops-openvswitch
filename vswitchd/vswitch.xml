@@ -972,7 +972,7 @@
       <column name="ports">
         Ports included in the VRF.
       </column>
-      <column name="bgp_routers">
+      <column name="bgp_routers" keyname="asn">
         BGP routers keyed by ASN value.
       </column>
       <column name="dhcp_server">
@@ -1019,7 +1019,7 @@
       <column name="name">
         Reference to the VRF table, to which this route belongs.
       </column>
-      <column name="route_map_entries">
+      <column name="route_map_entries" keyname="preference">
         Route map entries keyed by preference value.
       </column>
     </group>
@@ -1080,7 +1080,7 @@
       <column name="name">
         Name of the prefix list.
       </column>
-      <column name="prefix_list_entries">
+      <column name="prefix_list_entries" keyname="preference">
         Prefix list entries keyed by preference value.
       </column>
       <column name="description">
@@ -1400,7 +1400,7 @@
       Range: 1-3600 seconds.
       Default value is 360 seconds.
       </column>
-      <column name="bgp_neighbors">
+      <column name="bgp_neighbors" keyname="ip_or_group_name">
         BGP neighbors or neighbor groups, keyed by IP for the former or any
 	string name for the latter.
       </column>
