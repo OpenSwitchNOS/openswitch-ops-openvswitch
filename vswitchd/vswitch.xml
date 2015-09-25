@@ -1431,6 +1431,9 @@
       an individual BGP neighbor or is a BGP peer group.  A value
       of true implies a peer group.  Otherwise, the entry represents
       a BGP neighbor.  If the value is not set, it implies false.
+      This attribute is NOT user modifiable.  It is set by the system
+      at the creation time of the neighbor or the peer group and cannot be
+      changed again.
       </column>
 
       <column name="description">
