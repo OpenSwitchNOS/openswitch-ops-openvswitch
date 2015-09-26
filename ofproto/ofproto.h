@@ -480,6 +480,7 @@ struct ofproto_bundle_settings {
                                      tx_enable state. */
     size_t n_slaves_tx_enable;    /* Number of slaves in tx_enable state. */
     size_t slaves_entered;         /* Number of slaves entered while adding a bond*/
+    bool enable;                  /* Port enable */
 #endif
 };
 
