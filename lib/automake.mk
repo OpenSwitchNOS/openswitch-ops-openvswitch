@@ -43,8 +43,8 @@ ovslibinclude_HEADERS = \
 	lib/ofp-actions.h \
 	lib/ofp-errors.h \
 	lib/ofp-util.h \
-	lib/openhalon-dflt.h \
-	lib/openhalon-idl.h \
+	lib/openswitch-dflt.h \
+	lib/openswitch-idl.h \
 	lib/ovs-atomic.h \
 	lib/ovs-atomic-gcc4.7+.h \
 	lib/ovs-atomic-flag-gcc4.7+.h \
