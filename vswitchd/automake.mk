@@ -38,7 +38,9 @@ vswitchd_ovs_vswitchd_SOURCES = \
 	vswitchd/system-stats.c \
 	vswitchd/system-stats.h \
 	vswitchd/xenserver.c \
-	vswitchd/xenserver.h
+	vswitchd/xenserver.h \
+	vswitchd/bufmon.c \
+	vswitchd/vrf.c
 
 vswitchd_ovs_vswitchd_LDADD = \
 	lib/libovscommon.la \

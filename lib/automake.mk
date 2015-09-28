@@ -436,10 +436,8 @@ lib_libopenvswitch_la_SOURCES = \
 	lib/vtep-idl.c \
 	lib/vtep-idl.h
 
-if OPS
 lib_libopenvswitch_la_SOURCES += \
 	vswitchd/bufmon-provider.c
-endif
 
 if WIN32
 lib_libovscommon_la_SOURCES += \
