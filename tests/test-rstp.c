@@ -467,12 +467,14 @@ test_rstp_main(int argc, char *argv[])
 
     if (argc != 2) {
         ovs_fatal(0, "usage: test-rstp INPUT.RSTP\n");
+        exit(EXIT_FAILURE);
     }
     file_name = argv[1];
 
     input_file = fopen(file_name, "r");
     if (!input_file) {
         ovs_fatal(errno, "error opening \"%s\"", file_name);
+        exit(EXIT_FAILURE);
     }
 
     tc = new_test_case();
@@ -707,6 +709,7 @@ test_rstp_main(int argc, char *argv[])
         rstp_unref(bridge->rstp);
         free(bridge);
     }
+    fclose(input_file);
     free(tc);
 }
 
