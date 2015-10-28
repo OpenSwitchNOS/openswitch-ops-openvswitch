@@ -84,6 +84,8 @@ ovslibinclude_HEADERS = \
 	lib/plugins.h \
 	lib/vlan-bitmap.h \
 	libltdl/ltdl.h \
+	lib/asic-plugin.h \
+	lib/plugin-extensions.h \
 	vswitchd/bufmon-provider.h
 endif
 
@@ -176,6 +178,8 @@ lib_libovscommon_la_SOURCES = \
         lib/ovs-thread.c \
         lib/ovs-thread.h \
         lib/plugins.c \
+        lib/asic-plugin.c \
+        lib/plugin-extensions.c \
         lib/poll-loop.c \
         lib/poll-loop.h \
         lib/process.c \
