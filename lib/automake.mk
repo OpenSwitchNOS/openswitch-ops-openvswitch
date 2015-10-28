@@ -117,6 +117,7 @@ ovslibinclude_HEADERS = \
 	lib/pcap-file.h \
 	lib/perf-counter.h \
 	lib/plugins.h \
+	lib/plugin-extensions.h \
 	lib/poll-loop.h \
 	lib/process.h \
 	lib/pvector.h \
@@ -168,8 +169,9 @@ ovslibinclude_HEADERS = \
 	lib/vlan-bitmap.h \
 	lib/vlandev.h \
 	lib/vswitch-idl.h \
-        vswitchd/bufmon-provider.h \
-        include/odp-netlink.h
+	vswitchd/bufmon-provider.h \
+	include/odp-netlink.h
+
 endif
 
 lib_LTLIBRARIES += lib/libovscommon.la
@@ -270,6 +272,7 @@ lib_libovscommon_la_SOURCES = \
 	lib/packets.c \
 	lib/packets.h \
         lib/plugins.c \
+        lib/plugin-extensions.c \
         lib/poll-loop.c \
         lib/poll-loop.h \
         lib/process.c \
