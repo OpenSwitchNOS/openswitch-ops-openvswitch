@@ -30,6 +30,12 @@ VLOG_DEFINE_THIS_MODULE(plugins);
 
 typedef void(*plugin_func)(void);
 struct plugin_class {
+    int plugin_magic;    // ID of Plugin
+    int plugin_major;    // major Version
+    int plugin_minor;    // Minor Version
+    plugin_func reconfigure_delete;
+    plugin_func reconfigure_add;
+    plugin_func reconfigure_modify;
     plugin_func init;
     plugin_func run;
     plugin_func wait;
@@ -46,6 +52,8 @@ plugins_open_plugin(const char *filename, void *data)
 {
     struct plugin_class *plcl;
     lt_dlhandle handle;
+
+    printf("## [plugins.c] opening %s\n", filename);
 
     if (!(handle = lt_dlopenadvise(filename, *(lt_dladvise *)data))) {
         VLOG_ERR("Failed loading %s: %s", filename, lt_dlerror());
@@ -66,6 +74,9 @@ plugins_open_plugin(const char *filename, void *data)
     }
 
     // The following APIs are optional, so don't fail if they are missing.
+    plcl->reconfigure_delete = lt_dlsym(handle, "reconfigure_delete");
+    plcl->reconfigure_add = lt_dlsym(handle, "reconfigure_add");
+    plcl->reconfigure_modify = lt_dlsym(handle, "reconfigure_modify");
     plcl->netdev_register = lt_dlsym(handle, "netdev_register");
     plcl->ofproto_register = lt_dlsym(handle, "ofproto_register");
     plcl->bufmon_register = lt_dlsym(handle, "bufmon_register");
@@ -76,6 +87,7 @@ plugins_open_plugin(const char *filename, void *data)
         goto err_set_data;
     }
 
+    printf("## [plugins.c] plcl->init %p\n", plcl->init);
     plcl->init();
 
     VLOG_INFO("Loaded plugin library %s", filename);
@@ -120,7 +132,7 @@ plugins_init(const char *path)
         goto err_interface_register;
     }
 
-    if (lt_dladvise_global(&advise) || lt_dladvise_ext (&advise) ||
+    if (lt_dladvise_local(&advise) || lt_dladvise_ext (&advise) ||
         lt_dlforeachfile(lt_dlgetsearchpath(), &plugins_open_plugin, &advise)) {
         VLOG_ERR("ltdl setting advise: %s", lt_dlerror());
         goto err_set_advise;
@@ -153,6 +165,24 @@ do { \
         } \
     } \
 }while(0)
+
+void
+plugins_reconfigure_delete(void)
+{
+    PLUGINS_CALL(reconfigure_delete);
+}
+
+void
+plugins_reconfigure_add(void)
+{
+    PLUGINS_CALL(reconfigure_add);
+}
+
+void
+plugins_reconfigure_modify(void)
+{
+    PLUGINS_CALL(reconfigure_modify);
+}
 
 void
 plugins_run(void)

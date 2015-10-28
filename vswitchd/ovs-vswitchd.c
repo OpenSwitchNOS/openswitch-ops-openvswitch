@@ -134,6 +134,7 @@ main(int argc, char *argv[])
             simap_destroy(&usage);
         }
         bridge_run();
+        bridge_reconfigure_plugins(); //TODO: Remove later, is called just to avoid warnings
 #ifdef OPS
         subsystem_run();
         bufmon_run();

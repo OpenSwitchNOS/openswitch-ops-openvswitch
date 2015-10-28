@@ -76,6 +76,8 @@
 #include "openswitch-dflt.h"
 #endif
 
+#include "plugins.h"
+
 VLOG_DEFINE_THIS_MODULE(bridge);
 
 COVERAGE_DEFINE(bridge_reconfigure);
@@ -431,6 +433,8 @@ static void add_vlan_splinter_ports(struct bridge *,
                                     const unsigned long int *splinter_vlans,
                                     struct shash *ports);
 #endif
+
+void bridge_reconfigure_plugins(void);
 
 #ifdef OPS
 /* This function waits for SYSd and CONFIGd to complete their system
@@ -6433,3 +6437,11 @@ vrf_l3_ecmp_hash_set(struct vrf *vrf, unsigned int hash, bool enable)
     return ofproto_l3_ecmp_hash_set(vrf->up->ofproto, hash, enable);
 }
 #endif
+
+void
+bridge_reconfigure_plugins(void)
+{
+    plugins_reconfigure_delete();
+    plugins_reconfigure_add();
+    plugins_reconfigure_modify();
+}
