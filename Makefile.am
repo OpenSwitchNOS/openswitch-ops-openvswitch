@@ -378,6 +378,7 @@ endif
 include m4/automake.mk
 include lib/automake.mk
 include ofproto/automake.mk
+include plugins/automake.mk
 include utilities/automake.mk
 include include/automake.mk
 include vswitchd/automake.mk
