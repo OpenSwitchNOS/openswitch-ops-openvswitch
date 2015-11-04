@@ -84,6 +84,7 @@ ovslibinclude_HEADERS = \
 	lib/plugins.h \
 	lib/vlan-bitmap.h \
 	libltdl/ltdl.h \
+	lib/plugins/switchd-bcm-plugin.h \
 	vswitchd/bufmon-provider.h
 endif
 
