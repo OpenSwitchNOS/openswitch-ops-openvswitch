@@ -63,6 +63,8 @@
 #include "bundles.h"
 #ifdef OPS
 #include "vlan-bitmap.h"
+#include "plugins/switchd-bcm-plugin.h"
+#include "ofproto/ofproto-extensions.h"
 #endif
 
 VLOG_DEFINE_THIS_MODULE(ofproto);
@@ -7160,11 +7162,18 @@ ofproto_add_l3_host_entry(struct ofproto *ofproto, void *aux,
                           char *next_hop_mac_addr, int *l3_egress_id)
 {
     int rc;
+    struct switchd_bcm_plugin_interface *intf;
 
-    rc = (ofproto->ofproto_class->add_l3_host_entry
-            ? ofproto->ofproto_class->add_l3_host_entry(ofproto, aux,
-                  is_ipv6_addr, ip_addr, next_hop_mac_addr, l3_egress_id)
-            : EOPNOTSUPP);
+    rc = find_ofproto_extension(
+        switchd_bcm_plugin_MAGIC,
+        switchd_bcm_plugin_MAJOR,
+        switchd_bcm_plugin_MINOR,
+        (void **) &intf);
+
+    rc = (rc == 0 && intf)
+      ? intf->add_l3_host_entry(ofproto, aux, is_ipv6_addr,
+				ip_addr, next_hop_mac_addr, l3_egress_id)
+      : EOPNOTSUPP;
 
     VLOG_DBG("Add L3 host entry rc=(%d)", rc);
 
@@ -7178,11 +7187,18 @@ ofproto_delete_l3_host_entry(struct ofproto *ofproto, void *aux,
                              int *l3_egress_id)
 {
     int rc;
+    struct switchd_bcm_plugin_interface *intf;
 
-    rc = (ofproto->ofproto_class->delete_l3_host_entry
-            ? ofproto->ofproto_class->delete_l3_host_entry(ofproto, aux,
-                       is_ipv6_addr, ip_addr, l3_egress_id)
-            : EOPNOTSUPP);
+    rc = find_ofproto_extension(
+        switchd_bcm_plugin_MAGIC,
+        switchd_bcm_plugin_MAJOR,
+        switchd_bcm_plugin_MINOR,
+        (void **) &intf);
+
+    rc = (rc == 0 && intf)
+      ? intf->delete_l3_host_entry(ofproto, aux, is_ipv6_addr,
+				   ip_addr, l3_egress_id)
+      : EOPNOTSUPP;
 
     VLOG_DBG("Delete L3 host entry rc=(%d)", rc);
 
@@ -7196,11 +7212,18 @@ ofproto_get_l3_host_hit(struct ofproto *ofproto, void *aux,
                         bool *hit_bit)
 {
     int rc;
+    struct switchd_bcm_plugin_interface *intf;
 
-    rc = ofproto->ofproto_class->get_l3_host_hit ?
-           ofproto->ofproto_class->get_l3_host_hit(ofproto, aux,
-           is_ipv6_addr, ip_addr, hit_bit) :
-           EOPNOTSUPP;
+    rc = find_ofproto_extension(
+        switchd_bcm_plugin_MAGIC,
+        switchd_bcm_plugin_MAJOR,
+        switchd_bcm_plugin_MINOR,
+        (void **) &intf);
+
+    rc = (rc == 0 && intf)
+      ? intf->get_l3_host_hit_bit(ofproto, aux, is_ipv6_addr,
+			      ip_addr, hit_bit)
+      : EOPNOTSUPP;
 
     VLOG_DBG("L3 host hit-bit rc=(%d)", rc);
 
@@ -7214,10 +7237,17 @@ ofproto_l3_route_action(struct ofproto *ofproto,
                         struct ofproto_route *route)
 {
     int rc;
+    struct switchd_bcm_plugin_interface *intf;
 
-    rc = ofproto->ofproto_class->l3_route_action ?
-         ofproto->ofproto_class->l3_route_action(ofproto, action, route) :
-         EOPNOTSUPP;
+    rc = find_ofproto_extension(
+        switchd_bcm_plugin_MAGIC,
+        switchd_bcm_plugin_MAJOR,
+        switchd_bcm_plugin_MINOR,
+        (void **) &intf);
+
+    rc = (rc == 0 && intf)
+      ? intf->l3_route_action(ofproto, action, route)
+      : EOPNOTSUPP;
 
     VLOG_DBG("l3_route_action rc=(%d), action %d", rc, action);
 
@@ -7229,10 +7259,17 @@ int
 ofproto_l3_ecmp_set(struct ofproto *ofproto, bool enable)
 {
     int rc;
+    struct switchd_bcm_plugin_interface *intf;
 
-    rc = ofproto->ofproto_class->l3_ecmp_set ?
-         ofproto->ofproto_class->l3_ecmp_set(ofproto, enable) :
-         EOPNOTSUPP;
+    rc = find_ofproto_extension(
+        switchd_bcm_plugin_MAGIC,
+        switchd_bcm_plugin_MAJOR,
+        switchd_bcm_plugin_MINOR,
+        (void **) &intf);
+
+    rc = (rc == 0 && intf)
+      ? intf->l3_ecmp_set(ofproto, enable)
+      : EOPNOTSUPP;
 
     VLOG_DBG("%s rc (%d), enable (%d)", __func__, rc, enable);
 
@@ -7243,10 +7280,17 @@ int
 ofproto_l3_ecmp_hash_set(struct ofproto *ofproto, unsigned int hash, bool enable)
 {
     int rc;
+    struct switchd_bcm_plugin_interface *intf;
 
-    rc = ofproto->ofproto_class->l3_ecmp_hash_set ?
-         ofproto->ofproto_class->l3_ecmp_hash_set(ofproto, hash, enable) :
-         EOPNOTSUPP;
+    rc = find_ofproto_extension(
+        switchd_bcm_plugin_MAGIC,
+        switchd_bcm_plugin_MAJOR,
+        switchd_bcm_plugin_MINOR,
+        (void **) &intf);
+
+    rc = (rc == 0 && intf)
+      ? intf->l3_ecmp_hash_set(ofproto, hash, enable)
+      : EOPNOTSUPP;
 
     VLOG_DBG("%s rc (%d), hash (%x) enable (%d)", __func__, rc, hash, enable);
 
