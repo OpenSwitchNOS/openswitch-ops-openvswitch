@@ -1,5 +1,5 @@
 /*! \file ofproto_extensions.h
-*/
+ */
 
 /* Copyright (C) 2016 Hewlett-Packard Development Company, L.P.
  *
@@ -27,11 +27,11 @@
     @struct ofproto_extension_header
     @brief  Interface header structure, contains plugin version
     information as magic, major and minor.
-*/
+ */
 struct ofproto_extension_header {
-  int magic;   /**< ID of Plugin */
-  int major;   /**< Major version */
-  int minor;   /**< Minor version */
+    int magic; /**< ID of Plugin */
+    int major; /**< Major version */
+    int minor; /**< Minor version */
 };
 
 /**
@@ -39,7 +39,7 @@ struct ofproto_extension_header {
     @brief  Initialization of the extensions hash table, needs to be run
     once before start the plugins registration.
     @return 0 if success, errno value otherwise.
-*/
+ */
 int ofproto_extensions_init(void);
 
 /**
@@ -48,7 +48,7 @@ int ofproto_extensions_init(void);
     itself inside <plugin>_init function to register the plugin's interface
     @param[in] magic The key for the hash table to find the respective interface
     @param[in] ptr The pointer to the plugin's interface structure
-*/
+ */
 int register_ofproto_extension (int magic, void *ptr);
 
 /**
@@ -57,7 +57,7 @@ int register_ofproto_extension (int magic, void *ptr);
     itself to delete its interface from the hash table
     @param[in] magic The key for the hash table to find the respective interface
     @return 0 if success, errno value otherwise.
-*/
+ */
 int unregister_ofproto_extension (int magic);
 
 /**
@@ -67,10 +67,36 @@ int unregister_ofproto_extension (int magic);
     @param[in] magic The key for the hash table to find the respective interface.
     @param[in] major The major value for the plugin expected version.
     @param[in] minr  The minor value for the plugin expected version.
-    @param[out] interface Returns the found interface, NULL if not found.
+    @param[out] interface Returns the found interface, NULL if not found. You can
+    pass the direction of your struct pointer:
+       struct my_interface *intf;
+       res = find_ofproto_extension(magic, major, minor, (void *)intf );
+       if (res == 0 && inft) ...
     @return 0 if success, errno value otherwise.
-*/
+ */
 int find_ofproto_extension (int magic, int major, int minor, void **interface);
 
+/**
+    @fn register_asic_plugin_magic
+    @brief Called from all asics-plugins init function to register their magic.
+    @param[in] magic The magic number of the caller asic plugin.
+    @return 0 if success, errno value otherwise.
+ */
+int register_asic_plugin_magic(int magic);
+
+/**
+    @fn find_asic_extension
+    @brief  Lookup for the current registered asic plugin. This call should be
+    used after plugins registration and from any feature-plugin.
+    @param[in] major The major value for the plugin expected version.
+    @param[in] minr  The minor value for the plugin expected version.
+    @param[out] interface Returns the found interface, NULL if not found. You can
+    pass the direction of your struct pointer:
+       struct my_asic_interface *asic_int;
+       res = find_asic_extension(major, minor, (void *)asic_int );
+       if (res == 0 && asic_int) ...
+    @return 0 if success, errno value otherwise.
+ */
+int find_asic_extension(int major, int minor, void **interface);
 
 #endif //__OFPROTO_EXTENSIONS_H__
