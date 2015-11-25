@@ -87,6 +87,22 @@ struct netdev_stats {
     uint64_t tx_dropped;        /* No buffer space. */
     uint64_t multicast;         /* Multicast packets received. */
     uint64_t collisions;
+    uint64_t ipv4_rx_packets;   /* Total ipv4 packets received. */
+    uint64_t ipv4_tx_packets;   /* Total ipv4 packets transmitted. */
+    uint64_t ipv4_rx_bytes;     /* Total ipv4 bytes received. */
+    uint64_t ipv4_tx_bytes;     /* Total ipv4 bytes transmitted. */
+    uint64_t ipv4_rx_errors;    /* Bad ipv4 packets received. */
+    uint64_t ipv4_tx_errors;    /* Ipv4 Packet transmit problems. */
+    uint64_t ipv4_rx_dropped;   /* ipv4 packets dropped while receiving. */
+    uint64_t ipv4_tx_dropped;   /* ipv4 packets dropped while transmitting. */
+    uint64_t ipv6_rx_packets;   /* Total ipv6 packets received. */
+    uint64_t ipv6_tx_packets;   /* Total ipv6 packets transmitted. */
+    uint64_t ipv6_rx_bytes;     /* Total ipv6 bytes received. */
+    uint64_t ipv6_tx_bytes;     /* Total ipv6 bytes transmitted. */
+    uint64_t ipv6_rx_errors;    /* Bad ipv6 packets received. */
+    uint64_t ipv6_tx_errors;    /* Ipv6 Packet transmit problems. */
+    uint64_t ipv6_rx_dropped;   /* ipv6 packets dropped while receiving. */
+    uint64_t ipv6_tx_dropped;   /* ipv6 packets dropped while transmitting. */
 
     /* Detailed receive errors. */
     uint64_t rx_length_errors;
