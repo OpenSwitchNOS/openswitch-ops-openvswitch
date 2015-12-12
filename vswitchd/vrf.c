@@ -763,3 +763,5 @@ vrf_port_reconfig_ipaddr(struct port *port,
 }
 /* FIXME : move vrf functions from bridge.c to this file */
 /* FIXME : move neighbor functions from bridge.c to this file */
+/* TODO : Investigate whether or how to leak routes from one
+ * VRF to another */
