@@ -135,6 +135,8 @@ enum ovsrec_interface_pm_info_power_mode_e {
 #define INTERFACE_OTHER_CONFIG_MAP_LACP_PORT_ID                 "lacp-port-id"
 #define INTERFACE_OTHER_CONFIG_MAP_LACP_PORT_PRIORITY           "lacp-port-priority"
 
+#define PORT_OTHER_CONFIG_FALLBACK                              "lacp-fallback"
+
 #define INTERFACE_USER_CONFIG_MAP_ADMIN                         "admin"
 
 #define OVSREC_INTERFACE_USER_CONFIG_ADMIN_DOWN                 "down"
