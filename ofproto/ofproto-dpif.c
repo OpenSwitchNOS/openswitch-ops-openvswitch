@@ -5649,5 +5649,8 @@ const struct ofproto_class ofproto_dpif_class = {
     NULL,
     NULL,
     NULL,
+    NULL,   // set_port_qos_cfg,
+    NULL,   // set_cos_map,
+    NULL,   // set_dscp_map,
 #endif
 };

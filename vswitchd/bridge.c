@@ -244,6 +244,12 @@ static unsigned int idl_seqno;
 /* Track changes to port connectivity. */
 static uint64_t connectivity_seqno = LLONG_MIN;
 
+#ifdef OPS
+/* Global QOS trust state. */
+static enum qos_trust global_qos_trust = QOS_TRUST_NONE;
+#endif
+
+
 /* Status update to database.
  *
  * Some information in the database must be kept as up-to-date as possible to
@@ -765,6 +771,156 @@ collect_in_band_managers(const struct ovsrec_open_vswitch *ovs_cfg,
 }
 #endif
 
+#ifdef OPS
+/* QOS. */
+
+/* Convert COS color text into enum value. */
+static enum ovsrec_qos_cos_map_color_e
+qos_get_color(const char *color_text)
+{
+   // if all else fails, return GREEN!
+   enum ovsrec_qos_cos_map_color_e color = QOS_COS_MAP_COLOR_GREEN;
+
+   if (!color_text) {
+      color = QOS_COS_MAP_COLOR_GREEN;
+   }
+   else if (!strncmp(OVSREC_QOS_COS_MAP_COLOR_GREEN, color_text, 8)) {
+      color = QOS_COS_MAP_COLOR_GREEN;
+   }
+   else if (!strncmp(OVSREC_QOS_COS_MAP_COLOR_YELLOW, color_text, 8)) {
+      color = QOS_COS_MAP_COLOR_YELLOW;
+   }
+   else if (!strncmp(OVSREC_QOS_COS_MAP_COLOR_RED, color_text, 8)) {
+      color = QOS_COS_MAP_COLOR_RED;
+   }
+   return color;
+}
+
+/* Configure global QOS trust setting. */
+static void
+qos_configure_trust(enum qos_trust *global_qos_trust, bool *changed)
+{
+   // qos trust setting
+   static enum qos_trust saved_qos_trust = QOS_TRUST_NONE;
+   enum qos_trust qos_trust;
+   const struct ovsrec_system *ovs_row = NULL;
+
+   *changed = false;
+
+   // nothing to do if System row is unchanged.
+   ovs_row = ovsrec_system_first(idl);
+   if (OVSREC_IDL_IS_ROW_MODIFIED(ovs_row, idl_seqno) ||
+       OVSREC_IDL_IS_ROW_INSERTED(ovs_row, idl_seqno))
+   {
+       qos_trust = get_qos_trust_value(&ovs_row->qos_enum_config);
+
+       // only change saved qos trust if default is valid
+       if (qos_trust != QOS_TRUST_MAX) {
+           if (qos_trust != saved_qos_trust)
+           {
+               *changed = true;
+               saved_qos_trust = qos_trust;
+           }
+       }
+   }
+
+   *global_qos_trust = saved_qos_trust;
+}
+
+/* Configure QOS maps for a particular bridge. */
+static void
+qos_configure(struct ofproto *ofproto)
+{
+   // cos map
+   int n_modified;
+   const struct ovsrec_qos_cos_map *ovsrec_cos_map_entry;
+   struct cos_map_settings cos_map_settings;
+
+   // how many rows in the COS map are modified?
+   cos_map_settings.n_entries = 0;
+   OVSREC_QOS_COS_MAP_FOR_EACH(ovsrec_cos_map_entry, idl) {
+      if (OVSREC_IDL_IS_ROW_MODIFIED(ovsrec_cos_map_entry, idl_seqno) ||
+          OVSREC_IDL_IS_ROW_INSERTED(ovsrec_cos_map_entry, idl_seqno)) {
+         VLOG_INFO("%s: MODIFIED %s %d", __FUNCTION__,
+                   ovsrec_cos_map_entry->description,
+                   (int)ovsrec_cos_map_entry->code_point);
+         cos_map_settings.n_entries++;
+      }
+   }
+   if (cos_map_settings.n_entries > 0) {
+      // build the settings struct, call provider API
+      cos_map_settings.entries =
+         (struct cos_map_entry *)malloc(sizeof(struct cos_map_entry) *
+                                        cos_map_settings.n_entries);
+      n_modified = 0;
+      OVSREC_QOS_COS_MAP_FOR_EACH(ovsrec_cos_map_entry, idl) {
+         if (OVSREC_IDL_IS_ROW_MODIFIED(ovsrec_cos_map_entry, idl_seqno) ||
+             OVSREC_IDL_IS_ROW_INSERTED(ovsrec_cos_map_entry, idl_seqno))
+         {
+            cos_map_settings.entries[n_modified].color =
+                              qos_get_color(ovsrec_cos_map_entry->color);
+            cos_map_settings.entries[n_modified].codepoint =
+                              ovsrec_cos_map_entry->code_point;
+            cos_map_settings.entries[n_modified].local_priority =
+                              ovsrec_cos_map_entry->local_priority;
+            n_modified++;
+         }
+      }
+      if (n_modified != cos_map_settings.n_entries) {
+         VLOG_INFO("%s: TSURIS cos %d != %d", __FUNCTION__,
+                   cos_map_settings.n_entries, n_modified);
+      }
+      ofproto_set_cos_map(ofproto, NULL, &cos_map_settings);
+      free(cos_map_settings.entries);
+   }
+
+   // dscp map
+   const struct ovsrec_qos_dscp_map *ovsrec_dscp_map_entry;
+   struct dscp_map_settings dscp_map_settings;
+
+   // how many rows in the DSCP map are modified?
+   dscp_map_settings.n_entries = 0;
+   OVSREC_QOS_DSCP_MAP_FOR_EACH(ovsrec_dscp_map_entry, idl) {
+      if (OVSREC_IDL_IS_ROW_MODIFIED(ovsrec_dscp_map_entry, idl_seqno) ||
+          OVSREC_IDL_IS_ROW_INSERTED(ovsrec_dscp_map_entry, idl_seqno)) {
+         dscp_map_settings.n_entries++;
+         VLOG_INFO("%s: MODIFIED %s %ld", __FUNCTION__,
+                   ovsrec_dscp_map_entry->description,
+                   ovsrec_dscp_map_entry->code_point);
+      }
+   }
+   if (dscp_map_settings.n_entries) {
+      // build the settings struct, call provider API
+      dscp_map_settings.entries =
+         (struct dscp_map_entry *)malloc(sizeof(struct dscp_map_entry) *
+                                         dscp_map_settings.n_entries);
+      n_modified = 0;
+      OVSREC_QOS_DSCP_MAP_FOR_EACH(ovsrec_dscp_map_entry, idl) {
+         if (OVSREC_IDL_IS_ROW_MODIFIED(ovsrec_dscp_map_entry, idl_seqno) ||
+             OVSREC_IDL_IS_ROW_INSERTED(ovsrec_dscp_map_entry, idl_seqno))
+         {
+            dscp_map_settings.entries[n_modified].color =
+                              qos_get_color(ovsrec_dscp_map_entry->color);
+            dscp_map_settings.entries[n_modified].codepoint =
+                              ovsrec_dscp_map_entry->code_point;
+            dscp_map_settings.entries[n_modified].cos =
+                              ovsrec_dscp_map_entry->n_priority_code_point;
+            dscp_map_settings.entries[n_modified].local_priority =
+                              ovsrec_dscp_map_entry->local_priority;
+            n_modified++;
+         }
+      }
+      if (n_modified != dscp_map_settings.n_entries) {
+         VLOG_DBG("%s: TSURIS dscp %d != %d", __FUNCTION__,
+                   dscp_map_settings.n_entries, n_modified);
+      }
+      ofproto_set_dscp_map(ofproto, NULL, &dscp_map_settings);
+      free(dscp_map_settings.entries);
+   }
+
+}
+#endif
+
 static void
 bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
 {
@@ -773,6 +929,7 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
     struct sockaddr_in *managers;
 #endif
     struct bridge *br, *next;
+    bool qos_trust_changed = false;
 
 #ifdef OPS
     struct vrf *vrf, *vrf_next;
@@ -782,6 +939,10 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
 #endif
 
     COVERAGE_INC(bridge_reconfigure);
+
+#ifdef OPS
+    qos_configure_trust(&global_qos_trust, &qos_trust_changed);
+#endif
 
 #ifndef OPS_TEMP
     ofproto_set_flow_limit(smap_get_int(&ovs_cfg->other_config, "flow-limit",
@@ -934,21 +1095,33 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
          * default system ID. */
         bridge_configure_datapath_id(br);
 
+#ifdef OPS
+        qos_configure(br->ofproto);
+#endif
+
         HMAP_FOR_EACH (port, hmap_node, &br->ports) {
             struct iface *iface;
+            bool port_iface_changed;
 
 #ifdef OPS
+
+            /* For all ports, if global qos trust changed, update those
+               ports with no qos trust setting */
+            port_iface_changed = qos_trust_changed &&
+                (QOS_TRUST_MAX == get_qos_trust_value(&port->cfg->qos_enum_config));
+
             /* For a bond port, reconfigure the port if any of the
                member interface rows change. */
-            bool port_iface_changed = false;
             LIST_FOR_EACH (iface, port_elem, &port->ifaces) {
                 if (OVSREC_IDL_IS_ROW_MODIFIED(iface->cfg, idl_seqno)) {
                     port_iface_changed = true;
                     break;
                 }
             }
-            if (OVSREC_IDL_IS_ROW_MODIFIED(port->cfg, idl_seqno) ||
-                (port_iface_changed == true)) {
+
+            if (port_iface_changed == true ||
+                OVSREC_IDL_IS_ROW_INSERTED(port->cfg, idl_seqno) ||
+                OVSREC_IDL_IS_ROW_MODIFIED(port->cfg, idl_seqno)) {
 #endif
                 VLOG_DBG("config port - %s", port->name);
                 port_configure(port);
@@ -997,21 +1170,29 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
         struct port *port;
         bool   is_port_configured = false;
 
+        qos_configure(vrf->up->ofproto);
+
         VLOG_DBG("config vrf - %s", vrf->up->name);
         HMAP_FOR_EACH (port, hmap_node, &vrf->up->ports) {
             struct iface *iface;
+            bool port_iface_changed;
+
+            /* For all ports, if global qos trust changed, update those
+               ports with no qos trust setting */
+            port_iface_changed = qos_trust_changed &&
+                (QOS_TRUST_MAX == get_qos_trust_value(&port->cfg->qos_enum_config));
 
             /* For a bond port, reconfigure the port if any of the
                member interface rows change. */
-            bool port_iface_changed = false;
             LIST_FOR_EACH (iface, port_elem, &port->ifaces) {
                 if (OVSREC_IDL_IS_ROW_MODIFIED(iface->cfg, idl_seqno)) {
                     port_iface_changed = true;
                     break;
                 }
             }
-            if (OVSREC_IDL_IS_ROW_MODIFIED(port->cfg, idl_seqno) ||
-                (port_iface_changed == true)) {
+
+            if (port_iface_changed == true ||
+                OVSREC_IDL_IS_ROW_MODIFIED(port->cfg, idl_seqno)) {
                 VLOG_DBG("config port - %s", port->name);
                 port_configure(port);
 
@@ -1030,7 +1211,6 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
         vrf_reconfigure_routes(vrf);
     }
 #endif
-
 
 #ifndef OPS_TEMP
     free(managers);
@@ -1392,6 +1572,7 @@ port_configure(struct port *port)
     int cfg_slave_count;
     bool lacp_enabled = false;
     bool lacp_active = false;   /* Not used. */
+    enum qos_trust port_qos_trust;
 #endif
 #ifndef OPS_TEMP
     if (cfg->vlan_mode && !strcmp(cfg->vlan_mode, "splinter")) {
@@ -1399,6 +1580,7 @@ port_configure(struct port *port)
         return;
     }
 #endif
+
     /* Get name. */
     s.name = port->name;
 
@@ -1573,6 +1755,18 @@ port_configure(struct port *port)
         ovsrec_port_set_status(port->cfg, &smap);
         smap_destroy(&smap);
     }
+
+    // Set port qos trust.  If port has no setting, use global default
+    port_qos_trust = get_qos_trust_value(&cfg->qos_enum_config);
+    if (port_qos_trust == QOS_TRUST_MAX) {
+       port_qos_trust = global_qos_trust;
+    }
+
+    VLOG_DBG("port_configure qos port@%p %s trust=%d",
+              port, port->name, port_qos_trust);
+    ofproto_set_port_qos_cfg(port->bridge->ofproto, (void *)port,
+                             port_qos_trust, &port->cfg->other_config);
+
 #endif
     /* Clean up. */
     free(s.slaves);
