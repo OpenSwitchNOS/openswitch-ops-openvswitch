@@ -120,6 +120,7 @@ ovslibinclude_HEADERS = \
 	lib/poll-loop.h \
 	lib/process.h \
 	lib/pvector.h \
+	lib/qos_utils.h \
 	lib/random.h \
 	lib/rconn.h \
 	lib/rculist.h \
@@ -274,6 +275,8 @@ lib_libovscommon_la_SOURCES = \
         lib/poll-loop.h \
         lib/process.c \
         lib/process.h \
+        lib/qos_utils.c \
+        lib/qos_utils.h \
         lib/random.c \
         lib/random.h \
         lib/reconnect.c \
