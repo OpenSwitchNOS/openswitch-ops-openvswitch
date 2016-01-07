@@ -8,6 +8,7 @@
 if OPS
 ovslibincludedir = $(includedir)/ovs
 ovslibinclude_HEADERS = \
+	lib/qos_utils.h \
 	lib/bfd.h \
         lib/bitmap.h \
 	lib/bundle.h \
@@ -102,6 +103,8 @@ lib_libovscommon_la_LDFLAGS = \
         $(AM_LDFLAGS)
 
 lib_libovscommon_la_SOURCES = \
+        lib/qos_utils.c \
+        lib/qos_utils.h \
         lib/aes128.c \
         lib/aes128.h \
         lib/async-append.h \
