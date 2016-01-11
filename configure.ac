@@ -43,6 +43,12 @@ AC_SYS_LARGEFILE
 LT_INIT([disable-shared])
 m4_pattern_forbid([LT_INIT]) dnl Make autoconf fail if libtool is missing.
 
+AC_ARG_WITH([jemalloc],
+	[AS_HELP_STRING([--with-jemalloc], [use jemalloc as the memory manager
+	instead of GLibC] @@)],
+	[],
+	[with_jemalloc=no])
+
 # The following explanation may help to understand the use of the
 # version number fields: current, revision, and age.
 #
@@ -90,6 +96,14 @@ AC_SEARCH_LIBS([pow], [m])
 AC_SEARCH_LIBS([clock_gettime], [rt])
 AC_SEARCH_LIBS([timer_create], [rt])
 AC_SEARCH_LIBS([pthread_sigmask], [pthread])
+
+AS_IF([test "x$with_jemalloc" != xno],
+	[
+	AC_SEARCH_LIBS([malloc], [jemalloc],
+		[AM_CONDITIONAL(WITH_JEMALLOC, true)],
+		[AM_CONDITIONAL(WITH_JEMALLOC, false)])
+	])
+
 AC_FUNC_STRERROR_R
 
 OVS_CHECK_ESX
