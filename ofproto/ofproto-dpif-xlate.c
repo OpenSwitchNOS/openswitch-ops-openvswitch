@@ -1,4 +1,4 @@
-/* Copyright (c) 2009, 2010, 2011, 2012, 2013, 2014, 2015 Nicira, Inc.
+/* Copyright (c) 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016 Nicira, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1584,10 +1584,15 @@ lookup_input_bundle(const struct xbridge *xbridge, ofp_port_t in_port,
     return NULL;
 }
 
+/* Mirrors the packet represented by 'ctx' to appropriate mirror destinations,
+ * given the packet is ingressing or egressing on 'xbundle', which has ingress
+ * or egress (as appropriate) mirrors 'mirrors'. */
 static void
 mirror_packet(struct xlate_ctx *ctx, struct xbundle *xbundle,
               mirror_mask_t mirrors)
 {
+    /* Figure out what VLAN the packet is in (because mirrors can select
+     * packets on basis of VLAN). */
     bool warn = ctx->xin->packet != NULL;
     uint16_t vid = vlan_tci_to_vid(ctx->xin->flow.vlan_tci);
     if (!input_vid_is_valid(vid, xbundle, warn)) {
@@ -1603,9 +1608,6 @@ mirror_packet(struct xlate_ctx *ctx, struct xbundle *xbundle,
         return;
     }
 
-    /* Record these mirrors so that we don't mirror to them again. */
-    ctx->mirrors |= mirrors;
-
     if (ctx->xin->resubmit_stats) {
         mirror_update_stats(xbridge->mbridge, mirrors,
                             ctx->xin->resubmit_stats->n_packets,
@@ -1619,27 +1621,36 @@ mirror_packet(struct xlate_ctx *ctx, struct xbundle *xbundle,
         entry->u.mirror.mirrors = mirrors;
     }
 
+    /* 'mirrors' is a bit-mask of candidates for mirroring.  Iterate as long as
+     * some candidates remain.  */
     while (mirrors) {
         const unsigned long *vlans;
         mirror_mask_t dup_mirrors;
         struct ofbundle *out;
         int out_vlan;
 
+        /* Get the details of the mirror represented by the rightmost 1-bit. */
         bool has_mirror = mirror_get(xbridge->mbridge, raw_ctz(mirrors),
                                      &vlans, &dup_mirrors, &out, &out_vlan);
         ovs_assert(has_mirror);
 
+        /* If this mirror selects on the basis of VLAN, and it does not select
+         * 'vlan', then discard this mirror and go on to the next one. */
         if (vlans) {
             ctx->wc->masks.vlan_tci |= htons(VLAN_CFI | VLAN_VID_MASK);
         }
-
         if (vlans && !bitmap_is_set(vlans, vlan)) {
             mirrors = zero_rightmost_1bit(mirrors);
             continue;
         }
 
-        mirrors &= ~dup_mirrors;
+        /* Record the mirror, and the mirrors that output to the same
+         * destination, so that we don't mirror to them again.  This must be
+         * done now to ensure that output_normal(), below, doesn't recursively
+         * output to the same mirrors. */
         ctx->mirrors |= dup_mirrors;
+
+        /* Send the packet to the mirror. */
         if (out) {
             struct xlate_cfg *xcfg = ovsrcu_get(struct xlate_cfg *, &xcfgp);
             struct xbundle *out_xbundle = xbundle_lookup(xcfg, out);
@@ -1657,6 +1668,10 @@ mirror_packet(struct xlate_ctx *ctx, struct xbundle *xbundle,
                 }
             }
         }
+
+        /* output_normal() could have recursively output (to different
+         * mirrors), so make sure that we don't send duplicates. */
+        mirrors &= ~ctx->mirrors;
     }
 }
 
@@ -4142,8 +4157,7 @@ recirc_put_unroll_xlate(struct xlate_ctx *ctx)
 
 /* Copy remaining actions to the action_set to be executed after recirculation.
  * UNROLL_XLATE action is inserted, if not already done so, before actions that
- * may generate PACKET_INs from the current table and without matching another
- * rule. */
+ * may depend on the current table ID or flow cookie. */
 static void
 recirc_unroll_actions(const struct ofpact *ofpacts, size_t ofpacts_len,
                       struct xlate_ctx *ctx)
@@ -4152,17 +4166,25 @@ recirc_unroll_actions(const struct ofpact *ofpacts, size_t ofpacts_len,
 
     OFPACT_FOR_EACH (a, ofpacts, ofpacts_len) {
         switch (a->type) {
-            /* May generate PACKET INs. */
         case OFPACT_OUTPUT_REG:
         case OFPACT_GROUP:
         case OFPACT_OUTPUT:
         case OFPACT_CONTROLLER:
         case OFPACT_DEC_MPLS_TTL:
         case OFPACT_DEC_TTL:
+            /* These actions may generate asynchronous messages, which include
+             * table ID and flow cookie information. */
             recirc_put_unroll_xlate(ctx);
             break;
 
-            /* These may not generate PACKET INs. */
+        case OFPACT_RESUBMIT:
+            if (ofpact_get_RESUBMIT(a)->table_id == 0xff) {
+                /* This resubmit action is relative to the current table, so we
+                 * need to track what table that is.*/
+                recirc_put_unroll_xlate(ctx);
+            }
+            break;
+
         case OFPACT_SET_TUNNEL:
         case OFPACT_REG_MOVE:
         case OFPACT_SET_FIELD:
@@ -4170,8 +4192,7 @@ recirc_unroll_actions(const struct ofpact *ofpacts, size_t ofpacts_len,
         case OFPACT_STACK_POP:
         case OFPACT_LEARN:
         case OFPACT_WRITE_METADATA:
-        case OFPACT_RESUBMIT:        /* May indirectly generate PACKET INs, */
-        case OFPACT_GOTO_TABLE:      /* but from a different table and rule. */
+        case OFPACT_GOTO_TABLE:
         case OFPACT_ENQUEUE:
         case OFPACT_SET_VLAN_VID:
         case OFPACT_SET_VLAN_PCP:
@@ -4204,11 +4225,12 @@ recirc_unroll_actions(const struct ofpact *ofpacts, size_t ofpacts_len,
         case OFPACT_SAMPLE:
         case OFPACT_DEBUG_RECIRC:
         case OFPACT_CT:
+            /* These may not generate PACKET INs. */
             break;
 
-            /* These need not be copied for restoration. */
         case OFPACT_NOTE:
         case OFPACT_CONJUNCTION:
+            /* These need not be copied for restoration. */
             continue;
         }
         /* Copy the action over. */
@@ -4485,8 +4507,30 @@ do_xlate_actions(const struct ofpact *ofpacts, size_t ofpacts_len,
             break;
 
         case OFPACT_RESUBMIT:
+            /* Recirculation complicates resubmit.  There are two cases:
+             *
+             *     - If mpls_pop has been executed, then the flow table lookup
+             *       as part of resubmit might depend on fields that can only
+             *       be obtained via recirculation, so the resubmit itself
+             *       triggers recirculation and we need to make sure that the
+             *       resubmit is executed again after recirculation.
+             *       Therefore, in this case we trigger recirculation and let
+             *       the code following this "switch" append the resubmit to
+             *       the post-recirculation actions.
+             *
+             *     - Otherwise, some action in the flow entry found by resubmit
+             *       might trigger recirculation.  If that happens, then we do
+             *       not want to execute the resubmit again after
+             *       recirculation, so we want to skip back to the head of the
+             *       loop to avoid that, only adding any actions that follow
+             *       the resubmit to the post-recirculation actions.
+             */
+            if (ctx->was_mpls) {
+                ctx_trigger_recirculation(ctx);
+                break;
+            }
             xlate_ofpact_resubmit(ctx, ofpact_get_RESUBMIT(a));
-            break;
+            continue;
 
         case OFPACT_SET_TUNNEL:
             flow->tunnel.tun_id = htonll(ofpact_get_SET_TUNNEL(a)->tun_id);

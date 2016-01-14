@@ -221,9 +221,9 @@ static void learned_cookies_flush(struct ofproto *, struct ovs_list *dead_cookie
 
 /* ofport. */
 static void ofport_destroy__(struct ofport *) OVS_EXCLUDED(ofproto_mutex);
-static void ofport_destroy(struct ofport *);
+static void ofport_destroy(struct ofport *, bool del);
 
-static void update_port(struct ofproto *, const char *devname);
+static int update_port(struct ofproto *, const char *devname);
 static int init_ports(struct ofproto *);
 static void reinit_ports(struct ofproto *);
 
@@ -301,7 +301,8 @@ static bool ofproto_group_exists__(const struct ofproto *ofproto,
 static bool ofproto_group_exists(const struct ofproto *ofproto,
                                  uint32_t group_id)
     OVS_EXCLUDED(ofproto->groups_rwlock);
-static enum ofperr add_group(struct ofproto *, struct ofputil_group_mod *);
+static enum ofperr add_group(struct ofproto *,
+                             const struct ofputil_group_mod *);
 static void handle_openflow(struct ofconn *, const struct ofpbuf *);
 static enum ofperr ofproto_flow_mod_start(struct ofproto *,
                                           struct ofproto_flow_mod *)
@@ -1626,7 +1627,7 @@ ofproto_destroy_defer__(struct ofproto *ofproto)
 }
 
 void
-ofproto_destroy(struct ofproto *p)
+ofproto_destroy(struct ofproto *p, bool del)
     OVS_EXCLUDED(ofproto_mutex)
 {
     struct ofport *ofport, *next_ofport;
@@ -1649,7 +1650,7 @@ ofproto_destroy(struct ofproto *p)
 
     ofproto_flush__(p);
     HMAP_FOR_EACH_SAFE (ofport, next_ofport, hmap_node, &p->ports) {
-        ofport_destroy(ofport);
+        ofport_destroy(ofport, del);
     }
 
     HMAP_FOR_EACH_SAFE (usage, next_usage, hmap_node, &p->ofport_usage) {
@@ -2012,7 +2013,7 @@ ofproto_port_add(struct ofproto *ofproto, struct netdev *netdev,
 
         simap_put(&ofproto->ofp_requests, netdev_name,
                   ofp_to_u16(ofp_port));
-        update_port(ofproto, netdev_name);
+        error = update_port(ofproto, netdev_name);
     }
     if (ofp_portp) {
         *ofp_portp = OFPP_NONE;
@@ -2402,7 +2403,7 @@ ofport_equal(const struct ofputil_phy_port *a,
 /* Adds an ofport to 'p' initialized based on the given 'netdev' and 'opp'.
  * The caller must ensure that 'p' does not have a conflicting ofport (that is,
  * one with the same name or port number). */
-static void
+static int
 ofport_install(struct ofproto *p,
                struct netdev *netdev, const struct ofputil_phy_port *pp)
 {
@@ -2436,7 +2437,7 @@ ofport_install(struct ofproto *p,
         goto error;
     }
     connmgr_send_port_status(p->connmgr, NULL, pp, OFPPR_ADD);
-    return;
+    return 0;
 
 error:
     VLOG_WARN_RL(&rl, "%s: could not add port %s (%s)",
@@ -2446,6 +2447,7 @@ error:
     } else {
         netdev_close(netdev);
     }
+    return error;
 }
 
 /* Removes 'ofport' from 'p' and destroys it. */
@@ -2454,7 +2456,7 @@ ofport_remove(struct ofport *ofport)
 {
     connmgr_send_port_status(ofport->ofproto->connmgr, NULL, &ofport->pp,
                              OFPPR_DELETE);
-    ofport_destroy(ofport);
+    ofport_destroy(ofport, true);
 }
 
 /* If 'ofproto' contains an ofport named 'name', removes it from 'ofproto' and
@@ -2540,7 +2542,7 @@ ofport_destroy__(struct ofport *port)
 }
 
 static void
-ofport_destroy(struct ofport *port)
+ofport_destroy(struct ofport *port, bool del OVS_UNUSED)
 {
     if (port) {
         dealloc_ofp_port(port->ofproto, port->ofp_port);
@@ -2627,13 +2629,14 @@ ofproto_port_get_stats(const struct ofport *port, struct netdev_stats *stats)
     return error;
 }
 
-static void
+static int
 update_port(struct ofproto *ofproto, const char *name)
 {
     struct ofproto_port ofproto_port;
     struct ofputil_phy_port pp;
     struct netdev *netdev;
     struct ofport *port;
+    int error = 0;
 
     COVERAGE_INC(ofproto_update_port);
 
@@ -2673,13 +2676,15 @@ update_port(struct ofproto *ofproto, const char *name)
                 ofport_remove(port);
             }
             ofport_remove_with_name(ofproto, name);
-            ofport_install(ofproto, netdev, &pp);
+            error = ofport_install(ofproto, netdev, &pp);
         }
     } else {
         /* Any port named 'name' is gone now. */
         ofport_remove_with_name(ofproto, name);
     }
     ofproto_port_destroy(&ofproto_port);
+
+    return error;
 }
 
 static int
@@ -6331,7 +6336,7 @@ handle_queue_get_config_request(struct ofconn *ofconn,
 }
 
 static enum ofperr
-init_group(struct ofproto *ofproto, struct ofputil_group_mod *gm,
+init_group(struct ofproto *ofproto, const struct ofputil_group_mod *gm,
            struct ofgroup **ofgroup)
 {
     enum ofperr error;
@@ -6357,7 +6362,9 @@ init_group(struct ofproto *ofproto, struct ofputil_group_mod *gm,
     *CONST_CAST(long long int *, &((*ofgroup)->modified)) = now;
     ovs_refcount_init(&(*ofgroup)->ref_count);
 
-    list_move(&(*ofgroup)->buckets, &gm->buckets);
+    list_init(&(*ofgroup)->buckets);
+    ofputil_bucket_clone_list(&(*ofgroup)->buckets, &gm->buckets, NULL);
+
     *CONST_CAST(uint32_t *, &(*ofgroup)->n_buckets) =
         list_size(&(*ofgroup)->buckets);
 
@@ -6377,7 +6384,7 @@ init_group(struct ofproto *ofproto, struct ofputil_group_mod *gm,
  * 'ofproto''s group table.  Returns 0 on success or an OpenFlow error code on
  * failure. */
 static enum ofperr
-add_group(struct ofproto *ofproto, struct ofputil_group_mod *gm)
+add_group(struct ofproto *ofproto, const struct ofputil_group_mod *gm)
 {
     struct ofgroup *ofgroup;
     enum ofperr error;
@@ -6525,7 +6532,7 @@ copy_buckets_for_remove_bucket(const struct ofgroup *ofgroup,
  * ofproto's ofgroup hash map. Thus, the group is never altered while users of
  * the xlate module hold a pointer to the group. */
 static enum ofperr
-modify_group(struct ofproto *ofproto, struct ofputil_group_mod *gm)
+modify_group(struct ofproto *ofproto, const struct ofputil_group_mod *gm)
 {
     struct ofgroup *ofgroup, *new_ofgroup, *retiring;
     enum ofperr error;
@@ -6694,7 +6701,7 @@ handle_group_mod(struct ofconn *ofconn, const struct ofp_header *oh)
             VLOG_INFO_RL(&rl, "%s: Invalid group_mod command type %d",
                          ofproto->name, gm.command);
         }
-        return OFPERR_OFPGMFC_BAD_COMMAND;
+        error = OFPERR_OFPGMFC_BAD_COMMAND;
     }
 
     if (!error) {
@@ -6704,6 +6711,8 @@ handle_group_mod(struct ofconn *ofconn, const struct ofp_header *oh)
         rf.group_mod = &gm;
         connmgr_send_requestforward(ofproto->connmgr, ofconn, &rf);
     }
+    ofputil_bucket_list_destroy(&gm.buckets);
+
     return error;
 }
 

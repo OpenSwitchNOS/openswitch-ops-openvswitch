@@ -287,7 +287,7 @@ static long long int stats_timer = LLONG_MIN;
 static void add_del_bridges(const struct ovsrec_open_vswitch *);
 static void bridge_run__(void);
 static void bridge_create(const struct ovsrec_bridge *);
-static void bridge_destroy(struct bridge *);
+static void bridge_destroy(struct bridge *, bool del);
 static struct bridge *bridge_lookup(const char *name);
 static unixctl_cb_func bridge_unixctl_dump_flows;
 static unixctl_cb_func bridge_unixctl_reconnect;
@@ -701,7 +701,7 @@ bridge_exit(void)
     struct bridge *br, *next_br;
 
     HMAP_FOR_EACH_SAFE (br, next_br, node, &all_bridges) {
-        bridge_destroy(br);
+        bridge_destroy(br, false);
     }
     ovsdb_idl_destroy(idl);
 }
@@ -907,7 +907,7 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
                 VLOG_ERR("failed to create bridge %s: %s", br->name,
                          ovs_strerror(error));
                 shash_destroy(&br->wanted_ports);
-                bridge_destroy(br);
+                bridge_destroy(br, true);
             } else {
                 /* Trigger storing datapath version. */
                 seq_change(connectivity_seq_get());
@@ -2355,6 +2355,7 @@ static void
 add_del_bridges(const struct ovsrec_open_vswitch *cfg)
 {
     struct bridge *br, *next;
+    struct shash_node *node;
     struct shash new_br;
     size_t i;
 
@@ -2380,13 +2381,13 @@ add_del_bridges(const struct ovsrec_open_vswitch *cfg)
         br->cfg = shash_find_data(&new_br, br->name);
         if (!br->cfg || strcmp(br->type, ofproto_normalize_type(
                                    br->cfg->datapath_type))) {
-            bridge_destroy(br);
+            bridge_destroy(br, true);
         }
     }
 
     /* Add new bridges. */
-    for (i = 0; i < cfg->n_bridges; i++) {
-        const struct ovsrec_bridge *br_cfg = cfg->bridges[i];
+    SHASH_FOR_EACH(node, &new_br) {
+        const struct ovsrec_bridge *br_cfg = node->data;
         struct bridge *br = bridge_lookup(br_cfg->name);
         if (!br) {
             bridge_create(br_cfg);
@@ -3177,7 +3178,7 @@ iface_refresh_stats(struct iface *iface)
 #undef IFACE_STAT
     ovs_assert(n <= N_IFACE_STATS);
 
-    ovsrec_interface_set_statistics(iface->cfg, (const char **)keys, values, n);
+    ovsrec_interface_set_statistics(iface->cfg, keys, values, n);
 #undef IFACE_STATS
 }
 
@@ -3739,7 +3740,7 @@ bridge_run(void)
                     (long int) getpid());
 
         HMAP_FOR_EACH_SAFE (br, next_br, node, &all_bridges) {
-            bridge_destroy(br);
+            bridge_destroy(br, false);
         }
 
 #ifdef OPS
@@ -4077,7 +4078,7 @@ vrf_create(const struct ovsrec_vrf *vrf_cfg)
 
 
 static void
-bridge_destroy(struct bridge *br)
+bridge_destroy(struct bridge *br, bool del)
 {
     if (br) {
 #ifndef OPS_TEMP
@@ -4094,7 +4095,7 @@ bridge_destroy(struct bridge *br)
         }
 #endif
         hmap_remove(&all_bridges, &br->node);
-        ofproto_destroy(br->ofproto);
+        ofproto_destroy(br->ofproto, del);
         hmap_destroy(&br->ifaces);
         hmap_destroy(&br->ports);
         hmap_destroy(&br->iface_by_name);
@@ -4126,7 +4127,7 @@ vrf_destroy(struct vrf *vrf)
         }
 
         hmap_remove(&all_vrfs, &vrf->node);
-        ofproto_destroy(vrf->up->ofproto);
+        ofproto_destroy(vrf->up->ofproto, false);
         hmap_destroy(&vrf->up->ifaces);
         hmap_destroy(&vrf->up->ports);
         hmap_destroy(&vrf->up->iface_by_name);

@@ -25,6 +25,7 @@
 #include "fatal-signal.h"
 #include "json.h"
 #include "ovn/lib/ovn-nb-idl.h"
+#include "packets.h"
 #include "poll-loop.h"
 #include "process.h"
 #include "smap.h"
@@ -404,11 +405,13 @@ print_lswitch(const struct nbrec_logical_switch *lswitch, struct ds *s)
             ds_put_format(s, "            tag: %"PRIu64"\n", lport->tag[0]);
         }
         if (lport->n_addresses) {
-            ds_put_cstr(s, "            addresses:");
+            ds_put_cstr(s, "            addresses: [");
             for (size_t j = 0; j < lport->n_addresses; j++) {
-                ds_put_format(s, " %s", lport->addresses[j]);
+                ds_put_format(s, "%s\"%s\"",
+                        j == 0 ? "" : ", ",
+                        lport->addresses[j]);
             }
-            ds_put_char(s, '\n');
+            ds_put_cstr(s, "]\n");
         }
     }
 }
@@ -661,6 +664,21 @@ nbctl_lport_set_addresses(struct ctl_context *ctx)
     lport = lport_by_name_or_uuid(ctx, id);
     if (!lport) {
         return;
+    }
+
+    int i;
+    for (i = 2; i < ctx->argc; i++) {
+        struct eth_addr ea;
+
+        if (strcmp(ctx->argv[i], "unknown")
+            && !ovs_scan(ctx->argv[i], ETH_ADDR_SCAN_FMT,
+                         ETH_ADDR_SCAN_ARGS(ea))) {
+            VLOG_ERR("Invalid address format (%s). See ovn-nb(5). "
+                     "Hint: An Ethernet address must be "
+                     "listed before an IP address, together as a single "
+                     "argument.", ctx->argv[i]);
+            return;
+        }
     }
 
     nbrec_logical_port_set_addresses(lport,

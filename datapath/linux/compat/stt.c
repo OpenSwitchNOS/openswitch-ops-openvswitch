@@ -153,6 +153,9 @@ struct stt_net {
 	struct list_head stt_list;
 	struct list_head stt_up_list;	/* Devices which are in IFF_UP state. */
 	int n_tunnels;
+#ifdef HAVE_NF_REGISTER_NET_HOOK
+	bool nf_hook_reg_done;
+#endif
 };
 
 static int stt_net_id;
@@ -1553,12 +1556,23 @@ static int stt_start(struct net *net)
 	 * rtnl-lock, which results in dead lock in stt-dev-create. Therefore
 	 * use this new API.
 	 */
+
+	if (sn->nf_hook_reg_done)
+		goto out;
+
 	err = nf_register_net_hook(net, &nf_hook_ops);
+	if (!err)
+		sn->nf_hook_reg_done = true;
 #else
+	/* Register STT only on very first STT device addition. */
+	if (!list_empty(&nf_hook_ops.list))
+		goto out;
+
 	err = nf_register_hook(&nf_hook_ops);
 #endif
 	if (err)
 		goto dec_n_tunnel;
+out:
 	sn->n_tunnels++;
 	return 0;
 
@@ -1669,6 +1683,30 @@ static int stt_stop(struct net_device *dev)
 	return 0;
 }
 
+static int __stt_change_mtu(struct net_device *dev, int new_mtu, bool strict)
+{
+	int max_mtu = IP_MAX_MTU - STT_HEADER_LEN - sizeof(struct iphdr)
+		      - dev->hard_header_len;
+
+	if (new_mtu < 68)
+		return -EINVAL;
+
+	if (new_mtu > max_mtu) {
+		if (strict)
+			return -EINVAL;
+
+		new_mtu = max_mtu;
+	}
+
+	dev->mtu = new_mtu;
+	return 0;
+}
+
+static int stt_change_mtu(struct net_device *dev, int new_mtu)
+{
+	return __stt_change_mtu(dev, new_mtu, true);
+}
+
 static const struct net_device_ops stt_netdev_ops = {
 	.ndo_init               = stt_init,
 	.ndo_uninit             = stt_uninit,
@@ -1676,7 +1714,7 @@ static const struct net_device_ops stt_netdev_ops = {
 	.ndo_stop               = stt_stop,
 	.ndo_start_xmit         = stt_dev_xmit,
 	.ndo_get_stats64        = ip_tunnel_get_stats64,
-	.ndo_change_mtu         = eth_change_mtu,
+	.ndo_change_mtu         = stt_change_mtu,
 	.ndo_validate_addr      = eth_validate_addr,
 	.ndo_set_mac_address    = eth_mac_addr,
 };
@@ -1768,6 +1806,10 @@ static int stt_configure(struct net *net, struct net_device *dev,
 	if (find_dev(net, dst_port))
 		return -EBUSY;
 
+	err = __stt_change_mtu(dev, IP_MAX_MTU, false);
+	if (err)
+		return err;
+
 	err = register_netdevice(dev);
 	if (err)
 		return err;
@@ -1854,6 +1896,9 @@ static int stt_init_net(struct net *net)
 
 	INIT_LIST_HEAD(&sn->stt_list);
 	INIT_LIST_HEAD(&sn->stt_up_list);
+#ifdef HAVE_NF_REGISTER_NET_HOOK
+	sn->nf_hook_reg_done = false;
+#endif
 	return 0;
 }
 
@@ -1868,7 +1913,7 @@ static void stt_exit_net(struct net *net)
 	/* Ideally this should be done from stt_stop(), But on some kernels
 	 * nf-unreg operation needs RTNL-lock, which can cause deallock.
 	 * So it is done from here. */
-	if (!list_empty(&nf_hook_ops.list))
+	if (sn->nf_hook_reg_done)
 		nf_unregister_net_hook(net, &nf_hook_ops);
 #endif
 
