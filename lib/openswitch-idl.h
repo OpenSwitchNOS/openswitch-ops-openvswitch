@@ -579,4 +579,52 @@ enum ovsrec_port_config_admin_e {
 #define SYSTEM_ECMP_CONFIG_HASH_DST_PORT                  "hash_dstport_enabled"
 #define SYSTEM_ECMP_CONFIG_ENABLE_DEFAULT                 "true"
 
+/************************** NTP_ASSOCIATIONS TABLE ****************************/
+
+#define NTP_TRUE_STR                                "true"
+#define NTP_FALSE_STR                               "false"
+
+#define NTP_ASSOC_SERVER_NAME_LEN                   57
+
+/* NTP Association attributes (association_attributes) */
+#define NTP_ASSOC_ATTRIB_REF_CLOCK_ID               "ref_clock_id"
+
+#define NTP_ASSOC_ATTRIB_PREFER                     "prefer"
+#define NTP_ASSOC_ATTRIB_PREFER_TRUE                "true"
+#define NTP_ASSOC_ATTRIB_PREFER_FALSE               "false"
+#define NTP_ASSOC_ATTRIB_PREFER_DEFAULT             NTP_ASSOC_ATTRIB_PREFER_FALSE
+
+#define NTP_ASSOC_ATTRIB_VERSION                    "version"
+#define NTP_ASSOC_ATTRIB_VERSION_3                  "3"
+#define NTP_ASSOC_ATTRIB_VERSION_4                  "4"
+#define NTP_ASSOC_ATTRIB_VERSION_DEFAULT            NTP_ASSOC_ATTRIB_VERSION_4
+
+#define NTP_ASSOC_STATUS_REMOTE_PEER_ADDRESS        "remote_peer_address"
+#define NTP_ASSOC_STATUS_REMOTE_PEER_SYNC_INFO      "remote_peer_sync_info"
+
+#define NTP_ASSOC_STATUS_STRATUM                    "stratum"
+#define NTP_ASSOC_STATUS_STRATUM_MIN                1
+#define NTP_ASSOC_STATUS_STRATUM_MAX                16
+
+#define NTP_ASSOC_STATUS_PEER_TYPE                  "peer_type"
+enum ntp_associations_status_e {
+    NTP_ASSOC_STATUS_PEER_TYPE_UNICAST,
+    NTP_ASSOC_STATUS_PEER_TYPE_MANYCAST,
+    NTP_ASSOC_STATUS_PEER_TYPE_BROADCAST,
+    NTP_ASSOC_STATUS_PEER_TYPE_MULTICAST
+};
+
+#define NTP_ASSOC_STATUS_LAST_POLLED               "last_polled"
+#define NTP_ASSOC_STATUS_POLLING_INTERVAL          "polling_interval"
+#define NTP_ASSOC_STATUS_REACHABILITY_REGISTER     "reachability_register"
+#define NTP_ASSOC_STATUS_NETWORK_DELAY             "network_delay"
+#define NTP_ASSOC_STATUS_TIME_OFFSET               "time_offset"
+#define NTP_ASSOC_STATUS_JITTER                    "jitter"
+#define NTP_ASSOC_STATUS_SYSTEM_STATUS_WORD        "system_status_word"
+#define NTP_ASSOC_STATUS_ROOT_DISPERSION           "root_dispersion"
+#define NTP_ASSOC_STATUS_ASSOCID                   "associd"
+
+/* NTP Global config from System Table */
+#define SYSTEM_NTP_CONFIG_AUTHENTICATION_ENABLE    "authentication_enable"
+
 #endif /* OPENSWITCH_IDL_HEADER */
