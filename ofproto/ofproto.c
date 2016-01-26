@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009-2015 Nicira, Inc.
- * Copyright (C) 2015, 2016 Hewlett-Packard Development Company, L.P.
+ * Copyright (c) 2010 Jean Tourrilhes - HP-Labs.
+ * Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1364,6 +1365,87 @@ ofproto_set_vlan(struct ofproto *ofproto, int vid, bool add)
 #endif
 
 
+
+/* QOS. */
+
+/* Converts enum in qos_trust SMAP into enum value */
+enum qos_trust get_qos_trust_value(const struct smap *cfg) {
+    enum qos_trust rv = QOS_TRUST_MAX;
+    const char *qos_trust_name = smap_get(cfg, "qos_trust");
+    VLOG_DBG("qos trust is %s", qos_trust_name);
+    if (qos_trust_name == NULL) {
+        return rv;
+    }
+
+    if (strcmp(qos_trust_name, "dscp") == 0) {
+        rv = QOS_TRUST_DSCP;
+    } else if (strcmp(qos_trust_name, "cos") == 0) {
+        rv = QOS_TRUST_COS;
+    } else if (strcmp(qos_trust_name, "none") == 0) {
+        rv = QOS_TRUST_NONE;
+    }
+
+    return rv;
+}
+
+/* Sets qos (and any other qos parameter) for a port in an ofproto.
+   aux is pointer to struct port */
+int ofproto_set_port_qos_cfg(struct ofproto *ofproto, void *aux,
+                             const enum qos_trust qos_trust,
+                             const struct smap *cfg) {
+   struct qos_port_settings settings;
+
+    if (ofproto->ofproto_class->set_port_qos_cfg == NULL) {
+        return EOPNOTSUPP;
+    }
+
+    VLOG_DBG("%s: aux @ %p, qos_trust %d, qos_cfg smap@ %p",
+             __FUNCTION__, aux, qos_trust, cfg);
+    settings.qos_trust = qos_trust;
+    if (settings.qos_trust == QOS_TRUST_MAX) {
+        return EOPNOTSUPP;
+    }
+
+    settings.other_config = cfg;
+    int rv = ofproto->ofproto_class->set_port_qos_cfg(ofproto, aux, &settings);
+
+    return rv;
+}
+
+/* Sets COS map in an ofproto.  aux currently unused */
+int ofproto_set_cos_map(struct ofproto *ofproto, void *aux,
+                        const struct cos_map_settings *settings) {
+
+    if (ofproto->ofproto_class->set_cos_map == NULL) {
+        return EOPNOTSUPP;
+    }
+
+    VLOG_DBG("%s: aux @ %p, settings@ %p (%d entry(s))",
+             __FUNCTION__, aux, settings, settings->n_entries);
+
+    int rv = ofproto->ofproto_class->set_cos_map(ofproto, aux, settings);
+
+    return rv;
+}
+
+/* Sets DSCP map in an ofproto.  aux currently unused */
+int ofproto_set_dscp_map(struct ofproto *ofproto, void *aux,
+                         const struct dscp_map_settings *settings) {
+
+    if (ofproto->ofproto_class->set_dscp_map == NULL) {
+        return EOPNOTSUPP;
+    }
+
+    VLOG_DBG("%s: aux @ %p, settings@ %p (%d entry(s)",
+             __FUNCTION__, aux, settings, settings->n_entries);
+
+    int rv = ofproto->ofproto_class->set_dscp_map(ofproto, aux, settings);
+
+    return rv;
+}
+
+
+
 /* Registers a mirror associated with client data pointer 'aux' in 'ofproto'.
  * If 'aux' is already registered then this function updates its configuration
  * to 's'.  Otherwise, this function registers a new mirror. */

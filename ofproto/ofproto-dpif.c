@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2009, 2010, 2011, 2012, 2013, 2014, 2015 Nicira, Inc.
- * Copyright (C) 2015, 2016 Hewlett-Packard Development Company, L.P.
+ * Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4415,6 +4415,7 @@ packet_out(struct ofproto *ofproto_, struct dp_packet *packet,
     return 0;
 }
 
+
 /* NetFlow. */
 
 static int
@@ -5823,5 +5824,8 @@ const struct ofproto_class ofproto_dpif_class = {
     NULL,
     NULL,
     NULL,
+    NULL,                       /* set_port_qos_cfg */
+    NULL,                       /* set_cos_map */
+    NULL,                       /* set_dscp_map */
 #endif
 };
