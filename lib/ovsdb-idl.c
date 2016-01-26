@@ -1523,7 +1523,7 @@ ovsdb_idl_first_row(const struct ovsdb_idl *idl,
     struct ovsdb_idl_row * temp
         = next_real_row(table, hmap_first(&table->rows));
     if (temp == NULL)
-        VLOG_INFO("DEBUG first row is missing from table class %s", table_class->name);
+        VLOG_DBG("DEBUG first row is missing from table class %s", table_class->name);
     return temp;
 }
 

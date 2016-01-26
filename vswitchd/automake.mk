@@ -18,6 +18,8 @@ vswitchd_ops_switchd_SOURCES = \
 	vswitchd/xenserver.c \
 	vswitchd/xenserver.h \
 	vswitchd/bufmon.c \
+	vswitchd/qos_map.c \
+	vswitchd/qos_map.h \
 	vswitchd/vrf.c \
 	vswitchd/vrf.h
 

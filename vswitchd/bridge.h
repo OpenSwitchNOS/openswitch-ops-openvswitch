@@ -20,8 +20,17 @@
 #ifdef OPS
 #include <netinet/in.h>
 #include "hmap.h"
+#include "lib/qos_utils.h"
 #include "lib/vswitch-idl.h"
 #include "ofproto/ofproto.h"
+#endif
+
+#ifdef OPS
+/* OVSDB IDL used to obtain configuration. */
+extern struct ovsdb_idl *idl;
+
+/* Most recently processed IDL sequence number. */
+extern unsigned int idl_seqno;
 #endif
 
 struct simap;

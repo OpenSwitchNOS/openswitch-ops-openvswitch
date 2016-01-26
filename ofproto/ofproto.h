@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2009, 2010, 2011, 2012, 2013, 2014, 2015 Nicira, Inc.
- * Copyright (C) 2015, 2016 Hewlett-Packard Development Company, L.P.
+ * Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -283,6 +283,63 @@ struct ofproto_l3_host {
     const char *err_str;              /* set if rc != 0 */
     char *mac;                        /* These are for neighbor, mac */
     int  l3_egress_id;                /* Egress ID in case if we need */
+};
+
+/* QOS */
+
+/* Defines & structures that platform-independent (PI) layer API use when
+   communicating with platform-dependent (PD) code, so that PD does not
+   have to know anything about the IDL interface. */
+
+/* In System or Port table, possible values in qos_enum_config column. */
+enum qos_trust {
+    QOS_TRUST_NONE = 0,
+    QOS_TRUST_COS,
+    QOS_TRUST_DSCP,
+    QOS_TRUST_MAX /* Used for validation only! */
+};
+
+/* collection of parameters to set_port_qos_cfg API */
+struct qos_port_settings {
+    enum qos_trust qos_trust;
+    const struct smap *other_config;
+};
+
+/* in QoS_DSCP_Map or QoS_COS_Map, possibible values for color column */
+enum cos_color {
+    COS_COLOR_GREEN = 0,
+    COS_COLOR_YELLOW,
+    COS_COLOR_RED,
+    COS_COLOR_MAX
+};
+
+/* single row from QoS_DSCP_Map table */
+struct dscp_map_entry {
+    enum cos_color  color;
+    int codepoint;
+    int local_priority;
+    int cos;
+    struct smap *other_config;
+};
+
+/* 1 or more rows in QoS_DSCP_Map passed to set_dscp_map API */
+struct dscp_map_settings {
+    int n_entries;
+    struct dscp_map_entry *entries;   /* array of 'struct dscp_map_entry' */
+};
+
+/* single row from QoS_COS_Map table */
+struct cos_map_entry {
+    enum cos_color color;
+    int codepoint;
+    int local_priority;
+    struct smap *other_config;
+};
+
+/* 1 or more rows in QoS_COS_Map passed to set_cos_map API */
+struct cos_map_settings {
+    int n_entries;
+    struct cos_map_entry *entries;   /* array of 'struct cos_map_entry' */
 };
 
 #endif
@@ -593,6 +650,16 @@ unsigned int ofproto_aa_vlan_get_queue_size(struct ofproto *ofproto);
 
 int ofproto_set_flood_vlans(struct ofproto *, unsigned long *flood_vlans);
 bool ofproto_is_mirror_output_bundle(const struct ofproto *, void *aux);
+
+/* Configuration of QOS tables. */
+enum qos_trust get_qos_trust_value(const struct smap *cfg);
+int ofproto_set_port_qos_cfg(struct ofproto *ofproto, void *aux,
+                             const enum qos_trust qos_trust,
+                             const struct smap *cfg);
+int ofproto_set_cos_map(struct ofproto *ofproto, void *aux,
+                        const struct cos_map_settings *settings);
+int ofproto_set_dscp_map(struct ofproto *ofproto, void *aux,
+                         const struct dscp_map_settings *settings);
 
 /* Configuration of OpenFlow tables. */
 struct ofproto_table_settings {
