@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2009, 2010, 2011, 2012, 2013, 2014 Nicira, Inc.
- * Copyright (C) 2015 Hewlett-Packard Development Company, L.P.
+ * Copyright (C) 2015, 2016 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1050,7 +1050,6 @@ struct ofproto_class {
     int (*port_get_lacp_stats)(const struct ofport *port,
                                struct lacp_slave_stats *stats);
 
-
 /* ## ----------------------- ## */
 /* ## OpenFlow Rule Functions ## */
 /* ## ----------------------- ## */
@@ -1730,6 +1729,26 @@ struct ofproto_class {
     /* Enable/Disable ECMP hash config */
     int (*l3_ecmp_hash_set)(const struct ofproto *ofproto, unsigned int hash,
                             bool enable);
+
+/* ## --------------------- ## */
+/* ## QOS configuration     ## */
+/* ## --------------------- ## */
+    /* change global or per-port QOS trust setting */
+    int (*set_port_qos_cfg)(struct ofproto *ofproto,
+                            void *aux, /* struct port * */
+                            const struct qos_port_settings *settings);
+
+    /* update one or more entries in COS map */
+    int (*set_cos_map)(struct ofproto *ofproto,
+                       const void *aux, /* struct port *, if NULL affects global */
+                       const struct cos_map_settings *settings);
+
+    /* update one or more entries in DSCP map */
+    int (*set_dscp_map)(struct ofproto *ofproto, /* could be NULL,
+                                                   affects global dscp map */
+                        const void *aux, /* struct port *, could be NULL */
+                        const struct dscp_map_settings *settings);
+
 #endif
 };
 

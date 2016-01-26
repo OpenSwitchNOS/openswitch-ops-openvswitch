@@ -1,5 +1,5 @@
 /* Copyright (c) 2008, 2009, 2010, 2011, 2012, 2013, 2014 Nicira, Inc.
- * Copyright (C) 2015 Hewlett-Packard Development Company, L.P.
+ * Copyright (C) 2015-2016 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@
 #include "ofproto/ofproto.h"
 #include "ovs-numa.h"
 #include "poll-loop.h"
+#include "qos_map.h"
 #include "seq.h"
 #include "sha1.h"
 #include "shash.h"
@@ -243,6 +244,12 @@ static unsigned int idl_seqno;
 
 /* Track changes to port connectivity. */
 static uint64_t connectivity_seqno = LLONG_MIN;
+
+#ifdef OPS
+/* Global QOS trust state. */
+static enum qos_trust global_qos_trust = QOS_TRUST_NONE;
+#endif
+
 
 /* Status update to database.
  *
@@ -765,6 +772,50 @@ collect_in_band_managers(const struct ovsrec_open_vswitch *ovs_cfg,
 }
 #endif
 
+#ifdef OPS
+/* QOS. */
+
+/* Configure global QOS trust setting. */
+static void
+qos_configure_trust(enum qos_trust *global_qos_trust, bool *changed)
+{
+   /* Keep track of QOS trust setting. */
+   static enum qos_trust saved_qos_trust = QOS_TRUST_NONE;
+   enum qos_trust qos_trust;
+   const struct ovsrec_system *ovs_row = NULL;
+
+   *changed = false;
+
+   /* Nothing to do if System row is unchanged. */
+   ovs_row = ovsrec_system_first(idl);
+   if (OVSREC_IDL_IS_ROW_MODIFIED(ovs_row, idl_seqno) ||
+       OVSREC_IDL_IS_ROW_INSERTED(ovs_row, idl_seqno))
+   {
+       qos_trust = get_qos_trust_value(&ovs_row->qos_config);
+
+       /* Only change saved qos trust if default is valid. */
+       if (qos_trust != QOS_TRUST_MAX) {
+           if (qos_trust != saved_qos_trust)
+           {
+               *changed = true;
+               saved_qos_trust = qos_trust;
+           }
+       }
+   }
+
+   *global_qos_trust = saved_qos_trust;
+}
+
+/* Configure QOS maps for a particular bridge. */
+static void
+qos_configure(struct ofproto *ofproto)
+{
+    qos_configure_cos_map(ofproto);
+
+    qos_configure_dscp_map(ofproto);
+}
+#endif
+
 static void
 bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
 {
@@ -775,6 +826,7 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
     struct bridge *br, *next;
 
 #ifdef OPS
+    bool qos_trust_changed = false;
     struct vrf *vrf, *vrf_next;
 #else
     int sflow_bridge_number;
@@ -782,6 +834,10 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
 #endif
 
     COVERAGE_INC(bridge_reconfigure);
+
+#ifdef OPS
+    qos_configure_trust(&global_qos_trust, &qos_trust_changed);
+#endif
 
 #ifndef OPS_TEMP
     ofproto_set_flow_limit(smap_get_int(&ovs_cfg->other_config, "flow-limit",
@@ -833,6 +889,7 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
         vrf_del_ports(vrf, &vrf->up->wanted_ports);
     }
 #endif
+
     /* Start pushing configuration changes down to the ofproto layer:
      *
      *   - Delete ofprotos that are no longer configured.
@@ -926,6 +983,7 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
     sflow_bridge_number = 0;
     collect_in_band_managers(ovs_cfg, &managers, &n_managers);
 #endif
+
     HMAP_FOR_EACH (br, node, &all_bridges) {
         struct port *port;
 
@@ -934,21 +992,32 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
          * default system ID. */
         bridge_configure_datapath_id(br);
 
+#ifdef OPS
+        qos_configure(br->ofproto);
+#endif
+
         HMAP_FOR_EACH (port, hmap_node, &br->ports) {
             struct iface *iface;
-
 #ifdef OPS
+            bool port_iface_changed;
+
+            /* For all ports, if global qos trust changed, update those
+               ports with no qos trust setting */
+            port_iface_changed = qos_trust_changed &&
+                (QOS_TRUST_MAX == get_qos_trust_value(&port->cfg->qos_config));
+
             /* For a bond port, reconfigure the port if any of the
                member interface rows change. */
-            bool port_iface_changed = false;
             LIST_FOR_EACH (iface, port_elem, &port->ifaces) {
                 if (OVSREC_IDL_IS_ROW_MODIFIED(iface->cfg, idl_seqno)) {
                     port_iface_changed = true;
                     break;
                 }
             }
-            if (OVSREC_IDL_IS_ROW_MODIFIED(port->cfg, idl_seqno) ||
-                (port_iface_changed == true)) {
+
+            if (port_iface_changed == true ||
+                OVSREC_IDL_IS_ROW_INSERTED(port->cfg, idl_seqno) ||
+                OVSREC_IDL_IS_ROW_MODIFIED(port->cfg, idl_seqno)) {
 #endif
                 VLOG_DBG("config port - %s", port->name);
                 port_configure(port);
@@ -997,21 +1066,29 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
         struct port *port;
         bool   is_port_configured = false;
 
+        qos_configure(vrf->up->ofproto);
+
         VLOG_DBG("config vrf - %s", vrf->up->name);
         HMAP_FOR_EACH (port, hmap_node, &vrf->up->ports) {
             struct iface *iface;
+            bool port_iface_changed;
+
+            /* For all ports, if global qos trust changed, update those
+               ports with no qos trust setting */
+            port_iface_changed = qos_trust_changed &&
+                (QOS_TRUST_MAX == get_qos_trust_value(&port->cfg->qos_config));
 
             /* For a bond port, reconfigure the port if any of the
                member interface rows change. */
-            bool port_iface_changed = false;
             LIST_FOR_EACH (iface, port_elem, &port->ifaces) {
                 if (OVSREC_IDL_IS_ROW_MODIFIED(iface->cfg, idl_seqno)) {
                     port_iface_changed = true;
                     break;
                 }
             }
-            if (OVSREC_IDL_IS_ROW_MODIFIED(port->cfg, idl_seqno) ||
-                (port_iface_changed == true)) {
+
+            if (port_iface_changed == true ||
+                OVSREC_IDL_IS_ROW_MODIFIED(port->cfg, idl_seqno)) {
                 VLOG_DBG("config port - %s", port->name);
                 port_configure(port);
 
@@ -1030,7 +1107,6 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
         vrf_reconfigure_routes(vrf);
     }
 #endif
-
 
 #ifndef OPS_TEMP
     free(managers);
@@ -1392,6 +1468,7 @@ port_configure(struct port *port)
     int cfg_slave_count;
     bool lacp_enabled = false;
     bool lacp_active = false;   /* Not used. */
+    enum qos_trust port_qos_trust;
 #endif
 #ifndef OPS_TEMP
     if (cfg->vlan_mode && !strcmp(cfg->vlan_mode, "splinter")) {
@@ -1399,6 +1476,7 @@ port_configure(struct port *port)
         return;
     }
 #endif
+
     /* Get name. */
     s.name = port->name;
 
@@ -1573,6 +1651,18 @@ port_configure(struct port *port)
         ovsrec_port_set_status(port->cfg, &smap);
         smap_destroy(&smap);
     }
+
+    // Set port qos trust.  If port has no setting, use global default
+    port_qos_trust = get_qos_trust_value(&cfg->qos_config);
+    if (port_qos_trust == QOS_TRUST_MAX) {
+       port_qos_trust = global_qos_trust;
+    }
+
+    VLOG_DBG("port_configure qos port@%p %s trust=%d",
+             port, port->name, port_qos_trust);
+    ofproto_set_port_qos_cfg(port->bridge->ofproto, (void *)port,
+                             port_qos_trust, &port->cfg->other_config);
+
 #endif
     /* Clean up. */
     free(s.slaves);
