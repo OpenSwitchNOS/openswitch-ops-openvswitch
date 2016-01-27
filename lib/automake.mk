@@ -106,6 +106,7 @@ ovslibinclude_HEADERS = \
 	lib/ovsdb-error.h \
 	lib/ovsdb-idl.h \
 	lib/ovsdb-idl-provider.h \
+	lib/ovsdb-map-op.h \
 	lib/ovsdb-parser.h \
 	lib/ovsdb-types.h \
 	lib/ovs-lldp.h \
@@ -388,6 +389,8 @@ ovsdb_libovsdb_la_SOURCES = \
         ovsdb/trigger.h \
         ovsdb/transaction.c \
         ovsdb/transaction.h \
+		lib/ovsdb-map-op.c \
+        lib/ovsdb-map-op.h \
         lib/vswitch-idl.c \
         lib/vswitch-idl.h
 
@@ -767,4 +770,3 @@ lib-install-data-local:
 	$(MKDIR_P) $(DESTDIR)$(PKIDIR)
 	$(MKDIR_P) $(DESTDIR)$(LOGDIR)
 	$(MKDIR_P) $(DESTDIR)$(DBDIR)
-
