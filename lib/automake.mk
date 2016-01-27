@@ -90,6 +90,7 @@ endif
 lib_LTLIBRARIES += lib/libovscommon.la
 
 lib_libovscommon_la_LIBADD = $(SSL_LIBS)
+lib_libovscommon_la_LIBADD += $(YAML_LIBS)
 
 if WIN32
 lib_libovscommon_la_LIBADD += ${PTHREAD_LIBS}
@@ -175,6 +176,8 @@ lib_libovscommon_la_SOURCES = \
         lib/ovs-rcu.h \
         lib/ovs-thread.c \
         lib/ovs-thread.h \
+        lib/plugins_yaml.c \
+        lib/plugins_yaml.h \
         lib/plugins.c \
         lib/poll-loop.c \
         lib/poll-loop.h \
@@ -242,6 +245,8 @@ lib_libovscommon_la_SOURCES = \
         lib/vlog.h \
         lib/ipc_packets.c \
         lib/ipc_packets.h
+
+lib_libovscommon_la_CFLAGS = -DYAML_PATH=$(sysconfdir)/openswitch/platform
 
 # libovsdb
 lib_LTLIBRARIES += ovsdb/libovsdb.la
