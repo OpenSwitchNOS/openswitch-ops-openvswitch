@@ -152,6 +152,10 @@ static void ovsdb_idl_row_clear_new(struct ovsdb_idl_row *);
 static void ovsdb_idl_txn_abort_all(struct ovsdb_idl *);
 static bool ovsdb_idl_txn_process_reply(struct ovsdb_idl *,
                                         const struct jsonrpc_msg *msg);
+void ovsdb_idl_txn_add_pmu(struct ovsdb_idl_row *,
+                           const struct ovsdb_idl_column *,
+                           struct ovsdb_datum *,
+                           enum pmu_operation);
 
 static void ovsdb_idl_send_lock_request(struct ovsdb_idl *);
 static void ovsdb_idl_send_unlock_request(struct ovsdb_idl *);
@@ -976,7 +980,29 @@ ovsdb_idl_row_create(struct ovsdb_idl_table *table, const struct uuid *uuid)
     hmap_insert(&table->rows, &row->hmap_node, uuid_hash(uuid));
     row->uuid = *uuid;
     row->table = table;
+    row->partial_map_written = NULL;
+    row->partial_map_lists = NULL;
     return row;
+}
+
+static void
+ovsdb_idl_destroy_all_pmuls(struct ovsdb_idl_row *row){
+    if (row->partial_map_written) {
+        /* Clear PMULs */
+        size_t idx, n_columns;
+        const struct ovsdb_idl_column *columns;
+        const struct ovsdb_type *type;
+        n_columns = row->table->class->n_columns;
+        columns = row->table->class->columns;
+        BITMAP_FOR_EACH_1 (idx, n_columns, row->partial_map_written) {
+            type = &columns[idx].type;
+            pmul_destroy(row->partial_map_lists[idx], type);
+        }
+        free(row->partial_map_lists);
+        bitmap_free(row->partial_map_written);
+        row->partial_map_lists = NULL;
+        row->partial_map_written = NULL;
+    }
 }
 
 static void
@@ -985,6 +1011,7 @@ ovsdb_idl_row_destroy(struct ovsdb_idl_row *row)
     if (row) {
         ovsdb_idl_row_clear_old(row);
         hmap_remove(&row->table->rows, &row->hmap_node);
+        ovsdb_idl_destroy_all_pmuls(row);
         free(row);
     }
 }
@@ -1500,6 +1527,7 @@ ovsdb_idl_txn_disassemble(struct ovsdb_idl_txn *txn)
     txn->idl->txn = NULL;
 
     HMAP_FOR_EACH_SAFE (row, next, txn_node, &txn->txn_rows) {
+        ovsdb_idl_destroy_all_pmuls(row);
         if (row->old) {
             if (row->written) {
                 ovsdb_idl_row_unparse(row);
@@ -1710,6 +1738,126 @@ ovsdb_idl_txn_commit(struct ovsdb_idl_txn *txn)
 
             if (!row->old || !shash_is_empty(json_object(row_json))) {
                 json_array_add(operations, op);
+            } else {
+                json_destroy(op);
+            }
+        }
+
+        /* Add Partial Map Updates (mutate ops) */
+        if (row->partial_map_written) {
+            struct json *op, *mutations;
+            size_t idx;
+            bool any_mutations;
+
+            op = json_object_create();
+            json_object_put_string(op, "op", "mutate");
+            json_object_put_string(op, "table", class->name);
+            json_object_put(op, "where", where_uuid_equals(&row->uuid));
+            mutations = json_array_create_empty();
+
+            any_mutations = false;
+            BITMAP_FOR_EACH_1(idx, class->n_columns,
+                              row->partial_map_written) {
+                struct pmul *pmul = row->partial_map_lists[idx];
+                const struct ovsdb_idl_column *column = &class->columns[idx];
+                enum ovsdb_atomic_type key_type = column->type.key.type;
+                enum ovsdb_atomic_type value_type = column->type.value.type;
+                struct json *mutation, *map, *col_name, *mutator;
+                struct json *del_set, *ins_map;
+                bool any_del, any_ins;
+
+                del_set = json_array_create_empty();
+                ins_map = json_array_create_empty();
+                any_del = false;
+                any_ins = false;
+
+                for (struct pmu *pmu = pmul_first(pmul); pmu;
+                     pmu = pmul_next(pmul, pmu)) {
+
+                    if (pmu_operation(pmu) == PMU_UPDATE) {
+                        /* Find out if value really changed */
+                        struct ovsdb_datum *old_datum, *new_datum;
+                        unsigned int pos;
+                        old_datum = &row->old[idx];
+                        new_datum = pmu_datum(pmu);
+                        pos = ovsdb_datum_find_key(old_datum,
+                                                   &new_datum->keys[0],
+                                                   key_type);
+                        if (ovsdb_atom_equals(&new_datum->values[0],
+                                              &old_datum->values[pos],
+                                              value_type)) {
+                            /* No change in value. Move on to next update. */
+                            continue;
+                        }
+                    } else if (pmu_operation(pmu) == PMU_DELETE){
+                        /* Verify that there is a key to delete */
+                        unsigned int pos;
+                        pos = ovsdb_datum_find_key(&row->old[idx],
+                                                   &pmu_datum(pmu)->keys[0],
+                                                   key_type);
+                        if (pos == UINT_MAX) {
+                            /* No key to delete. Move on to next update. */
+                            VLOG_WARN("Trying to delete a key that doesn't "
+                                      "exist in the map.");
+                            continue;
+                        }
+                    }
+
+                    if (pmu_operation(pmu) == PMU_INSERT) {
+                        map = json_array_create_2(
+                            ovsdb_atom_to_json(&pmu_datum(pmu)->keys[0],
+                                               key_type),
+                            ovsdb_atom_to_json(&pmu_datum(pmu)->values[0],
+                                               value_type));
+                        json_array_add(ins_map, map);
+                        any_ins = true;
+                    } else { /* PMU_UPDATE or PMU_DELETE */
+                        map = ovsdb_atom_to_json(&pmu_datum(pmu)->keys[0],
+                                                 key_type);
+                        json_array_add(del_set, map);
+                        any_del = true;
+                    }
+
+                    /* Generates an additional mutate for updates */
+                    if (pmu_operation(pmu) == PMU_UPDATE) {
+                        map = json_array_create_2(
+                            ovsdb_atom_to_json(&pmu_datum(pmu)->keys[0],
+                                               key_type),
+                            ovsdb_atom_to_json(&pmu_datum(pmu)->values[0],
+                                               value_type));
+                        json_array_add(ins_map, map);
+                        any_ins = true;
+                    }
+                }
+
+                if (any_del) {
+                    col_name = json_string_create(column->name);
+                    mutator = json_string_create("delete");
+                    map = json_array_create_2(json_string_create("set"),
+                                              del_set);
+                    mutation = json_array_create_3(col_name, mutator, map);
+                    json_array_add(mutations, mutation);
+                    any_mutations = true;
+                } else {
+                    json_destroy(del_set);
+                }
+                if (any_ins) {
+                    col_name = json_string_create(column->name);
+                    mutator = json_string_create("insert");
+                    map = json_array_create_2(json_string_create("map"),
+                                              ins_map);
+                    mutation = json_array_create_3(col_name, mutator, map);
+                    json_array_add(mutations, mutation);
+                    any_mutations = true;
+                } else {
+                    json_destroy(ins_map);
+                }
+            }
+            json_object_put(op, "mutations", mutations);
+
+            if (any_mutations) {
+                json_array_add(operations, op);
+                any_updates = true;
             } else {
                 json_destroy(op);
             }
@@ -2504,4 +2652,126 @@ ovsdb_idl_parse_lock_notify(struct ovsdb_idl *idl,
             }
         }
     }
+}
+
+/* Inserts a new Partial Map Update into current transaction. */
+void
+ovsdb_idl_txn_add_pmu(struct ovsdb_idl_row *row,
+                      const struct ovsdb_idl_column *column,
+                      struct ovsdb_datum *datum,
+                      enum pmu_operation operation)
+{
+    const struct ovsdb_idl_table_class *class;
+    size_t column_idx;
+    struct pmu *pmu;
+
+    class = row->table->class;
+    column_idx = column - class->columns;
+
+    /* Check if a PMU list exist for this column */
+    if(!row->partial_map_written){
+        row->partial_map_written = bitmap_allocate(class->n_columns);
+        row->partial_map_lists = xzalloc(class->n_columns *
+                                         sizeof *row->partial_map_lists);
+    }
+    if(!row->partial_map_lists[column_idx]) {
+        row->partial_map_lists[column_idx] = pmul_create();
+    }
+
+    /* Add PMU to corresponding list */
+    pmu = pmu_create(datum, operation);
+    bitmap_set1(row->partial_map_written, column_idx);
+    pmul_add_pmu(row->partial_map_lists[column_idx], pmu, &column->type);
+
+    /* Add this row to transaction's list of rows */
+    if (hmap_node_is_null(&row->txn_node)) {
+        hmap_insert(&row->table->idl->txn->txn_rows, &row->txn_node,
+                    uuid_hash(&row->uuid));
+    }
+}
+
+/* Inserts the key-value specified in 'datum' into the map in 'column' in
+ * 'row_'. If the key already exist in 'column', then it's value is updated
+ * with the value in 'datum'. The key-value in 'datum' must be of the same type
+ * as the keys-values in 'column'. This function takes ownership of 'datum'.
+ *
+ * Usually this function is used indirectly through one of the "update"
+ * functions generated by vswitch-idl. */
+void
+ovsdb_idl_txn_write_partial_map(const struct ovsdb_idl_row *row_,
+                                const struct ovsdb_idl_column *column,
+                                struct ovsdb_datum *datum)
+{
+    struct ovsdb_idl_row *row = CONST_CAST(struct ovsdb_idl_row *, row_);
+    enum ovsdb_atomic_type key_type;
+    enum pmu_operation operation;
+    unsigned int column_idx, pos;
+    struct ovsdb_datum *old_datum;
+
+    /* Verify that this column is being monitored */
+    column_idx = column - row->table->class->columns;
+    if (!(row->table->modes[column_idx] & OVSDB_IDL_MONITOR)) {
+        VLOG_WARN("ovsdb_idl_txn_write_partial_map(): Trying to update a non"
+                  "-monitored column.");
+        ovsdb_datum_destroy(datum, &column->type);
+        return;
+    }
+
+    if (datum->n != 1) {
+        VLOG_WARN("ovsdb_idl_txn_write_partial_map(): Trying to set an invalid"
+                  " datum.");
+        ovsdb_datum_destroy(datum, &column->type);
+        return;
+    }
+
+    /* Find out if this is an insert or an update */
+    key_type = column->type.key.type;
+    old_datum = &row->old[column_idx];
+    pos = ovsdb_datum_find_key(old_datum, &datum->keys[0], key_type);
+    if (pos == UINT_MAX) {
+        /* Insert operation */
+        operation = PMU_INSERT;
+    } else {
+        /* Update operation */
+        operation = PMU_UPDATE;
+    }
+    ovsdb_idl_txn_add_pmu(row, column, datum, operation);
+}
+
+/* Deletes the key specified in 'datum' from the map in 'column' in 'row_'.
+ * The key in 'datum' must be of the same type as the keys in 'column'.
+ * The value in 'datum' must be NULL. This function takes ownership of
+ * 'datum'.
+ *
+ * Usually this function is used indirectly through one of the "update"
+ * functions generated by vswitch-idl. */
+void
+ovsdb_idl_txn_delete_partial_map(const struct ovsdb_idl_row *row_,
+                                 const struct ovsdb_idl_column *column,
+                                 struct ovsdb_datum *datum)
+{
+    struct ovsdb_idl_row *row = CONST_CAST(struct ovsdb_idl_row *, row_);
+    unsigned int column_idx;
+
+    /* Verify that this column is being monitored */
+    column_idx = column - row->table->class->columns;
+    if (!(row->table->modes[column_idx] & OVSDB_IDL_MONITOR)) {
+        VLOG_WARN("ovsdb_idl_txn_delete_partial_map(): Trying to update a non"
+                  "-monitored column.");
+        struct ovsdb_type type_ = column->type;
+        type_.value.type = OVSDB_TYPE_VOID;
+        ovsdb_datum_destroy(datum, &type_);
+        return;
+    }
+
+    if (datum->n != 1) {
+        VLOG_WARN("ovsdb_idl_txn_delete_partial_map(): Trying to delete using"
+                  " an invalid datum.");
+        struct ovsdb_type type_ = column->type;
+        type_.value.type = OVSDB_TYPE_VOID;
+        ovsdb_datum_destroy(datum, &type_);
+        return;
+    }
+
+    ovsdb_idl_txn_add_pmu(row, column, datum, PMU_DELETE);
 }

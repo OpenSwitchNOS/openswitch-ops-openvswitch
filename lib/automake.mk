@@ -53,6 +53,7 @@ ovslibinclude_HEADERS = \
 	lib/ovsdb-data.h \
 	lib/ovsdb-idl.h \
 	lib/ovsdb-idl-provider.h \
+	lib/ovsdb-pmu.h \
 	lib/ovsdb-types.h \
 	lib/ovs-numa.h \
         lib/ovs-rcu.h \
@@ -261,6 +262,8 @@ ovsdb_libovsdb_la_SOURCES = \
         lib/ovsdb-idl.h \
         lib/ovsdb-parser.c \
         lib/ovsdb-parser.h \
+        lib/ovsdb-pmu.c \
+        lib/ovsdb-pmu.h \
         lib/ovsdb-types.c \
         lib/ovsdb-types.h \
         ovsdb/column.c \
@@ -672,4 +675,3 @@ lib-install-data-local:
 	$(MKDIR_P) $(DESTDIR)$(PKIDIR)
 	$(MKDIR_P) $(DESTDIR)$(LOGDIR)
 	$(MKDIR_P) $(DESTDIR)$(DBDIR)
-

@@ -21,6 +21,7 @@
 #include "list.h"
 #include "ovsdb-idl.h"
 #include "ovsdb-types.h"
+#include "ovsdb-pmu.h"
 #include "shash.h"
 #include "uuid.h"
 
@@ -37,6 +38,9 @@ struct ovsdb_idl_row {
     unsigned long int *prereqs; /* Bitmap of columns to verify in "old". */
     unsigned long int *written; /* Bitmap of columns from "new" to write. */
     struct hmap_node txn_node;  /* Node in ovsdb_idl_txn's list. */
+    unsigned long int *partial_map_written; /* Bitmap of columns containing
+                                             * partial maps */
+    struct pmul **partial_map_lists; /* List of lists of partial updates. */
 #ifdef OPS
     unsigned int insert_seqno;
     unsigned int modify_seqno;
