@@ -41,7 +41,11 @@ get_detach(void)
 void
 daemonize(void)
 {
+#ifdef OPS
     daemonize_start();
+#else
+    daemonize_start(false);
+#endif
     daemonize_complete();
 }
 
