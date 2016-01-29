@@ -123,6 +123,7 @@ ovslibinclude_HEADERS = \
 	lib/random.h \
 	lib/rconn.h \
 	lib/rculist.h \
+	lib/reconfigure-blocks.h \
 	lib/reconnect.h \
 	lib/route-table.h \
 	lib/rstp-common.h \
@@ -167,6 +168,7 @@ ovslibinclude_HEADERS = \
 	lib/vconn-provider.h \
 	lib/vlan-bitmap.h \
 	lib/vlandev.h \
+	lib/vswitch-config.h \
 	lib/vswitch-idl.h \
         vswitchd/bufmon-provider.h \
         include/odp-netlink.h
@@ -276,6 +278,8 @@ lib_libovscommon_la_SOURCES = \
         lib/process.h \
         lib/random.c \
         lib/random.h \
+        lib/reconfigure-blocks.c \
+        lib/reconfigure-blocks.h \
         lib/reconnect.c \
         lib/reconnect.h \
         lib/sat-math.h \
