@@ -1,0 +1,8 @@
+Verified+2: Edward Aymerich <edward.aymerich@hpe.com>
+Workflow+1: Edward Aymerich <edward.aymerich@hpe.com>
+Code-Review+2: Esteban Rodriguez Betancourt <estebarb@hpe.com>
+Submitted-by: Allan Delgado <allan.delgado@hpe.com>
+Submitted-at: Fri, 29 Jan 2016 22:53:49 +0000
+Reviewed-on: https://review.openswitch.net/3619
+Project: openswitch/ops-openvswitch
+Branch: refs/heads/feature/partial-map-updates
