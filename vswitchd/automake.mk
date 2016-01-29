@@ -22,12 +22,12 @@ vswitchd_ops_switchd_SOURCES = \
 	vswitchd/vrf.h
 
 vswitchd_ops_switchd_LDADD = \
+	plugins/libplugins.la \
 	lib/libovscommon.la \
 	ovsdb/libovsdb.la \
 	ofproto/libofproto.la \
 	lib/libsflow.la \
-	lib/libopenvswitch.la \
-	plugins/libplugins.la
+	lib/libopenvswitch.la
 
 vswitchd_ops_switchd_LDFLAGS = $(AM_LDFLAGS) $(DPDK_vswitchd_LDFLAGS)
 else

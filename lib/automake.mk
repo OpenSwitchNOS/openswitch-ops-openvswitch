@@ -169,7 +169,6 @@ ovslibinclude_HEADERS = \
 	lib/vswitch-idl.h \
 	vswitchd/bufmon-provider.h \
 	include/odp-netlink.h
-
 endif
 
 lib_LTLIBRARIES += lib/libovscommon.la
