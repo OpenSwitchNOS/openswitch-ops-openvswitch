@@ -169,6 +169,7 @@ ovslibinclude_HEADERS = \
 	lib/vlandev.h \
 	lib/vswitch-idl.h \
         vswitchd/bufmon-provider.h \
+	vswitchd/reconfigure-blocks.h \
         include/odp-netlink.h
 endif
 
