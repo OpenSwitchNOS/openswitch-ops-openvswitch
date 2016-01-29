@@ -20,20 +20,13 @@
 #include "hmap.h"
 #include "lib/vswitch-idl.h"
 #include "ofproto/ofproto.h"
+#include "vswitch-config.h"
 
 #define VRF_IPV4_MAX_LEN        32
 #define VRF_IPV6_MAX_LEN        128
 #define VRF_ROUTE_HASH_MAXSIZE  64 /* max prefixlen (49) + maxlen of "from" */
 
 struct bridge; /* forward declaration */
-struct vrf {
-    struct bridge *up;
-    struct hmap_node node;              /* In 'all_vrfs'. */
-    const struct ovsrec_vrf *cfg;
-    struct hmap all_neighbors;
-    struct hmap all_routes;
-    struct hmap all_nexthops;
-};
 
 /* Local Neighbor struct to store in hash-map and handle add/modify/deletes */
 struct neighbor {
