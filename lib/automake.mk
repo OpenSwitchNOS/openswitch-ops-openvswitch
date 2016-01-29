@@ -84,6 +84,8 @@ ovslibinclude_HEADERS = \
 	lib/plugins.h \
 	lib/vlan-bitmap.h \
 	libltdl/ltdl.h \
+	lib/reconfigure-blocks.h \
+	lib/vswitch-config.h \
 	vswitchd/bufmon-provider.h
 endif
 
@@ -241,7 +243,10 @@ lib_libovscommon_la_SOURCES = \
         lib/vlog.c \
         lib/vlog.h \
         lib/ipc_packets.c \
-        lib/ipc_packets.h
+        lib/ipc_packets.h \
+        lib/vswitch-config.h \
+        lib/reconfigure-blocks.c \
+        lib/reconfigure-blocks.h
 
 # libovsdb
 lib_LTLIBRARIES += ovsdb/libovsdb.la
