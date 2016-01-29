@@ -12,6 +12,8 @@ vswitchd_ops_switchd_SOURCES = \
 	vswitchd/bridge.c \
 	vswitchd/bridge.h \
 	vswitchd/ovs-vswitchd.c \
+	vswitchd/reconfigure-blocks.c \
+	vswitchd/reconfigure-blocks.h \
 	vswitchd/subsystem.c \
 	vswitchd/system-stats.c \
 	vswitchd/system-stats.h \
