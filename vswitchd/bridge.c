@@ -74,6 +74,8 @@
 #include "vrf.h"
 #include "openswitch-idl.h"
 #include "openswitch-dflt.h"
+
+#define SFLOW_DFLT_AGENT_IP4 "10.10.10.1" /* TODO: #include "ops-sflow.h" */
 #endif
 
 VLOG_DEFINE_THIS_MODULE(bridge);
@@ -320,6 +322,8 @@ static unixctl_cb_func vlan_unixctl_show;
 static void bridge_configure_sflow(struct bridge *,
                                    const struct ovsrec_sflow *cfg,
                                    int *sflow_bridge_number);
+static void sflow_agent_address(struct ofproto_sflow_options *oso,
+                const char *intf_name, const char *__af);
 #endif
 static void bridge_configure_datapath_id(struct bridge *);
 #ifndef OPS_TEMP
@@ -2229,6 +2233,87 @@ port_is_bond_fake_iface(const struct port *port)
 }
 #endif
 
+#ifdef OPS
+/* Given an interface name, get it's IP address (v4/v6) and pass it to sFlow
+ * agent. This is used as sFlow Agent IP in datagram. */
+static void
+sflow_agent_address(struct ofproto_sflow_options *oso, const char *intf_name, const char *__af)
+{
+    const struct ovsrec_port *port;
+    struct in_addr ip;
+
+    if (oso == NULL) {
+        VLOG_ERR("sflow options must be non-null.");
+        return;
+    }
+
+    /* Agent interface name not configured. Pick an L3 interface with IPv4
+     * configured. */
+    if (intf_name == NULL) {
+        OVSREC_PORT_FOR_EACH(port, idl)
+        {
+            if (port->ip4_address && (inet_pton(AF_INET, port->ip4_address, &ip) != -1)) {
+                /* First interface with a valid IPv4 address */
+                oso->agent_device = port->ip4_address;
+
+                /* Get only IP part and ignore subnet. */
+                if (strchr(oso->agent_device, '/')) {
+                    *strchr(oso->agent_device, '/') = '\0';
+                }
+
+                VLOG_DBG("Found a valid ip4 address: %s", oso->agent_device);
+                return;
+            }
+        }
+
+        /* No L3 interface exists with IPv4 configured. Assign default IP. */
+        if (port == NULL) {
+            VLOG_DBG("No interface exists with an IP configured. Assign default agent IP.");
+            oso->agent_device = SFLOW_DFLT_AGENT_IP4;
+            return;
+        }
+    }
+
+    /* An interface name provided as input. Get it's IPv4 address. */
+    OVSREC_PORT_FOR_EACH(port, idl)
+    {
+      if (strcmp(port->name, intf_name) == 0) {
+        break;  /* record found */
+      }
+    }
+
+    if (port != NULL) {
+        /* __af is NULL in OVSDB. Use default address. */
+        if (__af == NULL) {
+            oso->agent_device = port->ip4_address;  // TODO: What if only ip6 is configured?
+            if (strchr(oso->agent_device, '/')) {
+                *strchr(oso->agent_device, '/') = '\0';
+            }
+
+            VLOG_DBG("ip addr of port: %s is %s", (port->name)?port->name:"NULL",
+                    (port->ip4_address)? port->ip4_address: "NULL");
+            return;
+        }
+
+        if (strcmp(__af, "ipv4") == 0) {
+            oso->agent_device = port->ip4_address;
+        } else {
+            oso->agent_device = port->ip6_address;
+        }
+
+        if (strchr(oso->agent_device, '/')) {
+            *strchr(oso->agent_device, '/') = '\0';
+        }
+
+        VLOG_DBG("agent_device: %s", oso->agent_device);
+    } else {
+        /* no record with given intf name. Should not happen as CLI prevents it. */
+        VLOG_ERR("agent_device: NULL");
+    }
+    return;
+}
+#endif
+
 /* Set sFlow configuration on 'br'. */
 static void
 #ifdef OPS
@@ -2247,7 +2332,7 @@ bridge_configure_sflow(struct bridge *br, int *sflow_bridge_number)
     struct ofproto_sflow_options oso;
 
     if (!cfg) {
-        VLOG_ERR("%s:%d, disable sflow config", __FUNCTION__, __LINE__);
+        VLOG_DBG("%s:%d, disable sflow config", __FUNCTION__, __LINE__);
 
         ofproto_set_sflow(br->ofproto, NULL);
         return;
@@ -2274,7 +2359,10 @@ bridge_configure_sflow(struct bridge *br, int *sflow_bridge_number)
     }
 
     oso.sub_id = (*sflow_bridge_number)++;
-    oso.agent_device = cfg->agent;
+
+#ifdef OPS
+    sflow_agent_address(&oso, cfg->agent, cfg->agent_addr_family);
+#endif
 
 #ifndef OPS
     oso.control_ip = NULL;
