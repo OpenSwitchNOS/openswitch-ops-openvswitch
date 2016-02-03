@@ -285,6 +285,16 @@ json_object_put_string(struct json *json, const char *name, const char *value)
 }
 
 const char *
+json_object_get_string(const struct json *json, const char *name)
+{
+    void *data = shash_find_data(json_object(json), name);
+    if (data)
+        return json_string(data);
+    else
+        return NULL;
+}
+
+const char *
 json_string(const struct json *json)
 {
     ovs_assert(json->type == JSON_STRING);

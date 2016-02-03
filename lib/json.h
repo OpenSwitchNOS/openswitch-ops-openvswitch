@@ -90,6 +90,7 @@ struct json *json_object_create(void);
 void json_object_put(struct json *, const char *name, struct json *value);
 void json_object_put_string(struct json *,
                             const char *name, const char *value);
+const char *json_object_get_string(const struct json *json, const char *name);
 
 const char *json_string(const struct json *);
 struct json_array *json_array(const struct json *);
