@@ -540,6 +540,8 @@ enum ovsrec_port_config_admin_e {
 /****************************** VRF TABLE ******************************/
 
 #define OVSDB_VRF_NAME_MAXLEN                       32
+#define VRF_OTHER_CONFIG_MAP_DHCP_RELAY_ENABLED     "dhcp_relay_enabled"
+#define VRF_OTHER_CONFIG_MAP_UDP_FWD_ENABLED        "udp_fwd_enabled"
 
 /****************************** NEIGHBOR TABLE ***************************/
 #define OVSDB_NEIGHBOR_STATUS_DP_HIT                "dp_hit"
