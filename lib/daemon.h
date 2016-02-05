@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2008, 2009, 2010, 2011, 2012 Nicira, Inc.
- * Copyright (C) 2015, 2016 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,16 +42,14 @@
     OPT_NO_CHDIR,                               \
     OPT_OVERWRITE_PIDFILE,                      \
     OPT_PIDFILE,                                \
-    OPT_MONITOR,                                \
-    OPT_USER_GROUP
+    OPT_MONITOR
 
-#define DAEMON_LONG_OPTIONS                                              \
-        {"detach",            no_argument, NULL, OPT_DETACH},            \
-        {"no-chdir",          no_argument, NULL, OPT_NO_CHDIR},          \
-        {"pidfile",           optional_argument, NULL, OPT_PIDFILE},     \
+#define DAEMON_LONG_OPTIONS                                             \
+        {"detach",            no_argument, NULL, OPT_DETACH},           \
+        {"no-chdir",          no_argument, NULL, OPT_NO_CHDIR},         \
+        {"pidfile",           optional_argument, NULL, OPT_PIDFILE},    \
         {"overwrite-pidfile", no_argument, NULL, OPT_OVERWRITE_PIDFILE}, \
-        {"monitor",           no_argument, NULL, OPT_MONITOR},           \
-        {"user",              required_argument, NULL, OPT_USER_GROUP}
+        {"monitor",           no_argument, NULL, OPT_MONITOR}
 
 #define DAEMON_OPTION_HANDLERS                  \
         case OPT_DETACH:                        \
@@ -73,10 +70,6 @@
                                                 \
         case OPT_MONITOR:                       \
             daemon_set_monitor();               \
-            break;                              \
-                                                \
-        case OPT_USER_GROUP:                    \
-            daemon_set_new_user(optarg);        \
             break;
 
 void set_detach(void);
@@ -91,8 +84,7 @@ pid_t read_pidfile(const char *name);
     OPT_PIDFILE,                               \
     OPT_PIPE_HANDLE,                           \
     OPT_SERVICE,                               \
-    OPT_SERVICE_MONITOR,                       \
-    OPT_USER_GROUP
+    OPT_SERVICE_MONITOR
 
 #define DAEMON_LONG_OPTIONS                                               \
         {"detach",             no_argument, NULL, OPT_DETACH},            \
@@ -100,8 +92,7 @@ pid_t read_pidfile(const char *name);
         {"pidfile",            optional_argument, NULL, OPT_PIDFILE},     \
         {"pipe-handle",        required_argument, NULL, OPT_PIPE_HANDLE}, \
         {"service",            no_argument, NULL, OPT_SERVICE},           \
-        {"service-monitor",    no_argument, NULL, OPT_SERVICE_MONITOR},   \
-        {"user",               required_argument, NULL, OPT_USER_GROUP}
+        {"service-monitor",    no_argument, NULL, OPT_SERVICE_MONITOR}
 
 #define DAEMON_OPTION_HANDLERS                  \
         case OPT_DETACH:                        \
@@ -122,10 +113,7 @@ pid_t read_pidfile(const char *name);
             break;                              \
                                                 \
         case OPT_SERVICE_MONITOR:               \
-            break;                              \
-                                                \
-        case OPT_USER_GROUP:                    \
-            daemon_set_new_user(optarg);
+            break;
 
 void control_handler(DWORD request);
 void set_pipe_handle(const char *pipe_handle);
@@ -134,14 +122,8 @@ void set_pipe_handle(const char *pipe_handle);
 bool get_detach(void);
 void daemon_save_fd(int fd);
 void daemonize(void);
-#ifdef OPS
 void daemonize_start(void);
-#else
-void daemonize_start(bool access_datapath);
-#endif
 void daemonize_complete(void);
-void daemon_set_new_user(const char * user_spec);
-void daemon_become_new_user(bool access_datapath);
 void daemon_usage(void);
 void service_start(int *argcp, char **argvp[]);
 void service_stop(void);

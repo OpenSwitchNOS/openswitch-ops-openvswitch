@@ -1,5 +1,5 @@
-#! /usr/bin/env python
-# Copyright (c) 2013, 2014, 2015 Nicira, Inc.
+#!/usr/bin/python
+# Copyright (c) 2013, 2014 Nicira, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,11 +22,8 @@ import tempfile
 
 ENV = os.environ
 HOME = ENV["HOME"]
-PWD = os.getcwd()
 OVS_SRC = HOME + "/ovs"
-if os.path.exists(PWD + "/WHY-OVS.md"):
-    OVS_SRC = PWD  # Use current directory as OVS source tree
-RUNDIR = OVS_SRC + "/_run"
+ROOT = HOME + "/root"
 BUILD_GCC = OVS_SRC + "/_build-gcc"
 BUILD_CLANG = OVS_SRC + "/_build-clang"
 
@@ -55,11 +52,6 @@ def uname():
     return _sh("uname", "-r", capture=True)[0].strip()
 
 
-def sudo():
-    if os.geteuid() != 0:
-        _sh(" ".join(["sudo"] + sys.argv), check=True)
-        sys.exit(0)
-
 def conf():
     tag()
 
@@ -68,11 +60,9 @@ def conf():
     except OSError:
         pass
 
-    configure = ["../configure",
-                 "--prefix=" + RUNDIR, "--localstatedir=" + RUNDIR,
-                 "--with-logdir=%s/log" % RUNDIR,
-                 "--with-rundir=%s/run" % RUNDIR,
-                 "--enable-silent-rules", "--with-dbdir=" + RUNDIR, "--silent"]
+    configure = ["../configure", "--prefix=" + ROOT, "--localstatedir=" + ROOT,
+                 "--with-logdir=%s/log" % ROOT, "--with-rundir=%s/run" % ROOT,
+                 "--enable-silent-rules", "--with-dbdir=" + ROOT, "--silent"]
 
     cflags = "-g -fno-omit-frame-pointer"
 
@@ -191,34 +181,31 @@ commands.append(tag)
 
 
 def kill():
-    sudo()
     for proc in ["ovs-vswitchd", "ovsdb-server"]:
-        if os.path.exists("%s/run/openvswitch/%s.pid" % (RUNDIR, proc)):
+        if os.path.exists("%s/run/openvswitch/%s.pid" % (ROOT, proc)):
             _sh("ovs-appctl", "-t", proc, "exit", check=False)
             time.sleep(.1)
-        _sh("killall", "-q", "-2", proc, check=False)
+        _sh("sudo", "killall", "-q", "-2", proc, check=False)
 commands.append(kill)
 
 
 def reset():
-    sudo()
     kill()
-    if os.path.exists(RUNDIR):
-        shutil.rmtree(RUNDIR)
+    if os.path.exists(ROOT):
+        shutil.rmtree(ROOT)
     for dp in _sh("ovs-dpctl dump-dps", capture=True):
         _sh("ovs-dpctl", "del-dp", dp.strip())
 commands.append(reset)
 
 
 def run():
-    sudo()
     kill()
     for d in ["log", "run"]:
-        d = "%s/%s" % (RUNDIR, d)
+        d = "%s/%s" % (ROOT, d)
         shutil.rmtree(d, ignore_errors=True)
         os.makedirs(d)
 
-    pki_dir = RUNDIR + "/pki"
+    pki_dir = ROOT + "/pki"
     if not os.path.exists(pki_dir):
         os.mkdir(pki_dir)
         os.chdir(pki_dir)
@@ -226,25 +213,14 @@ def run():
         _sh("ovs-pki req+sign ovsclient")
         os.chdir(OVS_SRC)
 
-    if not os.path.exists(RUNDIR + "/conf.db"):
-        _sh("ovsdb-tool", "create", RUNDIR + "/conf.db",
+    if not os.path.exists(ROOT + "/conf.db"):
+        _sh("ovsdb-tool", "create", ROOT + "/conf.db",
             OVS_SRC + "/vswitchd/vswitch.ovsschema")
 
     opts = ["--pidfile", "--log-file"]
 
-    if (options.user == "") or (options.user == "root:root"):
-        _sh("chown", "root:root", "-R", RUNDIR)
-        if '--user' in sys.argv:
-           sys.argv.remove("--user")
-    else:
-        _sh("chown", options.user, "-R", RUNDIR);
-        opts = ["--user", options.user] + opts
-
-    if (options.monitor):
-        opts = ["--monitor"] + opts
-
     _sh(*(["ovsdb-server",
-           "--remote=punix:%s/run/db.sock" % RUNDIR,
+           "--remote=punix:%s/run/db.sock" % ROOT,
            "--remote=db:Open_vSwitch,Open_vSwitch,manager_options",
            "--private-key=db:Open_vSwitch,SSL,private_key",
            "--certificate=db:Open_vSwitch,SSL,certificate",
@@ -276,6 +252,7 @@ def run():
                "--suppressions=%s/tests/glibc.supp" % OVS_SRC,
                "--suppressions=%s/tests/openssl.supp" % OVS_SRC] + cmd
     else:
+        cmd = ["sudo"] + cmd
         opts = opts + ["-vconsole:off", "--detach", "--enable-dummy"]
     _sh(*(cmd + opts))
 commands.append(run)
@@ -286,15 +263,13 @@ def modinst():
         print "Missing modules directory.  Is this a Linux system?"
         sys.exit(1)
 
-    sudo()
     try:
         _sh("rmmod", "openvswitch")
     except subprocess.CalledProcessError, e:
         pass  # Module isn't loaded
 
     try:
-        _sh("rm -f /lib/modules/%s/extra/openvswitch.ko" % uname())
-        _sh("rm -f /lib/modules/%s/extra/vport-*.ko" % uname())
+        _sh("rm /lib/modules/%s/extra/openvswitch.ko" % uname())
     except subprocess.CalledProcessError, e:
         pass  # Module isn't installed
 
@@ -304,7 +279,6 @@ def modinst():
 
     _sh("modprobe", "openvswitch")
     _sh("dmesg | grep openvswitch | tail -1")
-    _sh("find /lib/modules/%s/ -iname vport-*.ko -exec insmod '{}' \;" % uname())
 commands.append(modinst)
 
 
@@ -327,7 +301,7 @@ Basic Configuration:
 
     # First install the basic requirements needed to build Open vSwitch.
     sudo apt-get install git build-essential libtool autoconf pkg-config \\
-            libssl-dev gdb libcap-ng-dev linux-headers-`uname -r`
+            libssl-dev gdb linux-headers-`uname -r`
 
     # Next clone the Open vSwitch source.
     git clone https://github.com/openvswitch/ovs.git %(ovs)s
@@ -340,11 +314,6 @@ Basic Configuration:
 
     # Install the kernel module
     sudo insmod %(ovs)s/datapath/linux/openvswitch.ko
-
-    # If needed, manually load all required vport modules:
-    sudo insmod %(ovs)s/datapath/linux/vport-vxlan.ko
-    sudo insmod %(ovs)s/datapath/linux/vport-geneve.ko
-    [...]
 
     # Run the switch.
     %(v)s run
@@ -360,11 +329,7 @@ Commands:
     modinst - Build ovs and install the kernel module.
     env     - Print the required path environment variable.
     doc     - Print this message.
-
-Note:
-    If running as non-root user, "kill", "reset", "run" and "modinst"
-    will always run as the root user, by rerun the commands with "sudo".
-""" % {"ovs": OVS_SRC, "v": sys.argv[0], "run": RUNDIR}
+""" % {"ovs": OVS_SRC, "v": sys.argv[0], "run": ROOT}
     sys.exit(0)
 commands.append(doc)
 
@@ -426,11 +391,6 @@ def main():
                      help="run ovs-vswitchd with dpdk subopts (ended by --)")
     group.add_option("--clang", dest="clang", action="store_true",
                      help="Use binaries built by clang")
-    group.add_option("--user", dest="user", action="store", default="",
-                     help="run all daemons as a non root user")
-    group.add_option("--monitor", dest="monitor", action="store_true",
-                     help="run daemons with --monitor option")
-
 
     parser.add_option_group(group)
 
