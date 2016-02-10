@@ -18,6 +18,5 @@
 #define __NETINET_IN_H 1
 
 #define IPPROTO_GRE 47
-#define IPPORT_FTP 21
 
 #endif /* netinet/in.h */

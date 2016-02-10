@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2014 Nicira, Inc.
- * Copyright (C) 2015, 2016 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +41,7 @@ get_detach(void)
 void
 daemonize(void)
 {
-#ifdef OPS
     daemonize_start();
-#else
-    daemonize_start(false);
-#endif
     daemonize_complete();
 }
 
