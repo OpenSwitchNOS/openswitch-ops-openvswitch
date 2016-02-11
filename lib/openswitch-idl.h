@@ -146,6 +146,8 @@ enum ovsrec_interface_user_config_admin_e {
     INTERFACE_USER_CONFIG_ADMIN_UP
 };
 
+#define INTERFACE_USER_CONFIG_MAP_PROXY_ARP                     "proxy_arp_enabled"
+
 #define INTERFACE_USER_CONFIG_MAP_AUTONEG                       "autoneg"
 
 #define INTERFACE_USER_CONFIG_MAP_AUTONEG_OFF                   "off"
