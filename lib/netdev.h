@@ -102,6 +102,13 @@ struct netdev_stats {
     uint64_t tx_fifo_errors;
     uint64_t tx_heartbeat_errors;
     uint64_t tx_window_errors;
+
+    /* sFlow statistics. */
+    uint64_t sflow_ingress_packets;
+    uint64_t sflow_ingress_bytes;
+    uint64_t sflow_egress_packets;
+    uint64_t sflow_egress_bytes;
+
 };
 
 /* Configuration specific to tunnels. */

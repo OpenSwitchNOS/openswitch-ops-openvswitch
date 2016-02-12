@@ -638,7 +638,11 @@ iface_refresh_stats(struct iface *iface)
     IFACE_STAT(rx_errors,       "rx_errors")    \
     IFACE_STAT(tx_errors,       "tx_errors")    \
     IFACE_STAT(rx_crc_errors,   "rx_crc_err")   \
-    IFACE_STAT(collisions,      "collisions")
+    IFACE_STAT(collisions,      "collisions")   \
+    IFACE_STAT(sflow_ingress_packets,   "sflow_ingress_packets") \
+    IFACE_STAT(sflow_ingress_bytes,     "sflow_ingress_bytes") \
+    IFACE_STAT(sflow_egress_packets,    "sflow_egress_packets") \
+    IFACE_STAT(sflow_egress_bytes,      "sflow_egress_bytes")
 
 #define IFACE_STAT(MEMBER, NAME) + 1
     enum { N_IFACE_STATS = IFACE_STATS };
