@@ -1,5 +1,5 @@
 /* Copyright (c) 2008, 2009, 2010, 2011, 2012, 2013, 2014 Nicira, Inc.
- * Copyright (C) 2015, 2016 Hewlett-Packard Development Company, L.P.
+ * Copyright (C) 2015 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,8 +143,8 @@ struct bridge {
     struct hmap_node node;      /* In 'all_bridges'. */
     char *name;                 /* User-specified arbitrary name. */
     char *type;                 /* Datapath type. */
-    struct eth_addr ea;         /* Bridge Ethernet Address. */
-    struct eth_addr default_ea; /* Default MAC. */
+    uint8_t ea[ETH_ADDR_LEN];   /* Bridge Ethernet Address. */
+    uint8_t default_ea[ETH_ADDR_LEN]; /* Default MAC. */
     const struct ovsrec_bridge *cfg;
 
     /* OpenFlow switch processing. */
@@ -339,10 +339,10 @@ static void bridge_configure_remotes(struct bridge *,
                                      size_t n_managers);
 #endif
 static void bridge_pick_local_hw_addr(struct bridge *,
-                                      struct eth_addr *ea,
+                                      uint8_t ea[ETH_ADDR_LEN],
                                       struct iface **hw_addr_iface);
 static uint64_t bridge_pick_datapath_id(struct bridge *,
-                                        const struct eth_addr bridge_ea,
+                                        const uint8_t bridge_ea[ETH_ADDR_LEN],
                                         struct iface *hw_addr_iface);
 static uint64_t dpid_from_hash(const void *, size_t nbytes);
 #ifndef OPS_TEMP
@@ -903,6 +903,8 @@ bridge_reconfigure(const struct ovsrec_open_vswitch *ovs_cfg)
         }
     }
 #endif
+
+
     HMAP_FOR_EACH (br, node, &all_bridges) {
         bridge_add_ports(br, &br->wanted_ports);
         shash_destroy(&br->wanted_ports);
@@ -1232,30 +1234,6 @@ bridge_delete_or_reconfigure_ports(struct bridge *br)
 
 #ifdef OPS
 static void
-vrf_delete_or_reconfigure_subintf(struct smap *sub_intf_info,
-                                  const struct ovsrec_interface *iface_cfg)
-{
-    const struct ovsrec_interface *parent_intf_cfg = NULL;
-    int sub_intf_vlan = 0;
-
-    if (iface_cfg->n_subintf_parent > 0) {
-        parent_intf_cfg = iface_cfg->value_subintf_parent[0];
-        sub_intf_vlan = iface_cfg->key_subintf_parent[0];
-    }
-
-    smap_add(sub_intf_info,
-             "parent_intf_name",
-             parent_intf_cfg ? parent_intf_cfg->name : "");
-
-    smap_add_format(sub_intf_info, "vlan", "%d", sub_intf_vlan);
-
-    VLOG_DBG("parent_intf_name %s\n", parent_intf_cfg->name);
-    VLOG_DBG("vlan %d\n", sub_intf_vlan);
-}
-#endif
-
-#ifdef OPS
-static void
 vrf_delete_or_reconfigure_ports(struct vrf *vrf)
 {
     struct ofproto_port ofproto_port;
@@ -1263,11 +1241,6 @@ vrf_delete_or_reconfigure_ports(struct vrf *vrf)
 
     struct sset ofproto_ports;
     struct port *port, *port_next;
-#ifdef OPS
-    struct iface *iface;
-    struct smap sub_intf_info;
-    int ret = 0;
-#endif
 
     /* List of "ofp_port"s to delete.  We make a list instead of deleting them
      * right away because ofproto implementations aren't necessarily able to
@@ -1291,6 +1264,8 @@ vrf_delete_or_reconfigure_ports(struct vrf *vrf)
 #ifndef OPS_TEMP
         ofp_port_t requested_ofp_port;
 #endif
+        struct iface *iface;
+
         sset_add(&ofproto_ports, ofproto_port.name);
 
         iface = iface_lookup(vrf->up, ofproto_port.name);
@@ -1299,17 +1274,6 @@ vrf_delete_or_reconfigure_ports(struct vrf *vrf)
              * ofproto_port. */
             goto delete;
         }
-#ifdef OPS
-        if (!strcmp(iface->cfg->type, OVSREC_INTERFACE_TYPE_VLANSUBINT)) {
-           smap_init(&sub_intf_info);
-           vrf_delete_or_reconfigure_subintf(&sub_intf_info, iface->cfg);
-           ret = netdev_set_config(iface->netdev, &sub_intf_info, NULL);
-           smap_destroy(&sub_intf_info);
-           if (ret)
-              goto delete;
-           continue;
-        }
-#endif
 
         if  (strcmp(ofproto_port.type, iface->type)
             || netdev_set_config(iface->netdev, &iface->cfg->options, NULL)
@@ -1625,13 +1589,13 @@ port_configure(struct port *port)
 static void
 bridge_configure_datapath_id(struct bridge *br)
 {
-    struct eth_addr ea;
+    uint8_t ea[ETH_ADDR_LEN];
     uint64_t dpid;
     struct iface *local_iface;
     struct iface *hw_addr_iface;
     char *dpid_string;
 
-    bridge_pick_local_hw_addr(br, &ea, &hw_addr_iface);
+    bridge_pick_local_hw_addr(br, ea, &hw_addr_iface);
     local_iface = iface_from_ofp_port(br, OFPP_LOCAL);
     if (local_iface) {
         int error = netdev_set_etheraddr(local_iface->netdev, ea);
@@ -1642,7 +1606,7 @@ bridge_configure_datapath_id(struct bridge *br)
                         br->name, ovs_strerror(error));
         }
     }
-    br->ea = ea;
+    memcpy(br->ea, ea, ETH_ADDR_LEN);
 
     dpid = bridge_pick_datapath_id(br, ea, hw_addr_iface);
     if (dpid != ofproto_get_datapath_id(br->ofproto)) {
@@ -2411,10 +2375,6 @@ iface_do_create(const struct bridge *br,
                 char **errp)
 {
     struct netdev *netdev = NULL;
-#ifdef OPS
-    struct smap sub_intf_info;
-    int ret = 0;
-#endif
     int error;
 
     if (netdev_is_reserved_name(iface_cfg->name)) {
@@ -2448,21 +2408,12 @@ iface_do_create(const struct bridge *br,
     if (error) {
         goto error;
     }
-
-    if (!strcmp(iface_cfg->type, OVSREC_INTERFACE_TYPE_VLANSUBINT)) {
-          smap_init(&sub_intf_info);
-          vrf_delete_or_reconfigure_subintf(&sub_intf_info, iface_cfg);
-          smap_destroy(&sub_intf_info);
-          if (ret) {
-              goto error;
-          }
-    } else {
-        error = iface_set_netdev_config(iface_cfg, netdev, errp);
-        if (error) {
-            goto error;
-        }
-    }
 #endif
+    error = iface_set_netdev_config(iface_cfg, netdev, errp);
+    if (error) {
+        goto error;
+    }
+
     *ofp_portp = iface_pick_ofport(iface_cfg);
     error = ofproto_port_add(br->ofproto, netdev, ofp_portp);
     if (error) {
@@ -2650,7 +2601,7 @@ bridge_configure_mcast_snooping(struct bridge *br)
 }
 #endif
 static void
-find_local_hw_addr(const struct bridge *br, struct eth_addr *ea,
+find_local_hw_addr(const struct bridge *br, uint8_t ea[ETH_ADDR_LEN],
                    const struct port *fake_br, struct iface **hw_addr_iface)
 {
 #ifndef OPS_TEMP
@@ -2677,7 +2628,7 @@ find_local_hw_addr(const struct bridge *br, struct eth_addr *ea,
     /* Otherwise choose the minimum non-local MAC address among all of the
      * interfaces. */
     HMAP_FOR_EACH (port, hmap_node, &br->ports) {
-        struct eth_addr iface_ea;
+        uint8_t iface_ea[ETH_ADDR_LEN];
         struct iface *candidate;
         struct iface *iface;
 
@@ -2690,12 +2641,12 @@ find_local_hw_addr(const struct bridge *br, struct eth_addr *ea,
 #endif
         /* Choose the MAC address to represent the port. */
         iface = NULL;
-        if (port->cfg->mac && eth_addr_from_string(port->cfg->mac, &iface_ea)) {
+        if (port->cfg->mac && eth_addr_from_string(port->cfg->mac, iface_ea)) {
             /* Find the interface with this Ethernet address (if any) so that
              * we can provide the correct devname to the caller. */
             LIST_FOR_EACH (candidate, port_elem, &port->ifaces) {
-                struct eth_addr candidate_ea;
-                if (!netdev_get_etheraddr(candidate->netdev, &candidate_ea)
+                uint8_t candidate_ea[ETH_ADDR_LEN];
+                if (!netdev_get_etheraddr(candidate->netdev, candidate_ea)
                     && eth_addr_equals(iface_ea, candidate_ea)) {
                     iface = candidate;
                 }
@@ -2730,7 +2681,7 @@ find_local_hw_addr(const struct bridge *br, struct eth_addr *ea,
             }
 
             /* Grab MAC. */
-            error = netdev_get_etheraddr(iface->netdev, &iface_ea);
+            error = netdev_get_etheraddr(iface->netdev, iface_ea);
             if (error) {
                 continue;
             }
@@ -2741,16 +2692,16 @@ find_local_hw_addr(const struct bridge *br, struct eth_addr *ea,
             !eth_addr_is_local(iface_ea) &&
             !eth_addr_is_reserved(iface_ea) &&
             !eth_addr_is_zero(iface_ea) &&
-            (!found_addr || eth_addr_compare_3way(iface_ea, *ea) < 0))
+            (!found_addr || eth_addr_compare_3way(iface_ea, ea) < 0))
         {
-            *ea = iface_ea;
+            memcpy(ea, iface_ea, ETH_ADDR_LEN);
             *hw_addr_iface = iface;
             found_addr = true;
         }
     }
 
     if (!found_addr) {
-        *ea = br->default_ea;
+        memcpy(ea, br->default_ea, ETH_ADDR_LEN);
         *hw_addr_iface = NULL;
     }
 
@@ -2760,7 +2711,7 @@ find_local_hw_addr(const struct bridge *br, struct eth_addr *ea,
 }
 
 static void
-bridge_pick_local_hw_addr(struct bridge *br, struct eth_addr *ea,
+bridge_pick_local_hw_addr(struct bridge *br, uint8_t ea[ETH_ADDR_LEN],
                           struct iface **hw_addr_iface)
 {
     const char *hwaddr;
@@ -2769,10 +2720,10 @@ bridge_pick_local_hw_addr(struct bridge *br, struct eth_addr *ea,
     /* Did the user request a particular MAC? */
     hwaddr = smap_get(&br->cfg->other_config, "hwaddr");
     if (hwaddr && eth_addr_from_string(hwaddr, ea)) {
-        if (eth_addr_is_multicast(*ea)) {
+        if (eth_addr_is_multicast(ea)) {
             VLOG_ERR("bridge %s: cannot set MAC address to multicast "
-                     "address "ETH_ADDR_FMT, br->name, ETH_ADDR_ARGS(*ea));
-        } else if (eth_addr_is_zero(*ea)) {
+                     "address "ETH_ADDR_FMT, br->name, ETH_ADDR_ARGS(ea));
+        } else if (eth_addr_is_zero(ea)) {
             VLOG_ERR("bridge %s: cannot set MAC address to zero", br->name);
         } else {
             return;
@@ -2790,7 +2741,7 @@ bridge_pick_local_hw_addr(struct bridge *br, struct eth_addr *ea,
  * 'hw_addr_iface' must be passed in as a null pointer. */
 static uint64_t
 bridge_pick_datapath_id(struct bridge *br,
-                        const struct eth_addr bridge_ea,
+                        const uint8_t bridge_ea[ETH_ADDR_LEN],
                         struct iface *hw_addr_iface)
 {
     /*
@@ -2843,14 +2794,12 @@ bridge_pick_datapath_id(struct bridge *br,
 static uint64_t
 dpid_from_hash(const void *data, size_t n)
 {
-    union {
-        uint8_t bytes[SHA1_DIGEST_SIZE];
-        struct eth_addr ea;
-    } hash;
+    uint8_t hash[SHA1_DIGEST_SIZE];
 
-    sha1_bytes(data, n, hash.bytes);
-    eth_addr_mark_random(&hash.ea);
-    return eth_addr_to_uint64(hash.ea);
+    BUILD_ASSERT_DECL(sizeof hash >= ETH_ADDR_LEN);
+    sha1_bytes(data, n, hash);
+    eth_addr_mark_random(hash);
+    return eth_addr_to_uint64(hash);
 }
 
 static void
@@ -2861,35 +2810,22 @@ iface_refresh_netdev_status(struct iface *iface)
     enum netdev_features current;
     enum netdev_flags flags;
     const char *link_state;
-    struct eth_addr mac;
+    uint8_t mac[ETH_ADDR_LEN];
     int64_t bps, mtu_64,
 #ifndef OPS_TEMP
     ifindex64,
 #endif
     link_resets;
     int mtu, error;
+
     if (iface_is_synthetic(iface)) {
         return;
     }
 
 #ifdef OPS
     /* Interface status is updated from subsystem.c. */
-    if (!iface->type
-        || (!strcmp(iface->type, OVSREC_INTERFACE_TYPE_SYSTEM))
-        || (!strcmp(iface->type, OVSREC_INTERFACE_TYPE_LOOPBACK))) {
-        return;
-    } else if (!iface->type
-               || (!strcmp(iface->type, OVSREC_INTERFACE_TYPE_VLANSUBINT))) {
-        error = netdev_get_flags(iface->netdev, &flags);
-        if (!error) {
-            const char *state = flags & NETDEV_UP
-                                ? OVSREC_INTERFACE_LINK_STATE_UP
-                                : OVSREC_INTERFACE_LINK_STATE_DOWN;
-            ovsrec_interface_set_admin_state(iface->cfg, state);
-        } else {
-            ovsrec_interface_set_admin_state(iface->cfg, NULL);
-        }
-        return;
+    if (!iface->type || !strcmp(iface->type, "system")) {
+            return;
     }
 #endif
 
@@ -2945,7 +2881,7 @@ iface_refresh_netdev_status(struct iface *iface)
         ovsrec_interface_set_mtu(iface->cfg, NULL, 0);
     }
 
-    error = netdev_get_etheraddr(iface->netdev, &mac);
+    error = netdev_get_etheraddr(iface->netdev, mac);
     if (!error) {
         char mac_string[32];
 
@@ -3121,7 +3057,7 @@ iface_refresh_stats(struct iface *iface)
 #undef IFACE_STAT
     ovs_assert(n <= N_IFACE_STATS);
 
-    ovsrec_interface_set_statistics(iface->cfg, (const char **)keys, values, n);
+    ovsrec_interface_set_statistics(iface->cfg, keys, values, n);
 #undef IFACE_STATS
 }
 
@@ -3336,14 +3272,14 @@ port_refresh_rstp_status(struct port *port)
 static void
 port_refresh_bond_status(struct port *port, bool force_update)
 {
-    struct eth_addr mac;
+    uint8_t mac[ETH_ADDR_LEN];
 
     /* Return if port is not a bond */
     if (list_is_singleton(&port->ifaces)) {
         return;
     }
 
-    if (bond_get_changed_active_slave(port->name, &mac, force_update)) {
+    if (bond_get_changed_active_slave(port->name, mac, force_update)) {
         struct ds mac_s;
 
         ds_init(&mac_s);
@@ -3971,11 +3907,11 @@ bridge_create(const struct ovsrec_bridge *br_cfg)
 
 #ifdef OPS
     /* Use system mac as default mac */
-    memcpy(&br->default_ea, ether_aton(ovs->system_mac), ETH_ADDR_LEN);
+    memcpy(br->default_ea, ether_aton(ovs->system_mac), ETH_ADDR_LEN);
 #else
     /* Derive the default Ethernet address from the bridge's UUID.  This should
      * be unique and it will be stable between ovs-vswitchd runs.  */
-    memcpy(&br->default_ea, &br_cfg->header_.uuid, ETH_ADDR_LEN);
+    memcpy(br->default_ea, &br_cfg->header_.uuid, ETH_ADDR_LEN);
     eth_addr_mark_random(br->default_ea);
 #endif
 
@@ -5150,7 +5086,7 @@ port_configure_bond(struct port *port, struct bond_settings *s)
     if (!mac_s || !ovs_scan(mac_s, ETH_ADDR_SCAN_FMT,
                             ETH_ADDR_SCAN_ARGS(s->active_slave_mac))) {
         /* OVSDB did not store the last active interface */
-        s->active_slave_mac = eth_addr_zero;
+        memset(s->active_slave_mac, 0, sizeof(s->active_slave_mac));
     }
 }
 
@@ -5191,6 +5127,7 @@ iface_get_type(const struct ovsrec_interface *iface,
     } else {
         type = iface->type[0] ? iface->type : "system";
     }
+
     return ofproto_port_open_type(br ? br->datapath_type : "vrf", type);
 }
 

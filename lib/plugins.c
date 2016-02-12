@@ -66,17 +66,10 @@ plugins_open_plugin(const char *filename, void *data)
     }
 
     // The following APIs are optional, so don't fail if they are missing.
-    if (!(plcl->netdev_register = lt_dlsym(handle, "netdev_register"))) {
-            VLOG_INFO("netdev_register not supported by %s plugin", filename);
-    }
+    plcl->netdev_register = lt_dlsym(handle, "netdev_register");
+    plcl->ofproto_register = lt_dlsym(handle, "ofproto_register");
+    plcl->bufmon_register = lt_dlsym(handle, "bufmon_register");
 
-    if (!(plcl->ofproto_register = lt_dlsym(handle, "ofproto_register"))) {
-            VLOG_INFO("ofproto_register not supported by %s plugin", filename);
-    }
-
-    if (!(plcl->bufmon_register = lt_dlsym(handle, "bufmon_register"))) {
-            VLOG_INFO("bufmon_register not supported by %s plugin", filename);
-    }
 
     if (lt_dlcaller_set_data(interface_id, handle, plcl)) {
         VLOG_ERR("plugin %s initialized twice? must be a bug", filename);

@@ -19,7 +19,6 @@
 #include "daemon-private.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "dirs.h"
 #include "ovs-thread.h"
 #include "poll-loop.h"
 #include "openvswitch/vlog.h"
@@ -447,8 +446,7 @@ make_pidfile(void)
     /* Don't close the pidfile till the process exits. */
 }
 
-void
-daemonize_start(bool access_datapath OVS_UNUSED)
+void daemonize_start(void)
 {
     if (pidfile) {
         make_pidfile();
@@ -475,11 +473,6 @@ daemonize_complete(void)
     service_complete();
 }
 
-void
-daemon_become_new_user(bool access_datapath OVS_UNUSED)
-{
-}
-
 /* Returns the file name that would be used for a pidfile if 'name' were
  * provided to set_pidfile().  The caller must free the returned string. */
 char *
@@ -490,10 +483,4 @@ make_pidfile_name(const char *name)
     } else {
         return xasprintf("%s/%s.pid", ovs_rundir(), program_name);
     }
-}
-
-void
-daemon_set_new_user(const char *user_spec OVS_UNUSED)
-{
-    VLOG_FATAL("--user options is not currently supported.");
 }
