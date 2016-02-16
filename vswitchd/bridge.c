@@ -1408,6 +1408,9 @@ port_configure(struct port *port)
 #endif
     struct ofproto_bundle_settings s;
     struct iface *iface;
+
+    memset(&s, 0, sizeof s);
+
 #ifdef OPS
     int prev_bond_handle = port->bond_hw_handle;
     int cfg_slave_count;
@@ -1567,6 +1570,7 @@ port_configure(struct port *port)
     s.port_options[PORT_OPT_VLAN] = &cfg->vlan_options;
     s.port_options[PORT_OPT_BOND] = &cfg->bond_options;
     s.port_options[PORT_HW_CONFIG] = &cfg->hw_config;
+    s.port_options[PORT_OTHER_CONFIG] = &cfg->other_config;
 #endif
 
 #ifdef OPS
@@ -2267,7 +2271,7 @@ sflow_agent_address(struct ofproto_sflow_options *oso, const char *intf_name, co
 
         /* No L3 interface exists with IPv4 configured. Assign default IP. */
         if (port == NULL) {
-            VLOG_ERR("No L3 interface exists to assign a source IP to sFlow Agent.");
+            VLOG_DBG("No L3 interface exists to assign a source IP to sFlow Agent.");
             return;
         }
     }
