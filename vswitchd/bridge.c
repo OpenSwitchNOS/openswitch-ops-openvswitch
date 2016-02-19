@@ -238,6 +238,10 @@ static struct ovsdb_idl_txn *daemonize_txn;
 /* Most recently processed IDL sequence number. */
 #ifdef OPS
 unsigned int idl_seqno;
+/*
+ * Track changes for mac learning
+ */
+static uint64_t mlearn_seqno = LLONG_MIN;
 #else
 static unsigned int idl_seqno;
 #endif
@@ -318,6 +322,7 @@ static void vrf_del_ports(struct vrf *,
 static bool enable_lacp(struct port *port, bool *activep);
 static void bridge_configure_vlans(struct bridge *br);
 static unixctl_cb_func vlan_unixctl_show;
+static void mac_learning_check_seq(struct bridge *br);
 #endif
 static void bridge_configure_datapath_id(struct bridge *);
 #ifndef OPS_TEMP
@@ -668,6 +673,18 @@ bridge_init(const char *remote)
     ovsdb_idl_omit(idl, &ovsrec_temp_sensor_col_hw_config);
     ovsdb_idl_omit(idl, &ovsrec_temp_sensor_col_external_ids);
     ovsdb_idl_omit(idl, &ovsrec_temp_sensor_col_temperature);
+
+    /*
+     * MAC table related
+     */
+    ovsdb_idl_add_table(idl, &ovsrec_table_mac);
+    ovsdb_idl_add_column(idl, &ovsrec_mac_col_status);
+    ovsdb_idl_add_column(idl, &ovsrec_mac_col_bridge);
+    ovsdb_idl_add_column(idl, &ovsrec_mac_col_from);
+    ovsdb_idl_add_column(idl, &ovsrec_mac_col_vlan);
+    ovsdb_idl_add_column(idl, &ovsrec_mac_col_mac_addr);
+    ovsdb_idl_add_column(idl, &ovsrec_mac_col_tunnel_key);
+    ovsdb_idl_add_column(idl, &ovsrec_mac_col_port);
 #endif
 
     /* Register unixctl commands. */
@@ -3584,6 +3601,117 @@ run_stats_update(void)
     }
 }
 
+#if 0
+static void
+bridge_ovsdb_add_local_mac_entry (struct bridge *br, ofproto_mlearn_hmap_node *mlearn_node)
+{
+    const struct ovsrec_mac *mac_e = NULL;
+
+    ovsrec_mac_set_bridge(mac_e, const struct ovsrec_bridge *bridge);
+    ovsrec_mac_set_from(mac_e, "learning");
+    ovsrec_mac_set_mac_addr(mac_e, eth_mac_to_str(mlearn_node->mac));
+    ovsrec_mac_set_port(mac_e, const struct ovsrec_port *port);
+//    ovsrec_mac_set_status(mac_e, const struct smap *);
+//    ovsrec_mac_set_tunnel_key(mac_e, const int64_t *tunnel_key, size_t n_tunnel_key);
+    ovsrec_mac_set_vlan(mac_e, mlearn_node->vlan);
+
+}
+
+static void
+bridge_ovsdb_lookup_local_mac_entry (struct bridge *br, ofproto_mlearn_hmap_node *mlearn_node)
+{
+    const struct ovsrec_mac *mac_e = NULL;
+    OVSREC_MAC_FOR_EACH(mac_e, idl) {
+        if ((strcmp(eth_mac_to_str(mlearn_node->mac), mac_e->mac_addr) == 0) &&
+            (strcmp("learning", mac_e->from) == 0) &&
+            (mlearn_node->vlan == mac_e->vlan) &&
+            (mac_e->bridge == )) {
+            /*
+             * row found, now delete
+             */
+        }
+    }
+}
+
+static void
+bridge_ovsdb_del_local_mac_entry (struct bridge *br, ofproto_mlearn_hmap_node *mlearn_node)
+{
+    const struct ovsrec_mac *mac_e = NULL;
+
+    ovsrec_mac_set_bridge(mac_e, const struct ovsrec_bridge *bridge);
+    ovsrec_mac_set_from(mac_e, "learning");
+    ovsrec_mac_set_mac_addr(mac_e, eth_mac_to_str(mlearn_node->mac));
+    ovsrec_mac_set_port(mac_e, const struct ovsrec_port *port);
+//    ovsrec_mac_set_status(mac_e, const struct smap *);
+//    ovsrec_mac_set_tunnel_key(mac_e, const int64_t *tunnel_key, size_t n_tunnel_key);
+    ovsrec_mac_set_vlan(mac_e, mlearn_node->vlan);
+
+}
+#endif
+
+static void
+mac_learning_check_seq(struct bridge *br)
+{
+    if (!br) {
+        VLOG_ERR("mac_learning_check_seq: Invalid argument");
+        return;
+    }
+    struct ofproto *ofproto = br->ofproto;
+    uint64_t seq = seq_read(mac_learning_trigger_seq_get());
+    struct ofproto_mlearn_hmap *mhmap = NULL;
+    /*
+    struct ofproto_mlearn_hmap_node *mlearn_node = NULL;
+    enum ovsdb_idl_txn_status status;
+    static struct ovsdb_idl_txn *mac_txn;
+    */
+
+    if (seq != mlearn_seqno) {
+        /*
+         * sequence change detected
+         */
+        mlearn_seqno = seq;
+        VLOG_INFO("seq change read by bridge.c");
+        ofproto_mac_learning_get(ofproto, &mhmap);
+
+        if (mhmap) {
+            /*
+             * check TODO where should be the transaction init called
+             */
+            VLOG_INFO("received hash map");
+#if 0
+            if (!mac_txn) {
+                mac_txn = ovsdb_idl_txn_create(idl);
+            }
+            HMAP_FOR_EACH(mlearn_node, hmap_node, mhmap) {
+                if (mlearn_node->oper == MLEARN_ADD) {
+                    /*
+                     * add
+                     */
+                    bridge_ovsdb_add_local_mac_entry(br, mlearn_node);
+                } else {
+                    /*
+                     * del
+                     */
+                    bridge_ovsdb_del_local_mac_entry(br, mlearn_node);
+                }
+            }
+            if (mac_txn) {
+                status = ovsdb_idl_txn_commit(mac_txn);
+                if (status == ) {
+                    /*
+                     * OK
+                     */
+                    destroy(mac_txn);
+                    mac_txn = NULL;
+                }
+            }
+#endif
+        } else {
+            VLOG_ERR("hash map is NULL");
+        }
+    }
+}
+
 /* Update bridge/port/interface status if necessary. */
 static void
 run_status_update(void)
@@ -3770,6 +3898,13 @@ bridge_run(void)
                                         "flow-restore-wait", false));
     }
 
+#ifdef OPS
+    struct bridge *br;
+    HMAP_FOR_EACH (br, node, &all_bridges) {
+        mac_learning_check_seq(br);
+    }
+#endif
+
     bridge_run__();
 
     /* Re-configure SSL.  We do this on every trip through the main loop,
@@ -3863,6 +3998,14 @@ bridge_run(void)
 #endif
 }
 
+#ifdef OPS
+static void
+br_mac_learning_wait(void)
+{
+     seq_wait(mac_learning_trigger_seq_get(), mlearn_seqno);
+}
+#endif
+
 void
 bridge_wait(void)
 {
@@ -3893,6 +4036,9 @@ bridge_wait(void)
 
     status_update_wait();
     system_stats_wait();
+#ifdef OPS
+    br_mac_learning_wait();
+#endif
 }
 
 /* Adds some memory usage statistics for bridges into 'usage', for use with

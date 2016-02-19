@@ -1810,6 +1810,8 @@ struct ofproto_class {
     /* Enable/Disable ECMP hash config */
     int (*l3_ecmp_hash_set)(const struct ofproto *ofproto, unsigned int hash,
                             bool enable);
+
+    int (*get_mac_learning_hmap)(struct ofproto_mlearn_hmap **mhmap);
 #endif
 };
 
