@@ -8102,4 +8102,101 @@ ofproto_l3_ecmp_hash_set(struct ofproto *ofproto, unsigned int hash, bool enable
 
     return rc;
 }
+
+/* STG  Routines */
+int
+ofproto_create_stg(struct ofproto *ofproto, int *p_stg)
+{
+    int rc;
+
+    rc = ofproto->ofproto_class->create_stg ?
+         ofproto->ofproto_class->create_stg(ofproto, p_stg) : EOPNOTSUPP;
+
+    VLOG_DBG("Create STG entry rc=(%d)", rc);
+
+    return rc;
+} /* ofproto_craete_stg */
+
+int
+ofproto_delete_stg(struct ofproto *ofproto, int stg)
+{
+    int rc;
+
+    rc = ofproto->ofproto_class->delete_stg ?
+         ofproto->ofproto_class->delete_stg(ofproto, stg) : EOPNOTSUPP;
+
+    VLOG_DBG("Delete STG entry rc=(%d)", rc);
+
+    return rc;
+} /* ofproto_delete_stg */
+
+int
+ofproto_add_stg_vlan(struct ofproto *ofproto, int stg, int vid)
+{
+    int rc;
+
+    rc = ofproto->ofproto_class->add_stg_vlan ?
+         ofproto->ofproto_class->add_stg_vlan(ofproto, stg, vid) : EOPNOTSUPP;
+
+    VLOG_DBG("Add vlan to STG entry rc=(%d)", rc);
+
+    return rc;
+} /* ofproto_add_stg_vlan */
+
+int
+ofproto_remove_stg_vlan(struct ofproto *ofproto, int stg, int vid)
+{
+    int rc;
+
+    rc = ofproto->ofproto_class->remove_stg_vlan ?
+         ofproto->ofproto_class->remove_stg_vlan(ofproto, stg, vid) : EOPNOTSUPP;
+
+    VLOG_DBG("Remove vlan from STG entry rc=(%d)", rc);
+
+    return rc;
+} /* ofproto_remove_stg_vlan */
+
+int
+ofproto_set_stg_port_state(struct ofproto *ofproto, char *port_name, int stg,
+                               int stp_state, bool port_stp_set)
+{
+    int rc;
+
+    rc = ofproto->ofproto_class->set_stg_port_state ?
+         ofproto->ofproto_class->set_stg_port_state(ofproto, port_name, stg, stp_state, port_stp_set) : EOPNOTSUPP;
+
+
+    VLOG_DBG("Set Port state in STG entry rc=(%d)", rc);
+
+    return rc;
+} /* ofproto_set_stg_port_state */
+
+int
+ofproto_get_stg_port_state(struct ofproto *ofproto, char *port_name, int stg, int *p_stp_state)
+{
+    int rc;
+
+    rc = ofproto->ofproto_class->get_stg_port_state ?
+         ofproto->ofproto_class->get_stg_port_state(ofproto, port_name, stg, *p_stp_state) : EOPNOTSUPP;
+
+
+    VLOG_DBG("Get Port state in STG entry rc=(%d)", rc);
+
+    return rc;
+} /* ofproto_get_stg_port_state */
+
+int
+ofproto_get_stg_default(struct ofproto *ofproto, int *p_stg)
+{
+    int rc;
+    struct asic_plugin_interface *intf;
+
+    rc = ofproto->ofproto_class->get_stg_default ?
+         ofproto->ofproto_class->get_stg_default(ofproto, *p_stg) : EOPNOTSUPP;
+
+    VLOG_DBG("Get default STG entry rc=(%d)", rc);
+
+    return rc;
+} /* ofproto_get_stg_default */
+
 #endif

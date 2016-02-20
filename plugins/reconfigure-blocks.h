@@ -16,7 +16,7 @@
 
 #ifndef RECONFIGURE_BLOCKS_H
 #define RECONFIGURE_BLOCKS_H 1
-
+#include "hmap.h"
 /* Reconfigure Blocks allows an external SwitchD plugin to register callback
  * handlers to be triggered at several different points in the reconfigure
  * bridge event. This enables the external plugin to be able to listen and make
@@ -102,6 +102,7 @@ enum block_id {
 struct blk_params{
     struct ovsdb_idl *idl;   /* OVSDB IDL handler */
     struct ofproto *ofproto; /* Ofproto handler */
+    const struct ovsrec_bridge *cfg;
 };
 
 int execute_reconfigure_block(struct blk_params *params, enum block_id blk_id);

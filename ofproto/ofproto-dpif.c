@@ -5823,5 +5823,12 @@ const struct ofproto_class ofproto_dpif_class = {
     NULL,
     NULL,
     NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
 #endif
 };
