@@ -553,6 +553,15 @@ int ofproto_l3_route_action(struct ofproto *ofproto,
 int ofproto_l3_ecmp_set(struct ofproto *ofproto, bool enable);
 int ofproto_l3_ecmp_hash_set(struct ofproto *ofproto, unsigned int hash,
                              bool enable);
+int ofproto_create_stg(struct ofproto *ofproto, int *p_stg);
+int ofproto_delete_stg(struct ofproto *ofproto, int stg);
+int ofproto_add_stg_vlan(struct ofproto *ofproto, int stg, int vid);
+int ofproto_remove_stg_vlan(struct ofproto *ofproto, int stg, int vid);
+int ofproto_set_stg_port_state(struct ofproto *ofproto, char *port_name, int stg,
+                                  int stp_state, bool port_stp_set);
+int ofproto_get_stg_port_state(struct ofproto *ofproto, char *port_name, int stg, int *p_stp_state);
+int ofproto_get_stg_default(struct ofproto *ofproto, int *p_stg);
+
 #endif
 
 /* Configuration of mirrors. */

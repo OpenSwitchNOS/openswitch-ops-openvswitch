@@ -1810,6 +1810,28 @@ struct ofproto_class {
     /* Enable/Disable ECMP hash config */
     int (*l3_ecmp_hash_set)(const struct ofproto *ofproto, unsigned int hash,
                             bool enable);
+    /* create stg group */
+    int (*create_stg)(const struct ofproto *ofproto, int *p_stg);
+
+    /* delete stg group */
+    int (*delete_stg)(const struct ofproto *ofproto, int stg);
+
+    /* add vlan to stg group */
+    int (*add_stg_vlan)(const struct ofproto *ofproto, int stg, int vid);
+
+    /* remove vlan from stg group */
+    int (*remove_stg_vlan)(const struct ofproto *ofproto, int stg, int vid);
+
+    /* set port state in stg group */
+    int (*set_stg_port_state)(const struct ofproto *ofproto, char *port_name, int stg,
+                              int stp_state, bool port_stp_set);
+
+    /* get port state in stg group */
+    int (*get_stg_port_state)(const struct ofproto *ofproto, char *port_name, int stg, int *p_stp_state);
+
+    /* get default stg group */
+    int (*get_stg_default)(const struct ofproto *ofproto, int *p_stg);
+
 #endif
 };
 
