@@ -2236,75 +2236,97 @@ port_is_bond_fake_iface(const struct port *port)
 #endif
 
 #ifdef OPS
+/* Find a port that has an ipv4 address */
+static char *
+sflow_agent_address_default(void)
+{
+    const struct ovsrec_port *port;
+
+    OVSREC_PORT_FOR_EACH(port, idl) {
+        if (port->ip4_address) {
+            /* Get only IP part and ignore subnet. */
+            if (strchr(port->ip4_address, '/')) {
+                *strchr(port->ip4_address, '/') = '\0';
+            }
+            return port->ip4_address;
+        }
+    }
+
+    VLOG_DBG("No L3 interface exists to assign a source IP to sFlow Agent.");
+    return NULL;
+}
+
 /* Given an interface name, get it's IP address (v4/v6) and pass it to sFlow
  * agent. This is used as sFlow Agent IP in datagram. */
 static void
 sflow_agent_address(struct ofproto_sflow_options *oso, const char *intf_name, const char *af)
 {
     const struct ovsrec_port *port;
-    struct in_addr ip;
 
     if (oso == NULL) {
         VLOG_ERR("Assigning source IP to sFlow Agent, but sflow options is null.");
         return;
     }
 
-    /* Agent interface name not configured. Pick an L3 interface with IPv4
-     * configured. */
+    /* Agent interface name not given. Pick an interface with ipv4 configured.*/
     if (intf_name == NULL) {
-        OVSREC_PORT_FOR_EACH(port, idl) {
-            if (port->ip4_address && (inet_pton(AF_INET, port->ip4_address, &ip) != -1)) {
-                /* First interface with a valid IPv4 address */
-                oso->agent_ip = port->ip4_address;
-
-                /* Get only IP part and ignore subnet. */
-                if (strchr(oso->agent_ip, '/')) {
-                    *strchr(oso->agent_ip, '/') = '\0';
-                }
-
-                VLOG_DBG("Input interface is NULL. Iterating over port records "
-                        "found a valid ip4 address: %s(ip)", oso->agent_ip);
-                return;
-            }
-        }
-
-        /* No L3 interface exists with IPv4 configured. */
-        if (port == NULL) {
-            VLOG_DBG("No L3 interface exists to assign a source IP to sFlow Agent.");
-            return;
-        }
+        oso->agent_ip = sflow_agent_address_default();
+        return;
     }
 
     /* An interface name provided as input. Get it's IPv4 address. */
     OVSREC_PORT_FOR_EACH(port, idl) {
-      if (strcmp(port->name, intf_name) == 0) {
-        break;  /* record found */
-      }
-    }
-
-    /* This condition is not possible. */
-    if (port == NULL) {
-        VLOG_ERR("Input L3 interface doesn't exist in database.");
-    }
-
-    /* af is NULL in OVSDB. Use default address family (ipv4). */
-    if (af == NULL) {
-        VLOG_DBG("Using default address family (ipv4). ip addr of port: %s is %s",
-                port->name, (port->ip4_address)? port->ip4_address: "NULL");
-
-        oso->agent_ip = port->ip4_address;
-
-        if (strchr(oso->agent_ip, '/')) {
-            *strchr(oso->agent_ip, '/') = '\0';
+        if (strcmp(port->name, intf_name) == 0) {
+            break;
         }
+    }
 
+    /* Error conditions. Assign defaults. - Start */
+
+    /* This condition is possible if unconfigured interface is given as
+     * agent interface.*/
+    if (port == NULL) {
+        oso->agent_ip = sflow_agent_address_default();
+        VLOG_DBG("Input L3 interface %s doesn't exist in database."
+                "Assigning IP %s based on configured interfaces.",
+                intf_name, oso->agent_ip?oso->agent_ip:"NULL");
         return;
     }
 
-    /* valid address family given in CLI */
-    if (strcmp(af, "ipv4") == 0) {
+    if ((af == NULL) && (port->ip4_address == NULL)) {
+        oso->agent_ip = sflow_agent_address_default();
+        VLOG_DBG("There is no ipv4 address on interface %s. Assigning IP %s "
+                "based on configured interfaces.", intf_name,
+                oso->agent_ip?oso->agent_ip: "NULL");
+        return;
+    }
+
+    if (af && (strcmp(af, "ipv4")==0) && (port->ip4_address == NULL)) {
+        oso->agent_ip = sflow_agent_address_default();
+        VLOG_DBG("There is no ipv4 address on interface %s. Assigning IP %s "
+                "based on configured interfaces.", intf_name,
+                oso->agent_ip?oso->agent_ip: "NULL");
+        return;
+    }
+
+    if (af && (strcmp(af, "ipv6")==0) && (port->ip6_address == NULL)) {
+        oso->agent_ip = sflow_agent_address_default();
+        VLOG_DBG("There is no ipv4 address on interface %s. Assigning IP %s "
+                "based on configured interfaces.", intf_name,
+                oso->agent_ip?oso->agent_ip: "NULL");
+        return;
+    }
+    /* Error conditions. Assign defaults. - Done */
+
+    /* af is NULL in OVSDB. Use default address family (ipv4). */
+    if (af == NULL) {
         oso->agent_ip = port->ip4_address;
-    } else {
+    }
+    /* valid address family given in CLI */
+    else if (strcmp(af, "ipv4") == 0) {
+        oso->agent_ip = port->ip4_address;
+    }
+    else if (strcmp(af, "ipv6") == 0) {
         oso->agent_ip = port->ip6_address;
     }
 
