@@ -485,6 +485,12 @@ enum ovsrec_port_config_admin_e {
 #define SYSTEM_OTHER_CONFIG_MAP_TFTP_SOURCE          "tftp_source"
 #define SYSTEM_OTHER_CONFIG_MAP_PROTOCOLS_SOURCE     "protocols_source"
 
+/*DHCP-Relay global configuration key */
+#define SYSTEM_OTHER_CONFIG_MAP_DHCP_RELAY_ENABLED    "dhcp_relay_enabled"
+
+/*UDP forward-protocol global configuration key */
+#define SYSTEM_OTHER_CONFIG_MAP_UDP_FWD_ENABLED       "udp_fwd_enabled"
+
 /* lacp global configuration parameters */
 #define SYSTEM_LACP_CONFIG_MAP_LACP_SYSTEM_ID        "lacp-system-id"
 #define SYSTEM_LACP_CONFIG_MAP_LACP_SYSTEM_PRIORITY  "lacp-system-priority"
