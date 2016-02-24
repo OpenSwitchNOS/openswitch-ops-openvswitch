@@ -5132,6 +5132,7 @@ port_configure_bond(struct port *port, struct bond_settings *s)
     struct iface *iface;
     const char *mac_s;
     int miimon_interval;
+    const char *bond_mode_str;
 
     s->name = port->name;
 #ifdef OPS
@@ -5139,10 +5140,11 @@ port_configure_bond(struct port *port, struct bond_settings *s)
 #else
     s->balance = BM_AB;
 #endif
-    if (port->cfg->bond_mode) {
-        if (!bond_mode_from_string(&s->balance, port->cfg->bond_mode)) {
+    bond_mode_str = smap_get(&port->cfg->other_config, OVSDB_BONDMODE_KEY);
+    if (bond_mode_str) {
+        if (!bond_mode_from_string(&s->balance, bond_mode_str)) {
             VLOG_WARN("port %s: unknown bond_mode %s, defaulting to %s",
-                      port->name, port->cfg->bond_mode,
+                      port->name, bond_mode_str,
                       bond_mode_to_string(s->balance));
         }
     } else {

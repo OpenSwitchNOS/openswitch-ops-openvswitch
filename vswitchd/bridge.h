@@ -24,6 +24,8 @@
 #include "ofproto/ofproto.h"
 #endif
 
+#define OVSDB_BONDMODE_KEY "bond_mode"
+
 struct simap;
 struct port {
     struct hmap_node hmap_node; /* Element in struct bridge's "ports" hmap. */
