@@ -591,6 +591,79 @@ vrf_reconfigure_ecmp(struct vrf *vrf)
         }
 }
 
+/* For each route row in OVSDB, walk all the nexthops and
+ * return TRUE if any nexthop is modified
+ */
+bool
+is_route_nh_rows_modified (const struct ovsrec_route *route)
+{
+  const struct ovsrec_nexthop *nexthop = NULL;
+  int index;
+
+  if( !route) {
+      return false;
+  }
+  for(index=0; index < route->n_nexthops; index++) {
+      nexthop = route->nexthops[index];
+      if ((OVSREC_IDL_IS_ROW_INSERTED(nexthop, idl_seqno)) ||
+          (OVSREC_IDL_IS_ROW_MODIFIED(nexthop, idl_seqno)))
+        return true;
+  }
+
+  return false;
+}
+
+void
+vrf_reconfigure_nexthops(struct vrf *vrf)
+{
+    struct route *route, *next;
+    const struct ovsrec_route  *route_row = NULL, *route_row_local = NULL;
+    const struct ovsrec_nexthop *nexthop_row = NULL;
+    const struct ovsrec_nexthop  *nh_row = NULL ;
+
+    route_row = ovsrec_route_first(idl);
+    if (!route_row) {
+        /* May be all routes got deleted, cleanup if any in this vrf hash */
+        HMAP_FOR_EACH_SAFE (route, next, node, &vrf->all_routes) {
+            vrf_route_delete(vrf, route);
+        }
+        return;
+    }
+
+    nexthop_row = ovsrec_nexthop_first(idl);
+    /* looking for any modification in  the nexthop table
+     * generqally checks if a nexthop has been changed from selected to unselected
+     */
+    if ((!OVSREC_IDL_ANY_TABLE_ROWS_MODIFIED(nexthop_row, idl_seqno)) &&
+        (!OVSREC_IDL_ANY_TABLE_ROWS_DELETED(nexthop_row, idl_seqno)) &&
+        (!OVSREC_IDL_ANY_TABLE_ROWS_INSERTED(nexthop_row, idl_seqno))) {
+        return;
+    } else {
+        if ((OVSREC_IDL_ANY_TABLE_ROWS_MODIFIED(nexthop_row, idl_seqno)) &&
+            !OVSREC_IDL_ANY_TABLE_ROWS_INSERTED(nexthop_row, idl_seqno) &&
+            !(OVSREC_IDL_ANY_TABLE_ROWS_DELETED(nexthop_row, idl_seqno))) {
+
+            OVSREC_ROUTE_FOR_EACH (route_row_local, idl)
+            {
+                nh_row = route_row_local->nexthops[0];
+                if (nh_row == NULL) {
+                    VLOG_ERR("Null next hop");
+                    continue;
+                }
+                if ((is_route_nh_rows_modified(route_row_local))) {
+                    route = vrf_route_hash_lookup(vrf, route_row_local);
+                    if (vrf_is_route_row_selected(route_row_local)) {
+                        if (route) {
+			    /* route is modified as one of the nexthops  has been modified */
+                            vrf_route_modify(vrf, route, route_row_local);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 void
 vrf_reconfigure_routes(struct vrf *vrf)
 {
