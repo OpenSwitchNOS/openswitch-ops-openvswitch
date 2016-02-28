@@ -14,6 +14,8 @@
 
 import uuid
 
+import six
+
 import ovs.jsonrpc
 import ovs.db.parser
 import ovs.db.schema
@@ -406,7 +408,11 @@ class Idl(object):
         if not new:
             # Delete row.
             if row:
-                del table.rows[uuid]
+                if table.track:
+                    _deleted = table.rows.pop(uuid)
+                    table.track_list[_deleted] = []
+                else:
+                    del table.rows[uuid]
                 changed = True
                 self.notify(ROW_DELETE, row)
             else:
@@ -441,6 +447,7 @@ class Idl(object):
 
     def __row_update(self, table, row, row_json):
         changed = False
+        changed_columns = []
         for column_name, datum_json in row_json.iteritems():
             column = table.columns.get(column_name)
             if not column:
@@ -459,12 +466,20 @@ class Idl(object):
 
             if datum != row._data[column_name]:
                 row._data[column_name] = datum
+                changed_columns.append(column_name)
                 if column.alert:
                     changed = True
             else:
                 # Didn't really change but the OVSDB monitor protocol always
                 # includes every value in a row.
                 pass
+
+        if table.track:
+            if row in table.track_list:
+                table.track_list[row] |= set(changed_columns)
+            else:
+                table.track_list[row] = set(changed_columns)
+
         return changed
 
     def __create_row(self, table, uuid):
@@ -1334,8 +1349,10 @@ class SchemaHelper(object):
         self._tables = {}
         self._readonly = {}
         self._all = False
+        self._track = {}
+        self._track_all = False
 
-    def register_columns(self, table, columns, readonly=[]):
+    def register_columns(self, table, columns, readonly=[], track=False):
         """Registers interest in the given 'columns' of 'table'.  Future calls
         to get_idl_schema() will include 'table':column for each column in
         'columns'. This function automatically avoids adding duplicate entries
@@ -1355,8 +1372,9 @@ class SchemaHelper(object):
         columns = set(columns) | self._tables.get(table, set())
         self._tables[table] = columns
         self._readonly[table] = readonly
+        self._track[table] = track
 
-    def register_table(self, table):
+    def register_table(self, table, track=False):
         """Registers interest in the given all columns of 'table'. Future calls
         to get_idl_schema() will include all columns of 'table'.
 
@@ -1364,10 +1382,12 @@ class SchemaHelper(object):
         """
         assert type(table) is str
         self._tables[table] = set()  # empty set means all columns in the table
+        self._track[table] = track
 
-    def register_all(self):
+    def register_all(self, track=False):
         """Registers interest in every column of every table."""
         self._all = True
+        self._track_all = track
 
     def get_idl_schema(self):
         """Gets a schema appropriate for the creation of an 'ovs.db.id.IDL'
@@ -1385,6 +1405,14 @@ class SchemaHelper(object):
 
             schema.tables = schema_tables
         schema.readonly = self._readonly
+
+        for table, schema_table in six.iteritems(schema.tables):
+            if (self._all and self._track_all) or (not self._all and self._track[table]):
+                schema_table.track = True
+                schema_table.track_list = {}
+            else:
+                schema_table.track = False
+
         return schema
 
     def _keep_table_columns(self, schema, table_name, columns):
