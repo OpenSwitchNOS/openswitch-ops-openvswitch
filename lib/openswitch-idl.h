@@ -518,6 +518,21 @@ enum ovsrec_port_config_admin_e {
 #define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_IBGP           "BGP_iBGP"
 #define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_UPTIME         "BGP_uptime"
 
+/* BGP_ROUTE table path_attributes column definitions */
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_FLAGS            "BGP_flags"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_AS_PATH          "BGP_AS_path"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_ORIGIN           "BGP_origin"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_LOC_PREF         "BGP_loc_pref"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_INTERNAL         "BGP_internal"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_IBGP             "BGP_iBGP"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_UPTIME           "BGP_uptime"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_WEIGHT           "BGP_weight"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_AGGREGATOR_ID    "BGP_aggregator_id"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_AGGREGATOR_ADDR  "BGP_aggregator_addr"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_COMMUNITY        "BGP_community"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_ECOMMUNITY       "BGP_ecommunity"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_ATOMIC_AGGREGATE "BGP_atomic_aggregate"
+
 /* BGP Neighbor state, goes into "status" column */
 #define BGP_PEER_STATE                          "bgp_peer_state"
 
