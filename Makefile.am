@@ -390,3 +390,4 @@ include include/automake.mk
 include vswitchd/automake.mk
 include ovsdb/automake.mk
 include python/automake.mk
+include vtep/automake.mk
