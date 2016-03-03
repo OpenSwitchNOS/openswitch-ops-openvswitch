@@ -18,7 +18,7 @@
 
 #include <netinet/in.h>
 #include "hmap.h"
-#include "lib/vswitch-idl.h"
+#include "vswitch-idl.h"
 #include "ofproto/ofproto.h"
 
 #define VRF_IPV4_MAX_LEN        32

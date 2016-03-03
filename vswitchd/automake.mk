@@ -8,6 +8,13 @@ DISTCLEANFILES += \
 	vswitchd/ovs-vswitchd.8
 
 if OPS
+ovsvswitchdincludedir = $(includedir)/ovs
+ovsvswitchdinclude_HEADERS = \
+       vswitchd/bridge.h \
+       vswitchd/vrf.h
+endif
+
+if OPS
 vswitchd_ops_switchd_SOURCES = \
 	vswitchd/bridge.c \
 	vswitchd/bridge.h \

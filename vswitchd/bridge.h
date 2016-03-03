@@ -20,7 +20,7 @@
 #ifdef OPS
 #include <netinet/in.h>
 #include "hmap.h"
-#include "lib/vswitch-idl.h"
+#include "vswitch-idl.h"
 #include "ofproto/ofproto.h"
 #endif
 
@@ -38,6 +38,40 @@ struct port {
 #ifdef OPS
     int bond_hw_handle;        /* Hardware bond identifier. */
 #endif
+};
+
+struct bridge {
+    struct hmap_node node;      /* In 'all_bridges'. */
+    char *name;                 /* User-specified arbitrary name. */
+    char *type;                 /* Datapath type. */
+    struct eth_addr ea;         /* Bridge Ethernet Address. */
+    struct eth_addr default_ea; /* Default MAC. */
+    const struct ovsrec_bridge *cfg;
+
+    /* OpenFlow switch processing. */
+    struct ofproto *ofproto;    /* OpenFlow switch. */
+
+    /* Bridge ports. */
+    struct hmap ports;          /* "struct port"s indexed by name. */
+    struct hmap ifaces;         /* "struct iface"s indexed by ofp_port. */
+    struct hmap iface_by_name;  /* "struct iface"s indexed by name. */
+
+#ifdef OPS
+    /* Bridge VLANs. */
+    struct hmap vlans;          /* "struct vlan"s indexed by VID. */
+#endif
+
+#ifndef OPS_TEMP
+    /* Port mirroring. */
+    struct hmap mirrors;        /* "struct mirror" indexed by UUID. */
+#endif
+    /* Used during reconfiguration. */
+    struct shash wanted_ports;
+
+    /* Synthetic local port if necessary. */
+    struct ovsrec_port synth_local_port;
+    struct ovsrec_interface synth_local_iface;
+    struct ovsrec_interface *synth_local_ifacep;
 };
 
 void bridge_init(const char *remote);
