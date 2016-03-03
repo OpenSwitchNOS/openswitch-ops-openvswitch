@@ -5035,7 +5035,7 @@ port_configure_lacp(struct port *port, struct lacp_settings *s)
     s->fast = lacp_time && !strcasecmp(lacp_time, "fast");
 
     s->fallback_ab_cfg = smap_get_bool(&port->cfg->other_config,
-                                       "lacp-fallback-ab", false);
+                                       "lacp-fallback", false);
 
     return s;
 }
@@ -5140,7 +5140,7 @@ port_configure_bond(struct port *port, struct bond_settings *s)
     }
 
     s->lacp_fallback_ab_cfg = smap_get_bool(&port->cfg->other_config,
-                                       "lacp-fallback-ab", false);
+                                            "lacp-fallback", false);
 
     LIST_FOR_EACH (iface, port_elem, &port->ifaces) {
         netdev_set_miimon_interval(iface->netdev, miimon_interval);
