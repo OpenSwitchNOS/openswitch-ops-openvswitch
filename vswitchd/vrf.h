@@ -18,6 +18,7 @@
 
 #include <netinet/in.h>
 #include "hmap.h"
+#include "vswitch-config.h"
 #include "lib/vswitch-idl.h"
 #include "ofproto/ofproto.h"
 
@@ -26,14 +27,6 @@
 #define VRF_ROUTE_HASH_MAXSIZE  64 /* max prefixlen (49) + maxlen of "from" */
 
 struct bridge; /* forward declaration */
-struct vrf {
-    struct bridge *up;
-    struct hmap_node node;              /* In 'all_vrfs'. */
-    const struct ovsrec_vrf *cfg;
-    struct hmap all_neighbors;
-    struct hmap all_routes;
-    struct hmap all_nexthops;
-};
 
 /* Local Neighbor struct to store in hash-map and handle add/modify/deletes */
 struct neighbor {
