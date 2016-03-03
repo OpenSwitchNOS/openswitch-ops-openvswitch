@@ -107,8 +107,6 @@ typedef struct _SFLReceiver {
     /* private fields */
     SFLSampleCollector sampleCollector;
 #ifdef SFLOW_DO_SOCKET
-    int sockfd4;
-    int sockfd6;
     struct sockaddr_in receiver4;
     struct sockaddr_in6 receiver6;
 #endif
