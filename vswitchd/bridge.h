@@ -25,20 +25,6 @@
 #endif
 
 struct simap;
-struct port {
-    struct hmap_node hmap_node; /* Element in struct bridge's "ports" hmap. */
-    struct bridge *bridge;
-    char *name;
-
-    const struct ovsrec_port *cfg;
-
-    /* An ordinary bridge port has 1 interface.
-     * A bridge port for bonding has at least 2 interfaces. */
-    struct ovs_list ifaces;    /* List of "struct iface"s. */
-#ifdef OPS
-    int bond_hw_handle;        /* Hardware bond identifier. */
-#endif
-};
 
 void bridge_init(const char *remote);
 void bridge_exit(void);
