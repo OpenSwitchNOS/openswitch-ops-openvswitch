@@ -28,18 +28,18 @@
 
 /* Interface Statistics update interval should
  * always be greater than or equal to 5 seconds. */
-#define DFLT_SYSTEM_OTHER_CONFIG_STATS_UPDATE_INTERVAL        5000
+#define DFLT_SYSTEM_OTHER_CONFIG_STATS_UPDATE_INTERVAL          5000
 
 /* Default min_vlan ID for internal VLAN range */
-#define DFLT_SYSTEM_OTHER_CONFIG_MAP_MIN_INTERNAL_VLAN_ID     1024
+#define DFLT_SYSTEM_OTHER_CONFIG_MAP_MIN_INTERNAL_VLAN_ID       1024
 
 /* Default max_vlan ID for internal VLAN range */
-#define DFLT_SYSTEM_OTHER_CONFIG_MAP_MAX_INTERNAL_VLAN_ID     4094
+#define DFLT_SYSTEM_OTHER_CONFIG_MAP_MAX_INTERNAL_VLAN_ID       4094
 
 /* Defaults and min/max values LACP parameters */
-#define DFLT_SYSTEM_LACP_CONFIG_SYSTEM_PRIORITY   65534
-#define MIN_SYSTEM_LACP_CONFIG_SYSTEM_PRIORITY    0
-#define MAX_SYSTEM_LACP_CONFIG_SYSTEM_PRIORITY    65535
+#define DFLT_SYSTEM_LACP_CONFIG_SYSTEM_PRIORITY                 65534
+#define MIN_SYSTEM_LACP_CONFIG_SYSTEM_PRIORITY                  0
+#define MAX_SYSTEM_LACP_CONFIG_SYSTEM_PRIORITY                  65535
 
 #define MIN_INTERFACE_OTHER_CONFIG_LACP_PORT_ID                 1
 #define MAX_INTERFACE_OTHER_CONFIG_LACP_PORT_ID                 65535
@@ -49,7 +49,9 @@
 #define MAX_INTERFACE_OTHER_CONFIG_LACP_AGGREGATION_KEY         65535
 #define DFLT_INTERFACE_HW_INTF_INFO_MAP_BRIDGE                  false
 
-#define MAX_NEXTHOPS_PER_ROUTE                                      32
+/* Defaults for static routes and other L3 features */
+#define MAX_NEXTHOPS_PER_ROUTE                                  32
+#define BROADCAST_ADDRESS                                       "255.255.255.255"
 
 /* Default for port hw_config */
 #define PORT_HW_CONFIG_MAP_ENABLE_DEFAULT                       "true"
