@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Hewlett-Packard Development Company, L.P.
+ * Copyright (C) 2015-2016 Hewlett-Packard Development Company, L.P.
  * All Rights Reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -385,7 +385,7 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 
 #define PORT_OTHER_CONFIG_MAP_LACP_TIME                 "lacp-time"
 
-#define PORT_OTHER_CONFIG_LACP_FALLBACK                 "lacp-fallback"
+#define PORT_OTHER_CONFIG_LACP_FALLBACK                 "lacp-fallback-ab"
 
 #define PORT_OTHER_CONFIG_LACP_TIME_SLOW                "slow"
 #define PORT_OTHER_CONFIG_LACP_TIME_FAST                "fast"
