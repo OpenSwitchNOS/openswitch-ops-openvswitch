@@ -106,8 +106,13 @@ int
 unregister_plugin_extension(const char *plugin_name)
 {
     struct plugin_extension_interface *extension;
-    extension = shash_find_data(&sh_extensions, plugin_name);
 
+    if (plugin_extensions_init() != 0) {
+        VLOG_ERR("Hash initialization error.");
+        goto error;
+    }
+
+    extension = shash_find_data(&sh_extensions, plugin_name);
     if (extension) {
       if (!shash_find_and_delete(&sh_extensions, plugin_name)){
         VLOG_ERR("Unable to delete extension with plugin_name [%s].",
@@ -128,8 +133,13 @@ find_plugin_extension(const char *plugin_name, int major, int minor,
                           struct plugin_extension_interface **plugin_interface)
 {
     struct plugin_extension_interface *extension;
-    extension = shash_find_data(&sh_extensions, plugin_name);
 
+    if (plugin_extensions_init() != 0) {
+        VLOG_ERR("Hash initialization error.");
+        goto error;
+    }
+
+    extension = shash_find_data(&sh_extensions, plugin_name);
     if (extension) {
         VLOG_INFO("Found plugin extension with plugin_name \
                  [%s] major [%d] minor [%d].",
