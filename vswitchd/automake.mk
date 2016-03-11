@@ -8,10 +8,6 @@ DISTCLEANFILES += \
 	vswitchd/ovs-vswitchd.8
 
 if OPS
-acl_includedir = $(includedir)/ovs/vswitchd/plugins/ops-classifier/include
-acl_include_HEADERS = \
-	vswitchd/plugins/ops-classifier/include/ofproto-ops-classifier.h
-
 vswitchd_ops_switchd_SOURCES = \
 	vswitchd/bridge.c \
 	vswitchd/bridge.h \
@@ -23,22 +19,7 @@ vswitchd_ops_switchd_SOURCES = \
 	vswitchd/xenserver.h \
 	vswitchd/bufmon.c \
 	vswitchd/vrf.c \
-	vswitchd/vrf.h \
-	vswitchd/plugins/ops-classifier/include/ops-classifier.h \
-	vswitchd/plugins/ops-classifier/include/ofproto-ops-classifier.h \
-	vswitchd/plugins/ops-classifier/src/acl.c \
-	vswitchd/plugins/ops-classifier/src/acl.h \
-	vswitchd/plugins/ops-classifier/src/acl_parse.c \
-	vswitchd/plugins/ops-classifier/src/acl_parse.h \
-	vswitchd/plugins/ops-classifier/src/acl_port.c \
-	vswitchd/plugins/ops-classifier/src/acl_port.h \
-	vswitchd/plugins/ops-classifier/src/ofproto_helps.c \
-	vswitchd/plugins/ops-classifier/src/ofproto_helps.h \
-	vswitchd/plugins/ops-classifier/src/ops-classifier.c \
-	vswitchd/plugins/ops-classifier/src/p2acl.c \
-	vswitchd/plugins/ops-classifier/src/p2acl.h \
-	vswitchd/plugins/ops-classifier/src/p2acl_colgrp.c \
-	vswitchd/plugins/ops-classifier/src/p2acl_colgrp.h
+	vswitchd/vrf.h
 
 vswitchd_ops_switchd_LDADD = \
 	lib/libovscommon.la \
