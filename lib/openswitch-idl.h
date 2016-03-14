@@ -525,7 +525,25 @@ enum ovsrec_port_config_admin_e {
 #define SYSTEM_OTHER_CONFIG_MAP_PROTOCOLS_SOURCE     "protocols_source"
 
 /*DHCP-Relay global configuration key */
+/*
+ * FIXME: Once the schema changes got merged (key was renamed
+ * to v4relay_disabled)it will be removed.
+ */
 #define SYSTEM_OTHER_CONFIG_MAP_DHCP_RELAY_DISABLED    "dhcp_relay_disabled"
+
+/* DHCP Configuration keys */
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_DISABLED \
+"v4relay_disabled"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_POLICY \
+"v4relay_option82_policy"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_VALIDATION_ENABLED \
+"v4relay_option82_validation_enabled"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_REMOTE_ID \
+"v4relay_option82_remote_id"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_HOP_COUNT_INCREMENT_DISABLED \
+"v4relay_hop_count_increment_disabled"
+#define SYSTEM_DHCP_CONFIG_MAP_BOOTP_GATEWAY \
+"bootp_gateway"
 
 /* lacp global configuration parameters */
 #define SYSTEM_LACP_CONFIG_MAP_LACP_SYSTEM_ID        "lacp-system-id"
