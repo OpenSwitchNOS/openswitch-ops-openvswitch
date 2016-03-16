@@ -1029,6 +1029,21 @@
       </p>
     </column>
 
+    <column name="tunnel_key">
+      <p>
+        This column is used only in the tunnel key per <ref
+        table="Logical_Switch"/>+<ref table="Physical_Locator"/> model (see
+        above).
+      </p>
+
+      <p>
+        For <code>vxlan_over_ipv4</code> encapsulation, when the <ref
+        table="Logical_Switch"/>+<ref table="Physical_Locator"/> model is in
+        use, this column is the VXLAN VNI.  It must be in the range 0 to
+        16,777,215.
+      </p>
+    </column>
+
   </table>
   <table name="ACL_entry">
     <p>

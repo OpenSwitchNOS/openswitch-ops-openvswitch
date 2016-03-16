@@ -189,6 +189,7 @@
               "type": "string"}},
           "mutable": false},
         "dst_ip": {"type": "string", "mutable": false}},
+        "tunnel_key": {"type": {"key": "integer", "min": 0, "max": 1}}},
       "indexes": [["encapsulation_type", "dst_ip"]]},
     "ACL_entry": {
       "columns": {
