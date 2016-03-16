@@ -102,6 +102,9 @@ enum block_id {
 struct blk_params{
     struct ovsdb_idl *idl;   /* OVSDB IDL handler */
     struct ofproto *ofproto; /* Ofproto handler */
+    unsigned int idl_seqno;  /* IDL sequence number */
+    int ovsdb_reconnected;   /* ovsdb reconnected flag */
+    struct hmap *ports;      /* Port map */
 };
 
 int execute_reconfigure_block(struct blk_params *params, enum block_id blk_id);

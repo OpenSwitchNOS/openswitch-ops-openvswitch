@@ -50,6 +50,7 @@
 #include "shash.h"
 #include "simap.h"
 #include "timeval.h"
+#include "ofproto-ops-classifier.h"
 
 struct match;
 struct ofputil_flow_mod;
