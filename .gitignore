@@ -70,3 +70,4 @@ OvsDpInterface.h
 /.vagrant/
 /build
 /libltdl/
+plugins/libplugins.pc
