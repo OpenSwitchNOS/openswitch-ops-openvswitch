@@ -449,6 +449,12 @@ ovsdb_idl_get_seqno(const struct ovsdb_idl *idl)
     return idl->change_seqno;
 }
 
+unsigned int
+ovsdb_idl_get_state_seqno(const struct ovsdb_idl *idl)
+{
+    return idl->state_seqno;
+}
+
 /* Returns true if 'idl' successfully connected to the remote database and
  * retrieved its contents (even if the connection subsequently dropped and is
  * in the process of reconnecting).  If so, then 'idl' contains an atomic
