@@ -130,6 +130,7 @@ class Idl(object):
                     column.alert = True
             table.need_table = False
             table.rows = {}
+            table.idx_to_row = {}
             table.idl = self
 
     def close(self):
@@ -287,6 +288,7 @@ class Idl(object):
             if table.rows:
                 changed = True
                 table.rows = {}
+                table.idx_to_row = {}
 
         if changed:
             self.change_seqno += 1
@@ -399,6 +401,63 @@ class Idl(object):
                 if self.__process_update(table, uuid, old, new):
                     self.change_seqno += 1
 
+                # Adding index as key in idx_to_row dictionary
+                if new:
+                    self.add_to_index_dict(uuid, table, new)
+
+    def add_to_index_dict(self, uuid, table, new):
+
+        if table.indexes and new:
+            row_data = table.rows[uuid]
+            index_values = []
+            for v in table.indexes[0]:
+                if v.name in row_data._data:
+                    column = table.columns.get(v.name)
+                    # Handling UUID type differently as we need the
+                    # UUID as the key for idx_to_row dictionary
+                    if column.type.key.type == ovs.db.types.UuidType:
+                        val = new[v.name][1]
+                    else:
+                        val = row_data.__getattr__(v.name)
+                    val = str(val)
+                    index_values.append(val)
+            index_values_tuple = tuple(sorted(index_values))
+            table.idx_to_row[index_values_tuple] = table.rows[uuid]
+
+    def index_to_row_lookup(self, index_values, table_name):
+        """
+        This subroutine fetches the row reference using index_values.
+        index_values is a list which contains the combination indices
+        that are used to identify a resource.
+        """
+        table = self.tables.get(table_name)
+        index_values = tuple(sorted(index_values))
+        if index_values in table.idx_to_row:
+            return table.idx_to_row[index_values]
+        return None
+
+    def row_to_index_lookup(self, row, table):
+        # Given the row return the index
+        index_values = []
+        if not table.indexes:
+            return None
+        for v in table.indexes[0]:
+            column = table.columns.get(v.name)
+            val = row.__getattr__(v.name)
+            if isinstance(val, Row):
+                val = val.uuid
+            val = str(val)
+            index_values.append(val)
+        index_values = sorted(index_values)
+        return index_values
+
+    def del_keys(self, row, table):
+        key = self.row_to_index_lookup(row, table)
+        if key is not None:
+            key = tuple(key)
+            if key in table.idx_to_row:
+                del table.idx_to_row[key]
+
     def __process_update(self, table, uuid, old, new):
         """Returns True if a column changed, False otherwise."""
         row = table.rows.get(uuid)
@@ -406,6 +465,7 @@ class Idl(object):
         if not new:
             # Delete row.
             if row:
+                self.del_keys(row, table)
                 del table.rows[uuid]
                 changed = True
                 self.notify(ROW_DELETE, row)
@@ -668,6 +728,8 @@ class Row(object):
             del self._idl.txn._txn_rows[self.uuid]
         else:
             self._idl.txn._txn_rows[self.uuid] = self
+        row = self._table.rows[self.uuid]
+        self._idl.del_keys(row, self._table)
         self.__dict__["_changes"] = None
         del self._table.rows[self.uuid]
 
