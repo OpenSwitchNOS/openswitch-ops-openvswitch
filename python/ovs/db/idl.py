@@ -130,7 +130,7 @@ class Idl(object):
                     column.alert = True
             table.need_table = False
             table.rows = {}
-            table.idx_to_row = {}
+            table.index_map = {}
             table.idl = self
 
     def close(self):
@@ -288,7 +288,7 @@ class Idl(object):
             if table.rows:
                 changed = True
                 table.rows = {}
-                table.idx_to_row = {}
+                table.index_map = {}
 
         if changed:
             self.change_seqno += 1
@@ -401,11 +401,9 @@ class Idl(object):
                 if self.__process_update(table, uuid, old, new):
                     self.change_seqno += 1
 
-                # Adding index as key in idx_to_row dictionary
-                if new:
-                    self.add_to_index_dict(uuid, table, new)
 
-    def add_to_index_dict(self, uuid, table, new):
+    def add_to_index_map(self, uuid, table, new):
+        # Adding index combo as key in index_map mapped to corresponding Row
 
         if table.indexes and new:
             row = table.rows[uuid]
@@ -414,15 +412,15 @@ class Idl(object):
                 if v.name in row._data:
                     column = table.columns.get(v.name)
                     # Handling UUID type differently as we need the
-                    # UUID as the key for idx_to_row dictionary
+                    # UUID as the key for index_map
                     if column.type.key.type == ovs.db.types.UuidType:
                         val = new[v.name][1]
                     else:
                         val = row.__getattr__(v.name)
                     val = str(val)
                     index_values.append(val)
-            index_values_tuple = tuple(sorted(index_values))
-            table.idx_to_row[index_values_tuple] = table.rows[uuid]
+            index_values_tuple = tuple(index_values)
+            table.index_map[index_values_tuple] = table.rows[uuid]
 
     def index_to_row_lookup(self, index_values, table_name):
         """
@@ -431,9 +429,9 @@ class Idl(object):
         that are used to identify a resource.
         """
         table = self.tables.get(table_name)
-        index_values = tuple(sorted(index_values))
-        if index_values in table.idx_to_row:
-            return table.idx_to_row[index_values]
+        index_values = tuple(index_values)
+        if index_values in table.index_map:
+            return table.index_map[index_values]
         return None
 
     def row_to_index_lookup(self, row, table):
@@ -442,30 +440,29 @@ class Idl(object):
         if not table.indexes:
             return None
         for v in table.indexes[0]:
-            column = table.columns.get(v.name)
             val = row.__getattr__(v.name)
             if isinstance(val, Row):
                 val = val.uuid
             val = str(val)
             index_values.append(val)
-        index_values = sorted(index_values)
         return index_values
 
-    def del_keys(self, row, table):
-        key = self.row_to_index_lookup(row, table)
-        if key is not None:
-            key = tuple(key)
-            if key in table.idx_to_row:
-                del table.idx_to_row[key]
+    def del_from_index_map(self, row, table):
+        index_values = self.row_to_index_lookup(row, table)
+        if index_values is not None:
+            key = tuple(index_values)
+            if key in table.index_map:
+                del table.index_map[key]
 
     def __process_update(self, table, uuid, old, new):
         """Returns True if a column changed, False otherwise."""
         row = table.rows.get(uuid)
         changed = False
+        is_new_row = False
         if not new:
             # Delete row.
             if row:
-                self.del_keys(row, table)
+                self.del_from_index_map(row, table)
                 del table.rows[uuid]
                 changed = True
                 self.notify(ROW_DELETE, row)
@@ -478,6 +475,7 @@ class Idl(object):
             if not row:
                 row = self.__create_row(table, uuid)
                 changed = True
+                is_new_row = True
             else:
                 # XXX rate-limit
                 vlog.warn("cannot add existing row %s to table %s"
@@ -490,6 +488,7 @@ class Idl(object):
             if not row:
                 row = self.__create_row(table, uuid)
                 changed = True
+                is_new_row = True
                 op = ROW_CREATE
                 # XXX rate-limit
                 vlog.warn("cannot modify missing row %s in table %s"
@@ -497,6 +496,10 @@ class Idl(object):
             if self.__row_update(table, row, new):
                 changed = True
                 self.notify(op, row, Row.from_json(self, table, uuid, old))
+
+        if is_new_row:
+            self.add_to_index_map(uuid, table, new)
+
         return changed
 
     def __row_update(self, table, row, row_json):
@@ -728,8 +731,6 @@ class Row(object):
             del self._idl.txn._txn_rows[self.uuid]
         else:
             self._idl.txn._txn_rows[self.uuid] = self
-        row = self._table.rows[self.uuid]
-        self._idl.del_keys(row, self._table)
         self.__dict__["_changes"] = None
         del self._table.rows[self.uuid]
 
