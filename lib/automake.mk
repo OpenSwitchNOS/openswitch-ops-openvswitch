@@ -559,7 +559,8 @@ lib_libsflow_la_SOURCES = \
 	lib/sflow_agent.c \
 	lib/sflow_sampler.c \
 	lib/sflow_poller.c \
-	lib/sflow_receiver.c
+	lib/sflow_receiver.c \
+	lib/sflow_util.c
 lib_libsflow_la_CPPFLAGS = $(AM_CPPFLAGS)
 lib_libsflow_la_CFLAGS = $(AM_CFLAGS)
 if HAVE_WNO_UNUSED

@@ -16,8 +16,6 @@
 
 #include <config.h>
 
-#include "collectors.h"
-
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -30,6 +28,7 @@
 
 VLOG_DEFINE_THIS_MODULE(sflow_util);
 
+#ifdef OPS
 /* TODO: Can 'fds' be part of SFLReceiver?. The list of 'targets' is obtained
 from ofproto_sflow_options.  */
 struct collectors {
@@ -128,93 +127,4 @@ collectors_count(const struct collectors *c)
 {
     return c ? c->n_fds : 0;
 }
-
-static char *
-rawdata_to_hex(const void *data, size_t n)
-{
-    char *hex = xmalloc(n+1);
-    size_t i;
-
-    for (i=n; i; i--) {
-        snprintf(hex, sizeof(char), "%0X ", data);
-        data++;
-    }
-    hex[n] = '\0';
-
-    return hex;
-}
-
-SFLReceivers_pack_send(SFLAgent *ops_agent, const void *payload, size_t n)
-{
-    if (ops_agent == NULL) {
-        VLOG_ERR("%s:%d: Invalid sFlow agent passed.", __FUNCTION__, __LINE__);
-        return;
-    }
-
-    //VLOG_ERR("%s:%d: Payload: %s of size: %d", __FUNCTION__, __LINE__,
-    //        rawdata_to_hex(payload n), n);
-
-    SFLReceiver *rcv = ops_agent->receivers;
-    for(; rcv; rcv=rcv->nxt) {
-    }
-
-    return;
-}
-
-/* Fn to write received sample pkt to buffer. Wrapper for
- * sfl_sampler_writeFlowSample() routine. */
-void ops_sflow_write_sampled_pkt(opennsl_pkt_t *pkt)
-{
-    SFL_FLOW_SAMPLE_TYPE    fs;
-    SFLFlow_sample_element  hdrElem;
-    SFLSampled_header       *header;
-    SFLSampler              *sampler;
-
-    if (!pkt) {
-        VLOG_ERR("%s:%d; NULL sFlow pkt received.", __FUNCTION__, __LINE__);
-        return;
-    }
-
-    /* sFlow Agent is uninitialized. Error condition or it's not enabled
-     * yet. */
-    if (!ops_sflow_agent) {
-        VLOG_ERR("%s:%d; sFlow Agent uninitialized.", __FUNCTION__, __LINE__);
-        return;
-    }
-
-    sampler = ops_sflow_agent->samplers;
-    if (!sampler) {
-        VLOG_ERR("%s:%d; Sampler on sFlow Agent uninitialized.", __FUNCTION__, __LINE__);
-        return;
-    }
-
-    /* Sampled header. */
-    /* Code from ofproto-dpif-sflow.c */
-    memset(&hdrElem, 0, sizeof hdrElem);
-    hdrElem.tag = SFLFLOW_HEADER;
-    header = &hdrElem.flowType.header;
-    header->header_protocol = SFLHEADER_ETHERNET_ISO8023;
-
-    /* The frame_length should include the Ethernet FCS (4 bytes),
-     * but it has already been stripped, so we need to add 4 here.
-     *
-     * In OpenNSL, there are two length's (pkt_len and tot_len). tot_len
-     * includes FCS (4 bytes) and pkt_len = tot_len-4.
-     * TODO: Confirm this theory with Broadcomm.
-     */
-    header->frame_length = pkt->tot_len;
-
-    /* Ethernet FCS stripped off. */
-    header->stripped = 4;
-    header->header_length = MIN(header->frame_length,
-                                sampler->sFlowFsMaximumHeaderSize);
-
-    /* TODO: OpenNSL saves incoming data blocks as an array of structs
-     * (containing {len, data} pairs). Is pointing 'header_bytes' to
-     * beginning of this array sufficient? */
-    header->header_bytes = (uint8_t *)pkt->pkt_data;
-
-    /* Submit the flow sample to be encoded into the next datagram. */
-    SFLADD_ELEMENT(&fs, &hdrElem);
-    sfl_sampler_writeFlowSample(sampler, &fs);
-}
+#endif
