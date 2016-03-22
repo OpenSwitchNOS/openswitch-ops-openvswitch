@@ -64,6 +64,11 @@ void *shash_find_and_delete(struct shash *, const char *);
 void *shash_find_and_delete_assert(struct shash *, const char *);
 struct shash_node *shash_first(const struct shash *);
 const struct shash_node **shash_sort(const struct shash *);
+#ifdef OPS
+const struct shash_node **shash_sort_numeric(const struct shash *);
+const struct shash_node **shash_sort_with_compar(const struct shash *,
+                                        int (*)(const void *, const void *));
+#endif /* OPS */
 bool shash_equal_keys(const struct shash *, const struct shash *);
 struct shash_node *shash_random_node(struct shash *);
 
