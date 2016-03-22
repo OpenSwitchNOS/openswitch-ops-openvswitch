@@ -21,7 +21,6 @@ inline static void putNet32(SFLReceiver *receiver, u_int32_t val);
 inline static void putAddress(SFLReceiver *receiver, SFLAddress *addr);
 #ifdef SFLOW_DO_SOCKET
 static void initSocket(SFLReceiver *receiver);
-static void openSocket(SFLReceiver *receiver);
 #endif
 
 /*_________________--------------------------__________________
@@ -42,9 +41,8 @@ void sfl_receiver_init(SFLReceiver *receiver, SFLAgent *agent)
     receiver->sFlowRcvrPort = SFL_DEFAULT_COLLECTOR_PORT;
 
 #ifdef SFLOW_DO_SOCKET
-    /* initialize and open the socket address */
+    /* initialize the socket address */
     initSocket(receiver);
-    openSocket(receiver);
 #endif
 
     /* preset some of the header fields */
@@ -95,8 +93,7 @@ void sfl_receiver_replaceAgentAddress(SFLReceiver *receiver, SFLAddress *addr)
   called on timeout, or when owner string is cleared
 */
 
-static void reset(SFLReceiver *receiver)
-{
+static void reset(SFLReceiver *receiver) {
     // ask agent to tell samplers and pollers to stop sending samples
     sfl_agent_resetReceiver(receiver->agent, receiver);
     // reinitialize
@@ -109,44 +106,18 @@ static void reset(SFLReceiver *receiver)
   -----------------___________________________------------------
 */
 
-static void initSocket(SFLReceiver *receiver)
-{
-    if (receiver->sFlowRcvrAddress.type == 0) {
-        return;
-    }
-
+static void initSocket(SFLReceiver *receiver) {
     if(receiver->sFlowRcvrAddress.type == SFLADDRESSTYPE_IP_V6) {
-        struct sockaddr_in6 *sa6 = &receiver->receiver6;
-        sa6->sin6_port = htons((u_int16_t)receiver->sFlowRcvrPort);
-        sa6->sin6_family = AF_INET6;
-        memcpy(sa6->sin6_addr.s6_addr, receiver->sFlowRcvrAddress.address.ip_v6.addr, 16);
-    } else {
-        struct sockaddr_in *sa4 = &receiver->receiver4;
-        sa4->sin_port = htons((u_int16_t)receiver->sFlowRcvrPort);
-        sa4->sin_family = AF_INET;
-        sa4->sin_addr.s_addr = receiver->sFlowRcvrAddress.address.ip_v4.addr;
+	struct sockaddr_in6 *sa6 = &receiver->receiver6;
+	sa6->sin6_port = htons((u_int16_t)receiver->sFlowRcvrPort);
+	sa6->sin6_family = AF_INET6;
+	sa6->sin6_addr = receiver->sFlowRcvrAddress.address.ip_v6;
     }
-}
-
-/*_________________---------------------------__________________
-  _________________      openSocket           __________________
-  -----------------___________________________------------------
-*/
-
-static void openSocket(SFLReceiver *receiver)
-{
-    if (receiver->sFlowRcvrAddress.type == 0) {
-        return;
-    }
-
-    if(receiver->sFlowRcvrAddress.type == SFLADDRESSTYPE_IP_V6) {
-        if ((receiver->sockfd6 = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-            sfl_agent_error(receiver->agent, "receiver", "Failed to open v6 socket");
-        }
-    } else {
-        if ((receiver->sockfd4 = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-            sfl_agent_error(receiver->agent, "receiver", "Failed to open v4 socket");
-        }
+    else {
+	struct sockaddr_in *sa4 = &receiver->receiver4;
+	sa4->sin_port = htons((u_int16_t)receiver->sFlowRcvrPort);
+	sa4->sin_family = AF_INET;
+	sa4->sin_addr = receiver->sFlowRcvrAddress.address.ip_v4;
     }
 }
 #endif
@@ -159,7 +130,6 @@ static void openSocket(SFLReceiver *receiver)
 char * sfl_receiver_get_sFlowRcvrOwner(SFLReceiver *receiver) {
     return receiver->sFlowRcvrOwner;
 }
-
 void sfl_receiver_set_sFlowRcvrOwner(SFLReceiver *receiver, char *sFlowRcvrOwner) {
     receiver->sFlowRcvrOwner = sFlowRcvrOwner;
     if(sFlowRcvrOwner == NULL || sFlowRcvrOwner[0] == '\0') {
@@ -184,12 +154,10 @@ void sfl_receiver_set_sFlowRcvrMaximumDatagramSize(SFLReceiver *receiver, u_int3
 SFLAddress *sfl_receiver_get_sFlowRcvrAddress(SFLReceiver *receiver) {
     return &receiver->sFlowRcvrAddress;
 }
-
 void sfl_receiver_set_sFlowRcvrAddress(SFLReceiver *receiver, SFLAddress *sFlowRcvrAddress) {
     if(sFlowRcvrAddress) receiver->sFlowRcvrAddress = *sFlowRcvrAddress; // structure copy
 #ifdef SFLOW_DO_SOCKET
     initSocket(receiver);
-    openSocket(receiver);
 #endif
 }
 u_int32_t sfl_receiver_get_sFlowRcvrPort(SFLReceiver *receiver) {
@@ -561,7 +529,6 @@ static int computeFlowSampleSize(SFLReceiver *receiver, SFL_FLOW_SAMPLE_TYPE *fs
 int sfl_receiver_writeFlowSample(SFLReceiver *receiver, SFL_FLOW_SAMPLE_TYPE *fs)
 {
     int packedSize;
-    char msg[256];
     if(fs == NULL) return -1;
     if((packedSize = computeFlowSampleSize(receiver, fs)) == -1) return -1;
 
@@ -575,9 +542,8 @@ int sfl_receiver_writeFlowSample(SFLReceiver *receiver, SFL_FLOW_SAMPLE_TYPE *fs
 
     // if the sample pkt is full enough so that this sample might put
     // it over the limit, then we should send it now before going on.
-    if((receiver->sampleCollector.pktlen + packedSize) >= receiver->sFlowRcvrMaximumDatagramSize) {
-        sendSample(receiver);
-    }
+    if((receiver->sampleCollector.pktlen + packedSize) >= receiver->sFlowRcvrMaximumDatagramSize)
+	sendSample(receiver);
 
     receiver->sampleCollector.numSamples++;
 
@@ -626,13 +592,10 @@ int sfl_receiver_writeFlowSample(SFLReceiver *receiver, SFL_FLOW_SAMPLE_TYPE *fs
 		putNet32(receiver, elem->flowType.header.frame_length);
 		putNet32(receiver, elem->flowType.header.stripped);
 		putNet32(receiver, elem->flowType.header.header_length);
-
 		/* the header */
 		memcpy(receiver->sampleCollector.datap, elem->flowType.header.header_bytes, elem->flowType.header.header_length);
-
-        /* round up to multiple of 4 to preserve alignment */
+		/* round up to multiple of 4 to preserve alignment */
 		receiver->sampleCollector.datap += ((elem->flowType.header.header_length + 3) / 4);
-
 		break;
 	    case SFLFLOW_ETHERNET:
 		putNet32(receiver, elem->flowType.ethernet.eth_len);
@@ -694,12 +657,6 @@ int sfl_receiver_writeFlowSample(SFLReceiver *receiver, SFL_FLOW_SAMPLE_TYPE *fs
 
     // update the pktlen
     receiver->sampleCollector.pktlen = (u_char *)receiver->sampleCollector.datap - (u_char *)receiver->sampleCollector.data;
-
-    // If more Receivers exist, write to them too.
-    if(receiver->nxt) {
-        sfl_receiver_writeFlowSample(receiver->nxt, fs);
-    }
-
     return packedSize;
 }
 
@@ -922,35 +879,32 @@ static void sendSample(SFLReceiver *receiver)
 							   receiver->sampleCollector.pktlen);
     else {
 #ifdef SFLOW_DO_SOCKET
-        struct sockaddr *recvaddr;
-        uint32_t soclen;
-        int *sockfd, result;
-
-        /* Collector ip is a v6 address */
-        if (receiver->sFlowRcvrAddress.type == SFLADDRESSTYPE_IP_V6) {
-            sockfd = &receiver->sockfd6;    // socket is open during receiver init.
-            soclen = sizeof(struct sockaddr_in6);
-            recvaddr = (struct sockaddr *)&receiver->receiver6;
-        }
-        /* v4 address */
-        else {
-            sockfd = &receiver->sockfd4;    // socket is open during receiver init.
-            soclen = sizeof(struct sockaddr_in);
-            recvaddr = (struct sockaddr *)&receiver->receiver4;
-        }
-
-        result = sendto(*sockfd,
-                receiver->sampleCollector.data,
-                receiver->sampleCollector.pktlen,
-                0,
-                recvaddr,
-                soclen);
-        if (result == -1 && errno != EINTR) sfl_agent_sysError(receiver->agent, "receiver", "sendto error");
-        if (result == 0) sfl_agent_error(receiver->agent, "receiver", "socket sendto returned 0");
+	/* send it myself */
+	if (receiver->sFlowRcvrAddress.type == SFLADDRESSTYPE_IP_V6) {
+	    u_int32_t soclen = sizeof(struct sockaddr_in6);
+	    int result = sendto(receiver->agent->receiverSocket6,
+				receiver->sampleCollector.data,
+				receiver->sampleCollector.pktlen,
+				0,
+				(struct sockaddr *)&receiver->receiver6,
+				soclen);
+	    if(result == -1 && errno != EINTR) sfl_agent_sysError(receiver->agent, "receiver", "IPv6 socket sendto error");
+	    if(result == 0) sfl_agent_error(receiver->agent, "receiver", "IPv6 socket sendto returned 0");
+	}
+	else {
+	    u_int32_t soclen = sizeof(struct sockaddr_in);
+	    int result = sendto(receiver->agent->receiverSocket4,
+				receiver->sampleCollector.data,
+				receiver->sampleCollector.pktlen,
+				0,
+				(struct sockaddr *)&receiver->receiver4,
+				soclen);
+	    if(result == -1 && errno != EINTR) sfl_agent_sysError(receiver->agent, "receiver", "socket sendto error");
+	    if(result == 0) sfl_agent_error(receiver->agent, "receiver", "socket sendto returned 0");
+	}
 #endif
     }
 
-done:
     /* reset for the next time */
     resetSampleCollector(receiver);
 }
@@ -981,4 +935,5 @@ static void sflError(SFLReceiver *receiver, char *msg)
     sfl_agent_error(receiver->agent, "receiver", msg);
     resetSampleCollector(receiver);
 }
+
 #endif  /* !__CHECKER__ */
