@@ -389,9 +389,7 @@ include plugins/automake.mk
 endif
 include utilities/automake.mk
 include include/automake.mk
-if OVS_VSWITCHD
 include vswitchd/automake.mk
-endif
 include ovsdb/automake.mk
 include python/automake.mk
 include vtep/automake.mk

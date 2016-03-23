@@ -2644,8 +2644,19 @@ add_port(struct ctl_context *ctx,
     ifaces = xmalloc(n_ifaces * sizeof *ifaces);
     for (i = 0; i < n_ifaces; i++) {
 #ifdef OPS
+        VLOG_INFO("Trying to add a port %s", port_name);
+        struct vsctl_iface *iface = NULL;
+        /*  FIXME: (this came in with vxlan POC) Do we need a better way to
+         * identify non-pre-existing interfaces (logical interfaces) and allow
+         * them to be added?
+         * (also see FIXME about 20ish lines down)
+         *
+         * current strategy, if we do not find a system interface, assume we
+         * are createing a logical interface and allow it to be added.
+         */
+        iface = find_orphan_iface(ctx, iface_names[i], false);
         /* find the existing interface in the orphan_ifaces dictionary */
-        if (vsctl_ctx->subsystems_exist) {
+        if (vsctl_ctx->subsystems_exist && iface) {
             struct vsctl_iface *iface;
             iface = find_orphan_iface(vsctl_ctx, iface_names[i], true);
             ifaces[i] = (struct ovsrec_interface *)iface->iface_cfg;
@@ -2681,7 +2692,10 @@ add_port(struct ctl_context *ctx,
     vsctl_port = add_port_to_cache(vsctl_ctx, bridge, port);
     for (i = 0; i < n_ifaces; i++) {
 #ifdef OPS
-        if (vsctl_ctx->subsystems_exist) {
+        /* FIXME: see FIXME note about 20ish lines up */
+        struct vsctl_iface *iface = NULL;
+        iface = find_orphan_iface(ctx, iface_names[i], false);
+        if (vsctl_ctx->subsystems_exist &&iface) {
             move_orphan_iface_to_cache(vsctl_ctx, vsctl_port, ifaces[i]);
         } else
 #endif
