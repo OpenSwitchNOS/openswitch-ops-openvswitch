@@ -133,6 +133,13 @@ struct netdev_stats {
     uint64_t ipv6_mc_tx_bytes;
     uint64_t ipv6_mc_rx_packets;
     uint64_t ipv6_mc_rx_bytes;
+
+    /* sFlow statistics. */
+    uint64_t sflow_ingress_packets; /* Total ingress sampled packets. */
+    uint64_t sflow_ingress_bytes;   /* Total ingress sampled bytes. */
+    uint64_t sflow_egress_packets;  /* Total egress sampled packets. */
+    uint64_t sflow_egress_bytes;    /* Total egress sampled bytes. */
+
 };
 
 /* Configuration specific to tunnels. */
