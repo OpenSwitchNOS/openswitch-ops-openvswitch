@@ -2645,7 +2645,15 @@ add_port(struct ctl_context *ctx,
     for (i = 0; i < n_ifaces; i++) {
 #ifdef OPS
         /* find the existing interface in the orphan_ifaces dictionary */
-        if (vsctl_ctx->subsystems_exist) {
+        /* FIXME
+         * is there a more appropriate way to skip around this check when
+         * we intend to add a new 'virutal' interface not yet known to the
+         * system ?
+         */
+        VLOG_INFO("VXLAN_POC Trying to add port %s", port_name);
+        struct vsctl_iface *iface = NULL;
+        iface = find_orphan_iface(ctx, iface_names[i], false);
+        if (vsctl_ctx->subsystems_exist && iface) {
             struct vsctl_iface *iface;
             iface = find_orphan_iface(vsctl_ctx, iface_names[i], true);
             ifaces[i] = (struct ovsrec_interface *)iface->iface_cfg;
@@ -2681,7 +2689,15 @@ add_port(struct ctl_context *ctx,
     vsctl_port = add_port_to_cache(vsctl_ctx, bridge, port);
     for (i = 0; i < n_ifaces; i++) {
 #ifdef OPS
-        if (vsctl_ctx->subsystems_exist) {
+        /* FIXME
+         * is there a more appropriate way to skip around this check when
+         * we intend to add a new 'virutal' interface not yet known to the
+         * system ?
+         */
+        VLOG_INFO("VXLAN_POC Trying to move port %s to cache", port_name);
+        struct vsctl_iface *iface = NULL;
+        iface = find_orphan_iface(ctx, iface_names[i], false);
+        if (vsctl_ctx->subsystems_exist  && iface) {
             move_orphan_iface_to_cache(vsctl_ctx, vsctl_port, ifaces[i]);
         } else
 #endif
