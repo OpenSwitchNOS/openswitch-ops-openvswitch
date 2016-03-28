@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2009, 2010, 2011, 2012, 2013, 2014, 2015 Nicira, Inc.
- * Copyright (C) 2015, 2016 Hewlett-Packard Development Company, L.P.
+ * Copyright (C) 2015-2016 Hewlett-Packard Enterprise Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,9 @@
 #include "sset.h"
 #include "stp.h"
 #include "lacp.h"
+#ifdef OPS
+#include "hmap.h"
+#endif
 
 #ifdef  __cplusplus
 extern "C" {
@@ -56,6 +59,7 @@ struct aa_mapping_settings;
 
 /* Needed for the lock annotations. */
 extern struct ovs_mutex ofproto_mutex;
+extern struct ovs_mutex mlearn_mutex;
 
 struct ofproto_controller_info {
     bool is_connected;
@@ -224,6 +228,14 @@ struct ofproto_controller {
 /* FIXME: Use MAX_NEXTHOPS_PER_ROUTE from common header */
 #define OFPROTO_MAX_NH_PER_ROUTE    32 /* maximum number of nexthops per route.
                                           only consider non-weighted ECMP now */
+
+/*
+ * Buffer size for hmap for mac learning
+ */
+#define BUFFER_SIZE  16384
+
+#define PORT_NAME_SIZE 16
+
 enum ofproto_route_family {
     OFPROTO_ROUTE_IPV4,
     OFPROTO_ROUTE_IPV6
@@ -284,6 +296,37 @@ struct ofproto_l3_host {
     const char *err_str;              /* set if rc != 0 */
     char *mac;                        /* These are for neighbor, mac */
     int  l3_egress_id;                /* Egress ID in case if we need */
+};
+
+/*
+ * Mac learning
+ */
+typedef enum ofproto_mac_event_ {
+    MLEARN_UNDEFINED, /* undefined event */
+    MLEARN_ADD,       /* add mac learn event */
+    MLEARN_DEL,       /* delete mac learn event */
+} ofproto_mac_event;
+
+struct ofproto_mlearn_hmap_node {
+    struct hmap_node hmap_node;   /* hmap node */
+    int vlan;                     /* VLAN */
+    int port;                     /* port_id */
+    struct eth_addr mac;          /* MAC address */
+    ofproto_mac_event oper;       /* action */
+    int hw_unit;                  /* hw_unit */
+    char port_name[PORT_NAME_SIZE];           /* Port name */
+};
+
+struct ofproto_mlearn_hmap_node_buffer {
+    int size;                                          /* max. size of this hmap */
+    int actual_size;                                   /* current size of hmap */
+    struct ofproto_mlearn_hmap_node nodes[BUFFER_SIZE];
+                                                /* statically allocated memory buffer */
+};
+
+struct ofproto_mlearn_hmap {
+    struct hmap table;                             /* hmap of (ofproto_mlearn_hmap_node)*/
+    struct ofproto_mlearn_hmap_node_buffer buffer; /* buffer */
 };
 
 #endif
@@ -532,6 +575,10 @@ int ofproto_bundle_register(struct ofproto *, void *aux,
 int ofproto_bundle_unregister(struct ofproto *, void *aux);
 
 #ifdef OPS
+
+void mac_learning_trigger_callback(void);
+struct seq * mac_learning_trigger_seq_get(void);
+
 int ofproto_bundle_get(struct ofproto *, void *aux, int *bundle_handle);
 /* Configuration of VLANs. */
 int ofproto_set_vlan(struct ofproto *, int vid, bool add);
@@ -553,6 +600,7 @@ int ofproto_l3_route_action(struct ofproto *ofproto,
 int ofproto_l3_ecmp_set(struct ofproto *ofproto, bool enable);
 int ofproto_l3_ecmp_hash_set(struct ofproto *ofproto, unsigned int hash,
                              bool enable);
+int ofproto_mac_learning_get(struct ofproto *ofproto, struct ofproto_mlearn_hmap **mhmap);
 #endif
 
 /* Configuration of mirrors. */
