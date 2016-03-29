@@ -3012,6 +3012,7 @@ bridge_run(void)
     run_stats_update();
     run_status_update();
     run_system_stats();
+    execute_run_block(BLK_RUN_COMPLETE);
 }
 
 void
@@ -3048,6 +3049,7 @@ bridge_wait(void)
     }
 
     system_stats_wait();
+    execute_run_block(BLK_WAIT_COMPLETE);
 }
 
 /* Adds some memory usage statistics for bridges into 'usage', for use with

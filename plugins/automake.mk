@@ -19,6 +19,7 @@ ovspluginslibinclude_HEADERS = \
     plugins/plugins.h \
     plugins/plugin-extensions.h \
     plugins/reconfigure-blocks.h \
+    plugins/run-blocks.h \
     plugins/asic-plugin.h \
     plugins/ofproto-ops-classifier.h
 
@@ -39,6 +40,8 @@ plugins_libplugins_la_SOURCES = \
     plugins/plugin-extensions.h \
     plugins/reconfigure-blocks.c \
     plugins/reconfigure-blocks.h \
+    plugins/run-blocks.c \
+    plugins/run-blocks.h \
     plugins/asic-plugin.h \
     plugins/ofproto-ops-classifier.h
 
