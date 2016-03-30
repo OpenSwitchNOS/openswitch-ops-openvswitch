@@ -1813,6 +1813,10 @@ struct ofproto_class {
 
     /* Get MAC table entries learnt from hardware */
     int (*get_mac_learning_hmap)(struct ofproto_mlearn_hmap **mhmap);
+    /* Add/Delete/Modify logical switch */
+    int (*set_logical_switch)(const struct ofproto *ofproto, void *aux,
+                              enum ofproto_logical_switch_action action,
+                              struct ofproto_logical_switch *log_switch);
 #endif
 };
 
