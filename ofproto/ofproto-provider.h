@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2009, 2010, 2011, 2012, 2013, 2014, 2015 Nicira, Inc.
- * Copyright (C) 2015, 2016 Hewlett-Packard Development Company, L.P.
+ * Copyright (C) 2015-2016 Hewlett-Packard Enterprise Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1810,6 +1810,11 @@ struct ofproto_class {
     /* Enable/Disable ECMP hash config */
     int (*l3_ecmp_hash_set)(const struct ofproto *ofproto, unsigned int hash,
                             bool enable);
+
+    /* Add/Delete/Modify logical switch */
+    int (*set_logical_switch)(const struct ofproto *ofproto, void *aux,
+                              enum ofproto_logical_switch_action action,
+                              struct ofproto_logical_switch *log_switch);
 #endif
 };
 
