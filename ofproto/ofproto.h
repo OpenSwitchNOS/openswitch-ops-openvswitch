@@ -567,6 +567,10 @@ struct ofproto_bundle_settings {
     size_t n_ip6_address_secondary;
     char **ip6_address_secondary; /* List of secondary IPv6 address */
     bool enable;                  /* Port enable */
+    int binding_cnt;              /* vlan to tunnel_key binding entries */
+    int *binding_vlans;           /* array of vlans each mapped to a tunnel key */
+    int *binding_tunnel_keys;     /* array of tunnel keys each mapped to a vlan */
+
 #endif
 };
 
