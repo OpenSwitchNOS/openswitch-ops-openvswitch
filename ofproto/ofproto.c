@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2009-2015 Nicira, Inc.
- * Copyright (C) 2015, 2016 Hewlett-Packard Development Company, L.P.
+ * Copyright (C) 2015-2016 Hewlett-Packard Enterprise Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,10 @@ COVERAGE_DEFINE(ofproto_queue_req);
 COVERAGE_DEFINE(ofproto_recv_openflow);
 COVERAGE_DEFINE(ofproto_reinit_ports);
 COVERAGE_DEFINE(ofproto_update_port);
+
+#ifdef OPS
+static struct seq *mlearn_trigger_seq = NULL;
+#endif
 
 /* Default fields to use for prefix tries in each flow table, unless something
  * else is configured. */
@@ -8000,6 +8004,36 @@ ofproto_port_set_realdev(struct ofproto *ofproto, ofp_port_t vlandev_ofp_port,
 }
 
 #ifdef OPS
+
+/*
+ * Provides a global seq for mac learning trigger notifications.
+ * mac learning module in plugin should call seq_change() on the returned
+ * object whenever the event trigger notification from the callback is called.
+ *
+ * seq_wait() monitor on this object will get trigger notification changes to
+ * collect the MAC learning notifications.
+ */
+struct seq *
+mac_learning_trigger_seq_get(void)
+OVS_REQUIRES(mlearn_mutex)
+{
+    static struct ovsthread_once once = OVSTHREAD_ONCE_INITIALIZER;
+
+    if (ovsthread_once_start(&once)) {
+        mlearn_trigger_seq = seq_create();
+        ovsthread_once_done(&once);
+    }
+
+    return mlearn_trigger_seq;
+}/* mac_learning_trigger_seq_get */
+
+void
+mac_learning_trigger_callback(void)
+OVS_REQUIRES(mlearn_mutex)
+{
+    seq_change(mac_learning_trigger_seq_get());
+}
+
 /* Function to add l3 host entry */
 int
 ofproto_add_l3_host_entry(struct ofproto *ofproto, void *aux,
@@ -8099,4 +8133,20 @@ ofproto_l3_ecmp_hash_set(struct ofproto *ofproto, unsigned int hash, bool enable
 
     return rc;
 }
+
+/* Function to get MAC entries from hardware */
+int
+ofproto_mac_learning_get(struct ofproto *ofproto, struct ofproto_mlearn_hmap **mhmap)
+{
+    int rc;
+
+    rc = ofproto->ofproto_class->get_mac_learning_hmap ?
+         ofproto->ofproto_class->get_mac_learning_hmap(mhmap) :
+         EOPNOTSUPP;
+
+    VLOG_DBG("%s rc (%d)", __func__, rc);
+
+    return (rc);
+}
+
 #endif
