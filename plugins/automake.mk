@@ -20,8 +20,7 @@ ovspluginslibinclude_HEADERS = \
     plugins/plugin-extensions.h \
     plugins/reconfigure-blocks.h \
     plugins/run-blocks.h \
-    plugins/asic-plugin.h \
-    plugins/ofproto-ops-classifier.h
+    plugins/asic-plugin.h
 
 lib_LTLIBRARIES += plugins/libplugins.la
 plugins_libplugins_la_LDFLAGS = \
@@ -42,8 +41,7 @@ plugins_libplugins_la_SOURCES = \
     plugins/reconfigure-blocks.h \
     plugins/run-blocks.c \
     plugins/run-blocks.h \
-    plugins/asic-plugin.h \
-    plugins/ofproto-ops-classifier.h
+    plugins/asic-plugin.h
 
 plugins_libplugins_la_CFLAGS = -DYAML_PATH=$(sysconfdir)/openswitch/platform
 
