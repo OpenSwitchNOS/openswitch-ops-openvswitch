@@ -8,6 +8,7 @@
 if OPS
 ovslibincludedir = $(includedir)/ovs
 ovslibinclude_HEADERS = \
+	lib/acllog.h \
 	lib/aes128.h \
 	lib/async-append.h \
 	lib/backtrace.h \
@@ -186,6 +187,8 @@ lib_libovscommon_la_LDFLAGS = \
         $(AM_LDFLAGS)
 
 lib_libovscommon_la_SOURCES = \
+        lib/acllog.c \
+        lib/acllog.h \
         lib/aes128.c \
         lib/aes128.h \
         lib/async-append.h \
