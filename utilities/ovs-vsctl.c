@@ -2652,7 +2652,7 @@ add_port(struct ctl_context *ctx,
          */
         VLOG_INFO("VXLAN_POC Trying to add port %s", port_name);
         struct vsctl_iface *iface = NULL;
-        iface = find_orphan_iface(ctx, iface_names[i], false);
+        iface = find_orphan_iface(vsctl_ctx, iface_names[i], false);
         if (vsctl_ctx->subsystems_exist && iface) {
             struct vsctl_iface *iface;
             iface = find_orphan_iface(vsctl_ctx, iface_names[i], true);
@@ -2696,7 +2696,7 @@ add_port(struct ctl_context *ctx,
          */
         VLOG_INFO("VXLAN_POC Trying to move port %s to cache", port_name);
         struct vsctl_iface *iface = NULL;
-        iface = find_orphan_iface(ctx, iface_names[i], false);
+        iface = find_orphan_iface(vsctl_ctx, iface_names[i], false);
         if (vsctl_ctx->subsystems_exist  && iface) {
             move_orphan_iface_to_cache(vsctl_ctx, vsctl_port, ifaces[i]);
         } else
