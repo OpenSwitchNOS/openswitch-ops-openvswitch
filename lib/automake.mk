@@ -421,7 +421,7 @@ pkgconfig_DATA += \
 
 lib_LTLIBRARIES += lib/libopenvswitch.la
 
-lib_libopenvswitch_la_LIBADD = $(SSL_LIBS) lib/libovscommon.la ovsdb/libovsdb.la plugins/libplugins.la
+lib_libopenvswitch_la_LIBADD = $(SSL_LIBS) lib/libovscommon.la ovsdb/libovsdb.la
 
 if WIN32
 lib_libopenvswitch_la_LIBADD += ${PTHREAD_LIBS}
@@ -580,6 +580,10 @@ lib_libsflow_la_SOURCES = \
 	lib/sflow_sampler.c \
 	lib/sflow_poller.c \
 	lib/sflow_receiver.c
+if OPS
+	\
+	lib/sflow_util.c
+endif
 lib_libsflow_la_CPPFLAGS = $(AM_CPPFLAGS)
 lib_libsflow_la_CFLAGS = $(AM_CFLAGS)
 if HAVE_WNO_UNUSED
