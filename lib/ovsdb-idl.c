@@ -79,7 +79,8 @@ struct ovsdb_idl_arc {
 enum ovsdb_idl_state {
     IDL_S_SCHEMA_REQUESTED,
     IDL_S_MONITOR_REQUESTED,
-    IDL_S_MONITORING
+    IDL_S_MONITORING,
+    IDL_S_IDENTIFY
 };
 
 struct ovsdb_idl {
@@ -94,6 +95,7 @@ struct ovsdb_idl {
     unsigned int state_seqno;
     enum ovsdb_idl_state state;
     struct json *request_id;
+    uint8_t session_priority;
 
     /* Database locking. */
     char *lock_name;            /* Name of lock we need, NULL if none. */
@@ -215,6 +217,7 @@ ovsdb_idl_create(const char *remote, const struct ovsdb_idl_class *class,
     idl = xzalloc(sizeof *idl);
     idl->class = class;
     idl->session = jsonrpc_session_open(remote, retry);
+    idl->session_priority = IDL_PRIORITY_UNDEFINED;
     shash_init(&idl->table_by_name);
     idl->tables = xmalloc(class->n_tables * sizeof *idl->tables);
     for (i = 0; i < class->n_tables; i++) {
@@ -321,6 +324,28 @@ ovsdb_idl_clear(struct ovsdb_idl *idl)
     }
 }
 
+/* Identifies the client within the OVSDB Server */
+void
+ovsdb_idl_set_identity(struct ovsdb_idl *idl, char* name)
+{
+    struct jsonrpc_msg *msg;
+
+    json_destroy(idl->request_id);
+    msg = jsonrpc_create_request(
+        "identify",
+        json_array_create_1(json_string_create(name)),
+        &idl->request_id);
+    idl->state = IDL_S_IDENTIFY;
+    jsonrpc_session_send(idl->session, msg);
+}
+
+/* Returns the current priority assigned to the IDL session */
+uint8_t
+ovsdb_idl_get_priority(struct ovsdb_idl *idl)
+{
+    return idl->session_priority;
+}
+
 /* Processes a batch of messages from the database server on 'idl'.  This may
  * cause the IDL's contents to change.  The client may check for that with
  * ovsdb_idl_get_seqno(). */
@@ -382,7 +407,13 @@ ovsdb_idl_run(struct ovsdb_idl *idl)
                 ovsdb_idl_clear(idl);
                 ovsdb_idl_parse_update(idl, msg->result);
                 break;
-
+            case IDL_S_IDENTIFY:
+                if (msg->result->type == JSON_ARRAY
+                   && msg->result->u.array.n == 1
+                   && msg->result->u.array.elems[0]->type == JSON_INTEGER){
+                    idl->session_priority = msg->result->u.array.elems[0]->u.integer;
+                }
+                break;
             case IDL_S_MONITORING:
             default:
                 OVS_NOT_REACHED();
