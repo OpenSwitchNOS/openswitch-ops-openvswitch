@@ -60,6 +60,17 @@ void ovsdb_idl_set_lock(struct ovsdb_idl *, const char *lock_name);
 bool ovsdb_idl_has_lock(const struct ovsdb_idl *);
 bool ovsdb_idl_is_lock_contended(const struct ovsdb_idl *);
 
+void ovsdb_idl_set_identity(struct ovsdb_idl *, char* name);
+uint8_t ovsdb_idl_get_priority(struct ovsdb_idl *);
+struct uuid * ovsdb_idl_get_server_uuid(struct ovsdb_idl *);
+
+enum ovsdb_idl_priority {
+    IDL_PRIORITY_HIGHEST = 0,
+    IDL_PRIORITY_DEFAULT = 8,
+    IDL_PRIORITY_LOWEST = 15,
+    IDL_PRIORITY_UNDEFINED = 255
+};
+
 unsigned int ovsdb_idl_get_seqno(const struct ovsdb_idl *);
 bool ovsdb_idl_has_ever_connected(const struct ovsdb_idl *);
 void ovsdb_idl_enable_reconnect(struct ovsdb_idl *);
