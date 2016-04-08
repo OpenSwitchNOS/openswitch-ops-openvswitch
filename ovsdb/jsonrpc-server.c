@@ -99,6 +99,8 @@ struct ovsdb_jsonrpc_server {
     struct ovsdb_server up;
     unsigned int n_sessions, max_sessions;
     struct shash remotes;      /* Contains "struct ovsdb_jsonrpc_remote *"s. */
+    int current_priority;
+    char *priority_file;
 };
 
 /* A configured remote.  This is either a passive stream listener plus a list
@@ -109,6 +111,7 @@ struct ovsdb_jsonrpc_remote {
     struct pstream *listener;   /* Listener, if passive. */
     struct ovs_list sessions;   /* List of "struct ovsdb_jsonrpc_session"s. */
     uint8_t dscp;
+    int current_priority;
 };
 
 static struct ovsdb_jsonrpc_remote *ovsdb_jsonrpc_server_add_remote(
@@ -251,6 +254,7 @@ ovsdb_jsonrpc_server_add_remote(struct ovsdb_jsonrpc_server *svr,
     list_init(&remote->sessions);
     remote->dscp = options->dscp;
     shash_add(&svr->remotes, name, remote);
+    remote->current_priority = 0;
 
     if (!listener) {
         ovsdb_jsonrpc_session_create(remote, jsonrpc_session_open(name, true));
@@ -318,6 +322,7 @@ ovsdb_jsonrpc_server_run(struct ovsdb_jsonrpc_server *svr)
 
     SHASH_FOR_EACH (node, &svr->remotes) {
         struct ovsdb_jsonrpc_remote *remote = node->data;
+        remote->current_priority = svr->current_priority;
 
         if (remote->listener) {
             if (svr->n_sessions < svr->max_sessions) {
@@ -344,6 +349,13 @@ ovsdb_jsonrpc_server_run(struct ovsdb_jsonrpc_server *svr)
 
         ovsdb_jsonrpc_session_run_all(remote);
     }
+}
+
+void
+ovsdb_jsonrpc_server_set_current_priority(struct ovsdb_jsonrpc_server *svr,
+                                          int priority)
+{
+    svr->current_priority = priority;
 }
 
 void
@@ -394,6 +406,10 @@ struct ovsdb_jsonrpc_session {
     /* Network connectivity. */
     struct jsonrpc_session *js;  /* JSON-RPC session. */
     unsigned int js_seqno;       /* Last jsonrpc_session_get_seqno() value. */
+
+    /* Priority */
+    char *name;                  /* Client's name/identifier */
+    uint8_t priority;            /* Priority from 0 to 15. 0 most important. */
 };
 
 static void ovsdb_jsonrpc_session_close(struct ovsdb_jsonrpc_session *);
@@ -420,6 +436,8 @@ ovsdb_jsonrpc_session_create(struct ovsdb_jsonrpc_remote *remote,
     hmap_init(&s->monitors);
     s->js = js;
     s->js_seqno = jsonrpc_session_get_seqno(js);
+    s->priority = OVSDB_PRIORITY_DEFAULT;
+    s->name = NULL;
 
     remote->server->n_sessions++;
 
@@ -440,6 +458,9 @@ ovsdb_jsonrpc_session_close(struct ovsdb_jsonrpc_session *s)
     list_remove(&s->node);
     s->remote->server->n_sessions--;
     ovsdb_session_destroy(&s->up);
+    if(s->name){
+        free(s->name);
+    }
     free(s);
 }
 
@@ -492,11 +513,20 @@ static void
 ovsdb_jsonrpc_session_run_all(struct ovsdb_jsonrpc_remote *remote)
 {
     struct ovsdb_jsonrpc_session *s, *next;
+    uint8_t current_highest_priority = OVSDB_PRIORITY_LOWEST;
+    LIST_FOR_EACH_SAFE (s, next, node, &remote->sessions) {
+        if (s->priority < OVSDB_PRIORITY_LOWEST &&
+                current_highest_priority >= remote->current_priority) {
+            current_highest_priority = s->priority;
+        }
+    }
 
     LIST_FOR_EACH_SAFE (s, next, node, &remote->sessions) {
-        int error = ovsdb_jsonrpc_session_run(s);
-        if (error) {
-            ovsdb_jsonrpc_session_close(s);
+        if (s->priority <= current_highest_priority) {
+            int error = ovsdb_jsonrpc_session_run(s);
+            if (error) {
+                ovsdb_jsonrpc_session_close(s);
+            }
         }
     }
 }
@@ -880,6 +910,26 @@ ovsdb_jsonrpc_session_got_request(struct ovsdb_jsonrpc_session *s,
         reply = ovsdb_jsonrpc_session_unlock(s, request);
     } else if (!strcmp(request->method, "echo")) {
         reply = jsonrpc_create_reply(json_clone(request->params), request->id);
+    } else if (!strcmp(request->method, "identify")) {
+        const struct json_array *params;
+        struct simap_node *existing_priority;
+        uint8_t assigned_priority;
+        params = json_array(request->params);
+        if (params->n != 1 || params->elems[0]->type != JSON_STRING) {
+            reply = jsonrpc_create_error(json_string_create(
+                    "Wrong parameters for identifying the session priority"),
+                                                 request->id);
+        } else {
+            s->name = strdup(json_string(params->elems[0]));
+            existing_priority = simap_find(&s->up.server->priorities, s->name);
+            assigned_priority = existing_priority ?
+                    existing_priority->data : OVSDB_PRIORITY_DEFAULT;
+            s->priority = assigned_priority;
+            reply = jsonrpc_create_reply(
+                    json_array_create_1(
+                            json_integer_create(assigned_priority)),
+                    request->id);
+        }
     } else {
         reply = jsonrpc_create_error(json_string_create("unknown method"),
                                      request->id);
@@ -1338,4 +1388,55 @@ ovsdb_jsonrpc_monitor_flush_all(struct ovsdb_jsonrpc_session *s)
             jsonrpc_session_send(s->js, msg);
         }
     }
+}
+
+void
+ovsdb_jsonrpc_load_priorities(struct ovsdb_jsonrpc_server * jsonrpc)
+{
+    if (!jsonrpc->priority_file) {
+        VLOG_WARN("OVSDB Server was executed without priority file specified."
+                  " All the sessions will receive a default priority."
+                  " The priority file can be set using the --priorities flag");
+        return;
+    }
+
+    FILE *priority_cfg = NULL;
+    struct json *json;
+    uint8_t priority;
+
+    priority_cfg  = fopen(jsonrpc->priority_file, "r");
+    if (!priority_cfg) {
+        VLOG_FATAL("reading priority json failed (%s)", jsonrpc->priority_file);
+    }
+
+    json = json_from_stream(priority_cfg);
+    if (json->type != JSON_OBJECT) {
+        fclose(priority_cfg);
+        VLOG_FATAL("reading json failed");
+    }
+
+    simap_clear(&jsonrpc->up.priorities);
+
+    struct shash_node *node;
+    SHASH_FOR_EACH(node, json->u.object) {
+        priority = json_integer((struct json*)node->data);
+        if (OVSDB_PRIORITY_HIGHEST <= priority
+           && priority <= OVSDB_PRIORITY_LOWEST){
+            simap_put(&jsonrpc->up.priorities, node->name, priority);
+        } else {
+            VLOG_WARN("%"PRId64" is an invalid priority value for \"%s\"."
+                      "Assigned default priority (%d) instead.\n",
+                      priority, node->name, OVSDB_PRIORITY_DEFAULT);
+            simap_put(&jsonrpc->up.priorities, node->name,
+                      OVSDB_PRIORITY_DEFAULT);
+        }
+    }
+
+    fclose(priority_cfg);
+}
+
+void
+ovsdb_jsonrpc_set_priority_file(struct ovsdb_jsonrpc_server *jsonrpc, char *pf)
+{
+    jsonrpc->priority_file = pf;
 }
