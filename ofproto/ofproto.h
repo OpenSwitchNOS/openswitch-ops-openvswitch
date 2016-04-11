@@ -342,10 +342,10 @@ enum ofproto_logical_switch_type {
 };
 
 struct ofproto_logical_switch {
-    char *name;                        /* Logical Switch Name */
-    char *description;                 /* Description of the Switch */
-    int  tunnel_key;                   /* Key used for overlay tunnels */
-    enum ofproto_logical_switch_type type;  /* logical switch type */
+    char *name;                            /* Logical Switch Name */
+    char *description;                     /* Description of the Switch */
+    int  tunnel_key;                       /* Key used for overlay tunnels */
+    enum ofproto_logical_switch_type type; /* logical switch type */
 };
 #endif
 
