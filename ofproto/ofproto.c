@@ -8152,4 +8152,22 @@ ofproto_mac_learning_get(struct ofproto *ofproto, struct ofproto_mlearn_hmap **m
     return (rc);
 }
 
+/* Logical switch */
+int
+ofproto_set_logical_switch(const struct ofproto *ofproto, void *aux,
+                           enum ofproto_logical_switch_action action,
+                           struct ofproto_logical_switch *log_switch)
+{
+    int rc;
+
+    rc = ofproto->ofproto_class->set_logical_switch ?
+         ofproto->ofproto_class->set_logical_switch(ofproto, aux, action,
+                                                    log_switch) :
+         EOPNOTSUPP;
+
+    VLOG_DBG("%s rc (%d) op(%d) name (%s) key (%d)",
+             __func__, rc, action, log_switch->name, log_switch->tunnel_key);
+    return rc;
+}
+
 #endif
