@@ -5823,6 +5823,7 @@ const struct ofproto_class ofproto_dpif_class = {
     NULL,
     NULL,
     NULL,
-    NULL                       /* get mac learnt */
+    NULL,                       /* get mac learnt */
+	NULL                        /* set_logical_switch */
 #endif
 };
