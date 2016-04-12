@@ -1,3 +1,23 @@
+# vtep IDL
+if OPS
+ovslibincludedir = $(includedir)/ovs
+ovslibinclude_HEADERS += \
+	vtep/vtep-idl.h
+endif
+
+OVSIDL_BUILT += \
+	vtep/vtep-idl.c \
+	vtep/vtep-idl.h \
+	vtep/vtep-idl.ovsidl
+EXTRA_DIST += vtep/vtep-idl.ann
+VTEP_IDL_FILES = \
+	$(srcdir)/vtep/vtep.ovsschema \
+	$(srcdir)/vtep/vtep-idl.ann
+    $(srcdir)/vtep/vtep-idl.ovsidl: $(VTEP_IDL_FILES)
+	$(AM_V_GEN)$(OVSDB_IDLC) annotate $(VTEP_IDL_FILES) > $@.tmp && \
+	mv $@.tmp $@
+    CLEANFILES += vtep/vtep-idl.c vtep/vtep-idl.h
+
 bin_PROGRAMS += \
    vtep/vtep-ctl
 
@@ -11,7 +31,7 @@ man_MANS += \
    vtep/vtep-ctl.8
 
 vtep_vtep_ctl_SOURCES = vtep/vtep-ctl.c
-vtep_vtep_ctl_LDADD = lib/libovscommon.la ovsdb/libovsdb.la lib/libopenvswitch.la
+vtep_vtep_ctl_LDADD = lib/libovscommon.la ovsdb/libovsdb.la lib/libopenvswitch.la vtep/libvtep.la
 
 # ovs-vtep
 scripts_SCRIPTS += \
@@ -48,7 +68,6 @@ man_MANS += vtep/vtep.5
 vtep/vtep.5: \
 	ovsdb/ovsdb-doc vtep/vtep.xml vtep/vtep.ovsschema $(VTEP_PIC)
 	$(AM_V_GEN)$(OVSDB_DOC) \
-		--title="vtep" \
 		$(VTEP_DOT_DIAGRAM_ARG) \
 		--version=$(VERSION) \
 		$(srcdir)/vtep/vtep.ovsschema \
@@ -58,13 +77,5 @@ vtep/vtep.5: \
 # Version checking for vtep.ovsschema.
 ALL_LOCAL += vtep/vtep.ovsschema.stamp
 vtep/vtep.ovsschema.stamp: vtep/vtep.ovsschema
-	@sum=`sed '/cksum/d' $? | cksum`; \
-	expected=`sed -n 's/.*"cksum": "\(.*\)".*/\1/p' $?`; \
-	if test "X$$sum" = "X$$expected"; then \
-	  touch $@; \
-	else \
-	  ln=`sed -n '/"cksum":/=' $?`; \
-	  echo >&2 "$?:$$ln: checksum \"$$sum\" does not match (you should probably update the version number and fix the checksum)"; \
-	  exit 1; \
-	fi
+	$(srcdir)/build-aux/cksum-schema-check $? $@
 CLEANFILES += vtep/vtep.ovsschema.stamp

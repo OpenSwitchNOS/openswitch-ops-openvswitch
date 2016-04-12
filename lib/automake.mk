@@ -117,7 +117,6 @@ ovslibinclude_HEADERS = \
 	lib/packets.h \
 	lib/pcap-file.h \
 	lib/perf-counter.h \
-	lib/plugins.h \
 	lib/poll-loop.h \
 	lib/process.h \
 	lib/pvector.h \
@@ -169,8 +168,8 @@ ovslibinclude_HEADERS = \
 	lib/vlan-bitmap.h \
 	lib/vlandev.h \
 	lib/vswitch-idl.h \
-        vswitchd/bufmon-provider.h \
-        include/odp-netlink.h
+	include/odp-netlink.h
+
 endif
 
 lib_LTLIBRARIES += lib/libovscommon.la
@@ -270,7 +269,6 @@ lib_libovscommon_la_SOURCES = \
         lib/ovs-thread.h \
 	lib/packets.c \
 	lib/packets.h \
-        lib/plugins.c \
         lib/poll-loop.c \
         lib/poll-loop.h \
         lib/process.c \
@@ -404,6 +402,26 @@ MAN_FRAGMENTS += \
         ovsdb/remote-active.man \
         ovsdb/remote-passive.man
 
+# libvtep
+
+lib_LTLIBRARIES += vtep/libvtep.la
+
+vtep_libvtep_la_LDFLAGS = \
+    -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
+    -Wl,--version-script=$(top_builddir)/vtep/libvtep.sym \
+    $(AM_LDFLAGS)
+vtep_libvtep_la_SOURCES = \
+    vtep/vtep-idl.c \
+    vtep/vtep-idl.h
+
+vtep_libvtep_la_CFLAGS = $(AM_CFLAGS)
+vtep_libvtep_la_CPPFLAGS = $(AM_CPPFLAGS)
+
+pkgconfig_DATA += \
+        $(srcdir)/vtep/libvtep.pc
+
+# libopenvswitch
+
 lib_LTLIBRARIES += lib/libopenvswitch.la
 
 lib_libopenvswitch_la_LIBADD = $(SSL_LIBS) lib/libovscommon.la ovsdb/libovsdb.la
@@ -527,11 +545,6 @@ lib_libopenvswitch_la_SOURCES = \
 	lib/vlandev.c \
 	lib/vlandev.h
 
-if OPS
-lib_libopenvswitch_la_SOURCES += \
-	vswitchd/bufmon-provider.c
-endif
-
 if WIN32
 lib_libovscommon_la_SOURCES += \
 	lib/daemon-windows.c \
@@ -570,6 +583,10 @@ lib_libsflow_la_SOURCES = \
 	lib/sflow_sampler.c \
 	lib/sflow_poller.c \
 	lib/sflow_receiver.c
+if OPS
+	\
+	lib/sflow_util.c
+endif
 lib_libsflow_la_CPPFLAGS = $(AM_CPPFLAGS)
 lib_libsflow_la_CFLAGS = $(AM_CFLAGS)
 if HAVE_WNO_UNUSED
@@ -710,6 +727,7 @@ OVSIDL_BUILT += \
 	$(srcdir)/lib/vswitch-idl.ovsidl
 
 EXTRA_DIST += $(srcdir)/lib/vswitch-idl.ann
+
 VSWITCH_IDL_FILES = \
 	$(srcdir)/vswitchd/vswitch.ovsschema \
 	$(srcdir)/lib/vswitch-idl.ann
