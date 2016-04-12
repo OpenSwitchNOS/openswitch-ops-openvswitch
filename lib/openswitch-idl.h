@@ -552,8 +552,11 @@ enum ovsrec_port_config_admin_e {
 
 /* DHCP Configuration keys */
 #define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_DISABLED    "v4relay_disabled"
+#define SYSTEM_DHCP_CONFIG_MAP_V6RELAY_ENABLED    "v6relay_enabled"
 #define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_ENABLED                \
                                        "v4relay_option82_enabled"
+#define SYSTEM_DHCP_CONFIG_MAP_V6RELAY_OPTION79_ENABLED                \
+                                       "v6relay_option79_enabled"
 #define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_POLICY                 \
                                        "v4relay_option82_policy"
 #define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_VALIDATION_ENABLED     \
