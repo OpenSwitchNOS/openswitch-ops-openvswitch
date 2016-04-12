@@ -1929,6 +1929,7 @@ ovsdb_idl_txn_extract_mutations(struct ovsdb_idl_row *row,
     BITMAP_FOR_EACH_1(idx, class->n_columns, row->map_op_written) {
         struct map_op_list *map_op_list;
         const struct ovsdb_idl_column *column;
+        struct ovsdb_datum *old_datum;
         enum ovsdb_atomic_type key_type, value_type;
         struct json *mutation, *map, *col_name, *mutator;
         struct json *del_set, *ins_map;
@@ -1938,6 +1939,11 @@ ovsdb_idl_txn_extract_mutations(struct ovsdb_idl_row *row,
         column = &class->columns[idx];
         key_type = column->type.key.type;
         value_type = column->type.value.type;
+        if (row->new && row->written && bitmap_is_set(row->written, idx)) {
+            old_datum = &row->new[idx];
+        } else {
+            old_datum = &row->old[idx];
+        }
 
         del_set = json_array_create_empty();
         ins_map = json_array_create_empty();
@@ -1949,9 +1955,8 @@ ovsdb_idl_txn_extract_mutations(struct ovsdb_idl_row *row,
 
             if (map_op_type(map_op) == MAP_OP_UPDATE) {
                 /* Find out if value really changed */
-                struct ovsdb_datum *old_datum, *new_datum;
+                struct ovsdb_datum *new_datum;
                 unsigned int pos;
-                old_datum = &row->old[idx];
                 new_datum = map_op_datum(map_op);
                 pos = ovsdb_datum_find_key(old_datum,
                                            &new_datum->keys[0],
@@ -1965,7 +1970,7 @@ ovsdb_idl_txn_extract_mutations(struct ovsdb_idl_row *row,
             } else if (map_op_type(map_op) == MAP_OP_DELETE){
                 /* Verify that there is a key to delete */
                 unsigned int pos;
-                pos = ovsdb_datum_find_key(&row->old[idx],
+                pos = ovsdb_datum_find_key(old_datum,
                                            &map_op_datum(map_op)->keys[0],
                                            key_type);
                 if (pos == UINT_MAX) {
@@ -2228,6 +2233,7 @@ ovsdb_idl_txn_commit(struct ovsdb_idl_txn *txn)
             json_object_put(op, "mutations", mutations);
 
             if (any_mutations) {
+                op = substitute_uuids(op, txn);
                 json_array_add(operations, op);
                 any_updates = true;
             } else {
@@ -3113,7 +3119,16 @@ ovsdb_idl_txn_write_partial_map(const struct ovsdb_idl_row *row_,
 
     /* Find out if this is an insert or an update */
     key_type = column->type.key.type;
-    old_datum = &row->old[column_idx];
+    if (row->new && row->written && bitmap_is_set(row->written, column_idx)) {
+        old_datum = &row->new[column_idx];
+    } else if (row->old){
+        old_datum = &row->old[column_idx];
+    } else {
+        VLOG_WARN("ovsdb_idl_txn_write_partial_map(): Trying to do a partial"
+                  " update in a map that does not exist.");
+        ovsdb_datum_destroy(datum, &column->type);
+        return;
+    }
     pos = ovsdb_datum_find_key(old_datum, &datum->keys[0], key_type);
     if (pos == UINT_MAX) {
         /* Insert operation */
@@ -3157,6 +3172,15 @@ ovsdb_idl_txn_delete_partial_map(const struct ovsdb_idl_row *row_,
         struct ovsdb_type type_ = column->type;
         type_.value.type = OVSDB_TYPE_VOID;
         ovsdb_datum_destroy(datum, &type_);
+        return;
+    }
+
+    /* Verify that there is a valid map to delete from */
+    if (!(row->new && row->written && bitmap_is_set(row->written, column_idx))
+        && !row->old) {
+        VLOG_WARN("ovsdb_idl_txn_delete_partial_map(): Trying to do a partial"
+                  " update in a map that does not exist.");
+        ovsdb_datum_destroy(datum, &column->type);
         return;
     }
 
