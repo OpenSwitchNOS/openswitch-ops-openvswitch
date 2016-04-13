@@ -471,6 +471,17 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define PORT_DHCP_RELAY_STATISTICS_MAP_DROPPED_V4SERVER_RESPONSES_WITH_OPTION82 \
                                    "dropped_v4server_responses_with_option82"
 
+/* DHCPv6-Relay statistics */
+#define PORT_DHCP_RELAY_STATISTICS_MAP_VALID_V6CLIENT_REQUESTS \
+                                   "valid_v6client_requests"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_DROPPED_V6CLIENT_REQUESTS \
+                                   "dropped_v6client_requests"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_VALID_V6SERVER_RESPONSES \
+                                   "valid_v6server_responses"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_DROPPED_V6SERVER_RESPONSES \
+                                   "dropped_v6server_responses"
+
+
 enum ovsrec_port_config_admin_e {
     PORT_ADMIN_CONFIG_DOWN,
     PORT_ADMIN_CONFIG_UP
@@ -562,6 +573,10 @@ enum ovsrec_port_config_admin_e {
                                        "v4relay_option82_remote_id"
 #define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_HOP_COUNT_INCREMENT_DISABLED    \
                                        "v4relay_hop_count_increment_disabled"
+
+#define SYSTEM_DHCP_CONFIG_MAP_V6RELAY_ENABLED    "v6relay_enabled"
+#define SYSTEM_DHCP_CONFIG_MAP_V6RELAY_OPTION79_ENABLED                \
+                                       "v6relay_option79_enabled"
 
 /* DHCP BOOTP-Gateway Configuration key */
 #define DHCP_RELAY_OTHER_CONFIG_MAP_BOOTP_GATEWAY    "bootp_gateway"
