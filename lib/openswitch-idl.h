@@ -563,6 +563,10 @@ enum ovsrec_port_config_admin_e {
 #define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_HOP_COUNT_INCREMENT_DISABLED    \
                                        "v4relay_hop_count_increment_disabled"
 
+#define SYSTEM_DHCP_CONFIG_MAP_V6RELAY_ENABLED    "v6relay_enabled"
+#define SYSTEM_DHCP_CONFIG_MAP_V6RELAY_OPTION79_ENABLED                \
+                                       "v6relay_option79_enabled"
+
 /* DHCP BOOTP-Gateway Configuration key */
 #define DHCP_RELAY_OTHER_CONFIG_MAP_BOOTP_GATEWAY    "bootp_gateway"
 
