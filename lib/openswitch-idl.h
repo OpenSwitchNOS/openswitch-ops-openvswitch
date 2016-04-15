@@ -475,6 +475,8 @@ enum ovsrec_port_config_admin_e {
 #define SYSTEM_SOFTWARE_INFO_OS_NAME                      "os_name"
 
 #define SYSTEM_OTHER_CONFIG_MAP_CLI_SESSION_TIMEOUT       "cli_session_timeout"
+#define SYSTEM_OTHER_CONFIG_MAP_BANNER                    "banner"
+#define SYSTEM_OTHER_CONFIG_MAP_BANNER_EXEC               "banner_exec"
 
 /* LLDP related */
 #define SYSTEM_OTHER_CONFIG_MAP_LLDP_ENABLE               "lldp_enable"
