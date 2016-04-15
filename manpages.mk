@@ -244,38 +244,28 @@ ovsdb/remote-active.man:
 ovsdb/remote-passive.man:
 ovsdb/remote-passive.man:
 
-vswitchd/ovs-vswitchd.8: \
-	vswitchd/ovs-vswitchd.8.in \
+vtep/vtep-ctl.8: \
+	vtep/vtep-ctl.8.in \
 	lib/common.man \
-	lib/coverage-unixctl.man \
-	lib/daemon.man \
-	lib/dpctl.man \
-	lib/memory-unixctl.man \
-	lib/service.man \
+	lib/db-ctl-base.man \
 	lib/ssl-bootstrap.man \
+	lib/ssl-peer-ca-cert.man \
 	lib/ssl.man \
-	lib/unixctl.man \
-	lib/vlog-unixctl.man \
+	lib/table.man \
 	lib/vlog.man \
-	ofproto/ofproto-dpif-unixctl.man \
-	ofproto/ofproto-tnl-unixctl.man \
-	ofproto/ofproto-unixctl.man \
 	ovsdb/remote-active.man \
+	ovsdb/remote-active.man \
+	ovsdb/remote-passive.man \
 	ovsdb/remote-passive.man
-vswitchd/ovs-vswitchd.8.in:
+vtep/vtep-ctl.8.in:
 lib/common.man:
-lib/coverage-unixctl.man:
-lib/daemon.man:
-lib/dpctl.man:
-lib/memory-unixctl.man:
-lib/service.man:
+lib/db-ctl-base.man:
 lib/ssl-bootstrap.man:
+lib/ssl-peer-ca-cert.man:
 lib/ssl.man:
-lib/unixctl.man:
-lib/vlog-unixctl.man:
+lib/table.man:
 lib/vlog.man:
-ofproto/ofproto-dpif-unixctl.man:
-ofproto/ofproto-tnl-unixctl.man:
-ofproto/ofproto-unixctl.man:
 ovsdb/remote-active.man:
+ovsdb/remote-active.man:
+ovsdb/remote-passive.man:
 ovsdb/remote-passive.man:

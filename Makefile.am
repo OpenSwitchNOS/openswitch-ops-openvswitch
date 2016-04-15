@@ -35,7 +35,7 @@ AM_CPPFLAGS += -I $(top_builddir)/libltdl
 
 AM_CPPFLAGS += $(SSL_INCLUDES)
 
-AM_CFLAGS = -Wstrict-prototypes -DOPS -DOPS_TEMP
+AM_CFLAGS = -Wstrict-prototypes -DOPS -DOPS_TEMP -DHALON
 AM_CFLAGS += $(WARNING_FLAGS)
 AM_CFLAGS += $(OVS_CFLAGS)
 
@@ -391,3 +391,4 @@ endif
 include ovsdb/automake.mk
 include python/automake.mk
 include vtep/automake.mk
+include tests/automake.mk
