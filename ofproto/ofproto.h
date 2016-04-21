@@ -329,6 +329,23 @@ struct ofproto_mlearn_hmap {
     struct ofproto_mlearn_hmap_node_buffer buffer; /* buffer */
 };
 
+enum ofp_l2_mac_tbl_action {
+    OFP_MAC_TBL_ACTION_UNDEF,   /* undefined action */
+    OFP_MAC_TBL_ADD,            /* add MAC table entry */
+    OFP_MAC_TBL_DELETE,         /* delete MAC table entry */
+    OFP_MAC_TBL_UPDATE          /* update MAC table entry */
+};
+
+struct ofproto_l2_mac_tbl_update_entry {
+    struct ovs_list node;                 /* MUST be first element - list contains "struct ofproto_l2_mac_tbl_update_entry" */
+    struct eth_addr mac;                  /* MAC address */
+    uint32_t vlan;                        /* VLAN ID */
+    enum ofp_l2_mac_tbl_action action;    /* MAC table entry update action */
+    ofp_port_t port;                      /* Destination interface (port, vxlan tunnel etc.) */
+    int macFlags;                         /* Properties of MAC entry */
+};
+
+
 enum ofproto_logical_switch_action {
     OFPROTO_LOG_SWITCH_ACTION_UNDEF,   /* undefined action */
     OFPROTO_LOG_SWITCH_ACTION_ADD,     /* add logical switch */
