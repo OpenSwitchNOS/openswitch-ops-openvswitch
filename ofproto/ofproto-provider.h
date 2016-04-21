@@ -1817,6 +1817,10 @@ struct ofproto_class {
     int (*set_logical_switch)(const struct ofproto *ofproto, void *aux,
                               enum ofproto_logical_switch_action action,
                               struct ofproto_logical_switch *log_switch);
+    /* Add/Delete/Update list of Mac-vlan/vni to ports */
+    int (*update_l2_mac_table)(const struct ofproto *ofproto,
+                               struct ovs_list *mac_entry_list);
+
 #endif
 };
 
