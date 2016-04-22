@@ -361,6 +361,14 @@ enum ovsrec_interface_hw_intf_info_pluggable_e {
 #define INTERFACE_HW_BOND_CONFIG_MAP_ENABLED_FALSE              "false"
 #define INTERFACE_HW_BOND_CONFIG_MAP_ENABLED_TRUE               "true"
 
+/* definitions for bond status */
+#define BOND_STATUS_FALSE                                       "false"
+#define BOND_STATUS_TRUE                                        "true"
+
+#define BOND_STATUS_UP                                          "up"
+#define BOND_STATUS_BLOCKED                                     "blocked"
+#define BOND_STATUS_DOWN                                        "down"
+
 enum ovsrec_interface_hw_bond_config_enabled_e {
     INTERFACE_HW_BOND_CONFIG_ENABLED_FALSE,
     INTERFACE_HW_BOND_CONFIG_ENABLED_TRUE
