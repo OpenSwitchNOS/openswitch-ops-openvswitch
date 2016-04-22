@@ -400,6 +400,13 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define INTERFACE_LACP_STATUS_MAP_PARTNER_KEY           "partner_key"
 #define INTERFACE_LACP_STATUS_MAP_PARTNER_STATE         "partner_state"
 
+/* Definitions for bond_status column */
+#define INTERFACE_BOND_STATUS_ENABLED_FALSE             "false"
+#define INTERFACE_BOND_STATUS_ENABLED_TRUE              "true"
+#define INTERFACE_BOND_STATUS_UP                        "up"
+#define INTERFACE_BOND_STATUS_BLOCKED                   "blocked"
+#define INTERFACE_BOND_STATUS_DOWN                      "down"
+
 #define INTERFACE_LACP_STATUS_STATE_ACTIVE              "Activ"
 #define INTERFACE_LACP_STATUS_STATE_TIMEOUT             "TmOut"
 #define INTERFACE_LACP_STATUS_STATE_AGGREGATION         "Aggr"
@@ -451,6 +458,12 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define PORT_LACP_STATUS_BOND_STATUS_DOWN               "down"
 #define PORT_LACP_STATUS_BOND_STATUS_DEFAULTED          "defaulted"
 
+/* Definitions for bond_status column */
+#define PORT_BOND_STATUS_ENABLED_FALSE                  "false"
+#define PORT_BOND_STATUS_ENABLED_TRUE                   "true"
+#define PORT_BOND_STATUS_UP                             "up"
+#define PORT_BOND_STATUS_BLOCKED                        "blocked"
+#define PORT_BOND_STATUS_DOWN                           "down"
 #define PORT_CONFIG_ADMIN_DOWN                          "down"
 
 /* DHCP-Relay statistics */
