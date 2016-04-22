@@ -361,6 +361,7 @@ enum ovsrec_interface_hw_intf_info_pluggable_e {
 #define INTERFACE_HW_BOND_CONFIG_MAP_ENABLED_FALSE              "false"
 #define INTERFACE_HW_BOND_CONFIG_MAP_ENABLED_TRUE               "true"
 
+
 enum ovsrec_interface_hw_bond_config_enabled_e {
     INTERFACE_HW_BOND_CONFIG_ENABLED_FALSE,
     INTERFACE_HW_BOND_CONFIG_ENABLED_TRUE
@@ -400,6 +401,13 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define INTERFACE_LACP_STATUS_MAP_PARTNER_KEY           "partner_key"
 #define INTERFACE_LACP_STATUS_MAP_PARTNER_STATE         "partner_state"
 
+/* Definitions for bond_status column */
+#define INTERFACE_BOND_STATUS_FALSE                     "false"
+#define INTERFACE_BOND_STATUS_TRUE                      "true"
+#define INTERFACE_BOND_STATUS_UP                        "up"
+#define INTERFACE_BOND_STATUS_BLOCKED                   "blocked"
+#define INTERFACE_BOND_STATUS_DOWN                      "down"
+
 #define INTERFACE_LACP_STATUS_STATE_ACTIVE              "Activ"
 #define INTERFACE_LACP_STATUS_STATE_TIMEOUT             "TmOut"
 #define INTERFACE_LACP_STATUS_STATE_AGGREGATION         "Aggr"
@@ -408,6 +416,7 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define INTERFACE_LACP_STATUS_STATE_DISTRIBUTING        "Dist"
 #define INTERFACE_LACP_STATUS_STATE_DEFAULTED           "Def"
 #define INTERFACE_LACP_STATUS_STATE_EXPIRED             "Exp"
+
 
 /****************************** PORT TABLE *******************************/
 
@@ -447,9 +456,17 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define PORT_LACP_STATUS_MAP_BOND_STATUS                "bond_status"
 #define PORT_LACP_STATUS_MAP_BOND_STATUS_REASON         "bond_status_reason"
 
+/* Definitions for bond_status column */
+#define PORT_BOND_STATUS_FALSE                          "false"
+#define PORT_BOND_STATUS_TRUE                           "true"
+#define PORT_BOND_STATUS_UP                             "up"
+#define PORT_BOND_STATUS_BLOCKED                        "blocked"
+#define PORT_BOND_STATUS_DOWN                           "down"
+
 #define PORT_LACP_STATUS_BOND_STATUS_OK                 "ok"
 #define PORT_LACP_STATUS_BOND_STATUS_DOWN               "down"
 #define PORT_LACP_STATUS_BOND_STATUS_DEFAULTED          "defaulted"
+
 
 #define PORT_CONFIG_ADMIN_DOWN                          "down"
 
