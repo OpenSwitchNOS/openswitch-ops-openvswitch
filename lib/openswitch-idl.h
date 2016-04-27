@@ -664,6 +664,17 @@ enum ovsrec_port_config_admin_e {
 #define SYSTEM_MGMT_INTF_MAP_DOMAIN_NAME          "domain_name"
 #define SYSTEM_MGMT_INTF_MAP_DHCP_DOMAIN_NAME     "dhcp_domain_name"
 
+/* BroadView Configuration column */
+#define SYSTEM_BROADVIEW_CONFIG_MAP_ENABLED      "enabled"
+#define SYSTEM_BROADVIEW_CONFIG_MAP_CLIENT_IP    "client_ip"
+#define SYSTEM_BROADVIEW_CONFIG_MAP_CLIENT_PORT  "client_port"
+#define SYSTEM_BROADVIEW_CONFIG_MAP_AGENT_PORT   "agent_port"
+
+#define SYSTEM_BROADVIEW_CONFIG_MAP_ENABLED_DEFAULT      false
+#define SYSTEM_BROADVIEW_CONFIG_MAP_AGENT_PORT_DEFAULT   8080
+#define SYSTEM_BROADVIEW_CONFIG_MAP_CLIENT_IP_DEFAULT    "127.0.0.1"
+#define SYSTEM_BROADVIEW_CONFIG_MAP_CLIENT_PORT_DEFAULT  9070
+
 /* buffer monitoring statistics config table (bufmon)*/
 #define BUFMON_CONFIG_MAP_ENABLED                               "enabled"
 #define BUFMON_CONFIG_MAP_COUNTERS_MODE                         "counters_mode"
