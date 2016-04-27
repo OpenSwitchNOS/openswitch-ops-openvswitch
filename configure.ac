@@ -144,10 +144,10 @@ AC_CONFIG_FILES([
     lib/string.h
     ovsdb/libovsdb.sym
     ofproto/libofproto.sym
-    plugins/libplugins.sym
     lib/libsflow.sym
     lib/libopenvswitch.sym
-    lib/libovscommon.sym])
+    lib/libovscommon.sym
+    vtep/libvtep.sym])
 
 OVS_ENABLE_OPTION([-Wall])
 OVS_ENABLE_OPTION([-Wextra])
@@ -177,6 +177,8 @@ OVS_CHECK_DPDK
 OVS_CHECK_SIMULATOR_PROVIDER
 AC_SUBST([OPS_BUILD])
 AM_CONDITIONAL([OPS], [test "$OPS_BUILD" = "1" || test "x$enable_simulator_provider" = "xyes"])
+AC_SUBST([BUILD_OVS_VSWITCHD])
+AM_CONDITIONAL([OVS_VSWITCHD], [test "$BUILD_OVS_VSWITCHD" = "1"])
 OVS_CHECK_PRAGMA_MESSAGE
 AC_SUBST([OVS_CFLAGS])
 AC_SUBST([OVS_LDFLAGS])
@@ -194,9 +196,9 @@ AC_CONFIG_FILES(tests/atlocal)
 AC_CONFIG_FILES(lib/libovscommon.pc)
 AC_CONFIG_FILES(lib/libopenvswitch.pc)
 AC_CONFIG_FILES(lib/libsflow.pc)
-AC_CONFIG_FILES(plugins/libplugins.pc)
 AC_CONFIG_FILES(ofproto/libofproto.pc)
 AC_CONFIG_FILES(ovsdb/libovsdb.pc)
+AC_CONFIG_FILES(vtep/libvtep.pc)
 AC_CONFIG_FILES(include/openvswitch/version.h)
 
 dnl This makes sure that include/openflow gets created in the build directory.
