@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Hewlett-Packard Development Company, L.P.
+ * Copyright (C) 2015-2016 Hewlett-Packard Development Company, L.P.
  * All Rights Reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -54,6 +54,9 @@
 
 #define OVSREC_PORT_ERROR_ADMIN_DOWN                    "port_admin_down"
 
+/************************** UDP BROADCAST SERVER TABLE***********************/
+#define SYSTEM_OTHER_CONFIG_MAP_UDP_BCAST_FWD_ENABLED   "udp_bcast_forwarder_enabled"
+
 enum ovsrec_interface_error_e {
     INTERFACE_ERROR_UNINITIALIZED,
     INTERFACE_ERROR_ADMIN_DOWN,
@@ -80,6 +83,15 @@ enum ovsrec_interface_pm_info_cable_technology_e {
 
 #define INTERFACE_PM_INFO_MAP_CONNECTOR                         "connector"
 
+#define OVSREC_INTERFACE_PM_INFO_CONNECTOR_QSFP28_CLR4          "QSFP28_CLR4"
+#define OVSREC_INTERFACE_PM_INFO_CONNECTOR_QSFP28_CR4           "QSFP28_CR4"
+#define OVSREC_INTERFACE_PM_INFO_CONNECTOR_QSFP28_PSM4          "QSFP28_PSM4"
+#define OVSREC_INTERFACE_PM_INFO_CONNECTOR_QSFP28_CWDM4         "QSFP28_CWDM4"
+#define OVSREC_INTERFACE_PM_INFO_CONNECTOR_QSFP28_LR4           "QSFP28_LR4"
+#define OVSREC_INTERFACE_PM_INFO_CONNECTOR_QSFP28_SR4           "QSFP28_SR4"
+#define OVSREC_INTERFACE_PM_INFO_CONNECTOR_SFP28_CR             "SFP28_CR"
+#define OVSREC_INTERFACE_PM_INFO_CONNECTOR_SFP28_LR             "SFP28_LR"
+#define OVSREC_INTERFACE_PM_INFO_CONNECTOR_SFP28_SR             "SFP28_SR"
 #define OVSREC_INTERFACE_PM_INFO_CONNECTOR_QSFP_CR4             "QSFP_CR4"
 #define OVSREC_INTERFACE_PM_INFO_CONNECTOR_QSFP_LR4             "QSFP_LR4"
 #define OVSREC_INTERFACE_PM_INFO_CONNECTOR_QSFP_SR4             "QSFP_SR4"
@@ -96,6 +108,15 @@ enum ovsrec_interface_pm_info_cable_technology_e {
 #define OVSREC_INTERFACE_PM_INFO_CONNECTOR_UNKNOWN              "unknown"
 
 enum ovsrec_interface_pm_info_connector_e {
+    INTERFACE_PM_INFO_CONNECTOR_QSFP28_CLR4,
+    INTERFACE_PM_INFO_CONNECTOR_QSFP28_CR4,
+    INTERFACE_PM_INFO_CONNECTOR_QSFP28_PSM4,
+    INTERFACE_PM_INFO_CONNECTOR_QSFP28_CWDM4,
+    INTERFACE_PM_INFO_CONNECTOR_QSFP28_LR4,
+    INTERFACE_PM_INFO_CONNECTOR_QSFP28_SR4,
+    INTERFACE_PM_INFO_CONNECTOR_SFP28_CR,
+    INTERFACE_PM_INFO_CONNECTOR_SFP28_LR,
+    INTERFACE_PM_INFO_CONNECTOR_SFP28_SR,
     INTERFACE_PM_INFO_CONNECTOR_QSFP_CR4,
     INTERFACE_PM_INFO_CONNECTOR_QSFP_LR4,
     INTERFACE_PM_INFO_CONNECTOR_QSFP_SR4,
@@ -248,17 +269,23 @@ enum ovsrec_interface_hw_intf_config_pause_e {
 
 #define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE             "interface_type"
 
-#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_UNKNOWN     "unknown"
-#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_BACKPLANE   "backplane"
-#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_1GBASE_SX   "1GBASE_SX"
-#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_1GBASE_T    "1GBASE_T"
-#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_10GBASE_CR  "10GBASE_CR"
-#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_10GBASE_SR  "10GBASE_SR"
-#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_10GBASE_LR  "10GBASE_LR"
-#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_10GBASE_LRM "10GBASE_LRM"
-#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_40GBASE_CR4 "40GBASE_CR4"
-#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_40GBASE_SR4 "40GBASE_SR4"
-#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_40GBASE_LR4 "40GBASE_LR4"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_UNKNOWN      "unknown"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_BACKPLANE    "backplane"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_1GBASE_SX    "1GBASE_SX"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_1GBASE_T     "1GBASE_T"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_10GBASE_CR   "10GBASE_CR"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_10GBASE_SR   "10GBASE_SR"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_10GBASE_LR   "10GBASE_LR"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_10GBASE_LRM  "10GBASE_LRM"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_25GBASE_CR   "25GBASE_CR"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_25GBASE_SR   "25GBASE_SR"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_25GBASE_LR   "25GBASE_LR"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_40GBASE_CR4  "40GBASE_CR4"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_40GBASE_SR4  "40GBASE_SR4"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_40GBASE_LR4  "40GBASE_LR4"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_100GBASE_CR4 "100GBASE_CR4"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_100GBASE_SR4 "100GBASE_SR4"
+#define INTERFACE_HW_INTF_CONFIG_MAP_INTERFACE_TYPE_100GBASE_LR4 "100GBASE_LR4"
 
 enum ovsrec_interface_hw_intf_config_interface_type_e {
     INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_UNKNOWN,
@@ -269,9 +296,15 @@ enum ovsrec_interface_hw_intf_config_interface_type_e {
     INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_10GBASE_SR,
     INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_10GBASE_LR,
     INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_10GBASE_LRM,
+    INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_25GBASE_CR,
+    INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_25GBASE_SR,
+    INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_25GBASE_LR,
     INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_40GBASE_CR4,
     INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_40GBASE_SR4,
-    INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_40GBASE_LR4
+    INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_40GBASE_LR4,
+    INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_100GBASE_CR4,
+    INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_100GBASE_SR4,
+    INTERFACE_HW_INTF_CONFIG_INTERFACE_TYPE_100GBASE_LR4
 };
 
 #define INTERFACE_HW_INTF_INFO_MAP_SWITCH_UNIT                  "switch_unit"
@@ -283,19 +316,23 @@ enum ovsrec_interface_hw_intf_config_interface_type_e {
 #define INTERFACE_HW_INTF_INFO_MAP_PLUGGABLE                    "pluggable"
 #define INTERFACE_HW_INTF_INFO_MAP_ENET1G                       "enet1G"
 #define INTERFACE_HW_INTF_INFO_MAP_ENET10G                      "enet10G"
+#define INTERFACE_HW_INTF_INFO_MAP_ENET25G                      "enet25G"
 #define INTERFACE_HW_INTF_INFO_MAP_ENET40G                      "enet40G"
+#define INTERFACE_HW_INTF_INFO_MAP_ENET100G                     "enet100G"
 #define INTERFACE_HW_INTF_INFO_MAP_SPLIT_4                      "split_4"
 #define INTERFACE_HW_INTF_INFO_SPLIT_PARENT                     "split_parent"
 
 #define INTERFACE_HW_INTF_INFO_MAP_CONNECTOR_RJ45               "RJ45"
 #define INTERFACE_HW_INTF_INFO_MAP_CONNECTOR_SFP_PLUS           "SFP_PLUS"
 #define INTERFACE_HW_INTF_INFO_MAP_CONNECTOR_QSFP_PLUS          "QSFP_PLUS"
+#define INTERFACE_HW_INTF_INFO_MAP_CONNECTOR_QSFP28             "QSFP28"
 
 enum ovsrec_interface_hw_intf_connector_e {
     INTERFACE_HW_INTF_INFO_CONNECTOR_UNKNOWN,
     INTERFACE_HW_INTF_INFO_CONNECTOR_RJ45,
     INTERFACE_HW_INTF_INFO_CONNECTOR_SFP_PLUS,
-    INTERFACE_HW_INTF_INFO_CONNECTOR_QSFP_PLUS
+    INTERFACE_HW_INTF_INFO_CONNECTOR_QSFP_PLUS,
+    INTERFACE_HW_INTF_INFO_CONNECTOR_QSFP28
 };
 
 #define INTERFACE_HW_INTF_INFO_MAP_PLUGGABLE_FALSE              "false"
@@ -385,13 +422,26 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 
 #define PORT_OTHER_CONFIG_MAP_LACP_TIME                 "lacp-time"
 
-#define PORT_OTHER_CONFIG_LACP_FALLBACK                 "lacp-fallback"
+#define PORT_OTHER_CONFIG_LACP_FALLBACK                 "lacp-fallback-ab"
+#define PORT_OTHER_CONFIG_LACP_FALLBACK_ENABLED         "true"
 
 #define PORT_OTHER_CONFIG_LACP_TIME_SLOW                "slow"
 #define PORT_OTHER_CONFIG_LACP_TIME_FAST                "fast"
 
 #define PORT_OTHER_CONFIG_MAP_LACP_SYSTEM_PRIORITY      "lacp-system-priority"
 #define PORT_OTHER_CONFIG_MAP_LACP_SYSTEM_ID            "lacp-system-id"
+
+#define PORT_OTHER_CONFIG_SFLOW_PER_INTERFACE_KEY_STR       "sflow-enabled"
+#define PORT_OTHER_CONFIG_SFLOW_PER_INTERFACE_VALUE_TRUE    "true"
+#define PORT_OTHER_CONFIG_SFLOW_PER_INTERFACE_VALUE_FALSE   "false"
+
+#define PORT_OTHER_CONFIG_MAP_BOND_MODE                 "bond_mode"
+
+#define PORT_OTHER_CONFIG_MAP_PROXY_ARP_ENABLED         "proxy_arp_enabled"
+#define PORT_OTHER_CONFIG_MAP_PROXY_ARP_ENABLED_TRUE    "true"
+
+#define PORT_OTHER_CONFIG_MAP_LOCAL_PROXY_ARP_ENABLED       "local_proxy_arp_enabled"
+#define PORT_OTHER_CONFIG_MAP_LOCAL_PROXY_ARP_ENABLED_TRUE  "true"
 
 #define PORT_LACP_STATUS_MAP_BOND_SPEED                 "bond_speed"
 #define PORT_LACP_STATUS_MAP_BOND_STATUS                "bond_status"
@@ -402,6 +452,24 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define PORT_LACP_STATUS_BOND_STATUS_DEFAULTED          "defaulted"
 
 #define PORT_CONFIG_ADMIN_DOWN                          "down"
+
+/* DHCP-Relay statistics */
+#define PORT_DHCP_RELAY_STATISTICS_MAP_VALID_V4CLIENT_REQUESTS \
+                                   "valid_v4client_requests"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_DROPPED_V4CLIENT_REQUESTS \
+                                   "dropped_v4client_requests"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_VALID_V4SERVER_RESPONSES \
+                                   "valid_v4server_responses"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_DROPPED_V4SERVER_RESPONSES \
+                                   "dropped_v4server_responses"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_VALID_V4CLIENT_REQUESTS_WITH_OPTION82 \
+                                   "valid_v4client_requests_with_option82"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_DROPPED_V4CLIENT_REQUESTS_WITH_OPTION82 \
+                                   "dropped_v4client_requests_with_option82"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_VALID_V4SERVER_RESPONSES_WITH_OPTION82 \
+                                   "valid_v4server_responses_with_option82"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_DROPPED_V4SERVER_RESPONSES_WITH_OPTION82 \
+                                   "dropped_v4server_responses_with_option82"
 
 enum ovsrec_port_config_admin_e {
     PORT_ADMIN_CONFIG_DOWN,
@@ -482,6 +550,22 @@ enum ovsrec_port_config_admin_e {
 #define SYSTEM_OTHER_CONFIG_MAP_TFTP_SOURCE          "tftp_source"
 #define SYSTEM_OTHER_CONFIG_MAP_PROTOCOLS_SOURCE     "protocols_source"
 
+/* DHCP Configuration keys */
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_DISABLED    "v4relay_disabled"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_ENABLED                \
+                                       "v4relay_option82_enabled"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_POLICY                 \
+                                       "v4relay_option82_policy"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_VALIDATION_ENABLED     \
+                                       "v4relay_option82_validation_enabled"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_REMOTE_ID              \
+                                       "v4relay_option82_remote_id"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_HOP_COUNT_INCREMENT_DISABLED    \
+                                       "v4relay_hop_count_increment_disabled"
+
+/* DHCP BOOTP-Gateway Configuration key */
+#define DHCP_RELAY_OTHER_CONFIG_MAP_BOOTP_GATEWAY    "bootp_gateway"
+
 /* lacp global configuration parameters */
 #define SYSTEM_LACP_CONFIG_MAP_LACP_SYSTEM_ID        "lacp-system-id"
 #define SYSTEM_LACP_CONFIG_MAP_LACP_SYSTEM_PRIORITY  "lacp-system-priority"
@@ -514,6 +598,18 @@ enum ovsrec_port_config_admin_e {
 #define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_INTERNAL       "BGP_internal"
 #define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_IBGP           "BGP_iBGP"
 #define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_UPTIME         "BGP_uptime"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_WEIGHT           "BGP_weight"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_AGGREGATOR_ID    "BGP_aggregator_id"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_AGGREGATOR_ADDR  "BGP_aggregator_addr"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_COMMUNITY        "BGP_community"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_ECOMMUNITY       "BGP_ecommunity"
+#define OVSDB_BGP_ROUTE_PATH_ATTRIBUTES_ATOMIC_AGGREGATE "BGP_atomic_aggregate"
+
+/* BGP Neighbor table status keys for clear commands*/
+#define OVSDB_BGP_NEIGHBOR_CLEAR_COUNTERS_SOFT_OUT_PERFORMED   "bgp_num_clear_counters_peer_soft_out_performed"
+#define OVSDB_BGP_NEIGHBOR_CLEAR_COUNTERS_SOFT_OUT_REQUESTED   "bgp_num_clear_counters_peer_soft_out_requested"
+#define OVSDB_BGP_NEIGHBOR_CLEAR_COUNTERS_SOFT_IN_PERFORMED    "bgp_num_clear_counters_peer_soft_in_performed"
+#define OVSDB_BGP_NEIGHBOR_CLEAR_COUNTERS_SOFT_IN_REQUESTED    "bgp_num_clear_counters_peer_soft_in_requested"
 
 /* BGP Neighbor state, goes into "status" column */
 #define BGP_PEER_STATE                          "bgp_peer_state"
@@ -568,6 +664,17 @@ enum ovsrec_port_config_admin_e {
 #define SYSTEM_MGMT_INTF_MAP_DOMAIN_NAME          "domain_name"
 #define SYSTEM_MGMT_INTF_MAP_DHCP_DOMAIN_NAME     "dhcp_domain_name"
 
+/* BroadView Configuration column */
+#define SYSTEM_BROADVIEW_CONFIG_MAP_ENABLED      "enabled"
+#define SYSTEM_BROADVIEW_CONFIG_MAP_CLIENT_IP    "client_ip"
+#define SYSTEM_BROADVIEW_CONFIG_MAP_CLIENT_PORT  "client_port"
+#define SYSTEM_BROADVIEW_CONFIG_MAP_AGENT_PORT   "agent_port"
+
+#define SYSTEM_BROADVIEW_CONFIG_MAP_ENABLED_DEFAULT      false
+#define SYSTEM_BROADVIEW_CONFIG_MAP_AGENT_PORT_DEFAULT   8080
+#define SYSTEM_BROADVIEW_CONFIG_MAP_CLIENT_IP_DEFAULT    "127.0.0.1"
+#define SYSTEM_BROADVIEW_CONFIG_MAP_CLIENT_PORT_DEFAULT  9070
+
 /* buffer monitoring statistics config table (bufmon)*/
 #define BUFMON_CONFIG_MAP_ENABLED                               "enabled"
 #define BUFMON_CONFIG_MAP_COUNTERS_MODE                         "counters_mode"
@@ -584,6 +691,7 @@ enum ovsrec_port_config_admin_e {
 #define SYSTEM_ECMP_CONFIG_HASH_SRC_PORT                  "hash_srcport_enabled"
 #define SYSTEM_ECMP_CONFIG_HASH_DST_IP                    "hash_dstip_enabled"
 #define SYSTEM_ECMP_CONFIG_HASH_DST_PORT                  "hash_dstport_enabled"
+#define SYSTEM_ECMP_CONFIG_HASH_RESILIENT                 "resilient_hash_enabled"
 #define SYSTEM_ECMP_CONFIG_ENABLE_DEFAULT                 "true"
 
 /************************************************************************/
@@ -728,6 +836,32 @@ enum ospf_nbr_statistics_e {
 
 #define OSPF_KEY_ROUTER_STUB_ADV_STARTUP      "startup"
 
+#define OSPF_KEY_STUB_ROUTER_STATE_ACTIVE     "stub_router_state_active"
+#define OSPF_KEY_ROUTE_AREA_ID                "area_id"
+#define OSPF_KEY_ROUTE_TYPE_ABR               "area_type_abr"
+#define OSPF_KEY_ROUTE_TYPE_ASBR              "area_type_asbr"
+#define OSPF_KEY_ROUTE_EXT_TYPE               "ext_type"
+#define OSPF_KEY_ROUTE_EXT_TAG                "ext_tag"
+#define OSPF_KEY_ROUTE_TYPE2_COST             "type2_cost"
+
+#define OSPF_KEY_ROUTE_COST                   "cost"
+
+/* Neighbor options */
+#define OSPF_NBR_OPTION_STRING_T              "type_of_service"
+#define OSPF_NBR_OPTION_STRING_E              "external_routing"
+#define OSPF_NBR_OPTION_STRING_MC             "multicast"
+#define OSPF_NBR_OPTION_STRING_NP             "type_7_lsa"
+#define OSPF_NBR_OPTION_STRING_EA             "external_attributes_lsa"
+#define OSPF_NBR_OPTION_STRING_DC             "demand_circuits"
+#define OSPF_NBR_OPTION_STRING_O              "opaque_lsa"
+
+#define OSPF_PATH_TYPE_STRING_INTER_AREA      "inter_area"
+#define OSPF_PATH_TYPE_STRING_INTRA_AREA      "intra_area"
+#define OSPF_PATH_TYPE_STRING_EXTERNAL        "external"
+
+#define OSPF_EXT_TYPE_STRING_TYPE1            "ext_type_1"
+#define OSPF_EXT_TYPE_STRING_TYPE2            "ext_type_2"
+
 /******************************** NTP START **********************************/
 /****************************** NTP_KEY TABLE ********************************/
 #define NTP_KEY_KEY_PASSWORD_LEN_MIN                    8
@@ -808,5 +942,11 @@ enum ospf_nbr_statistics_e {
 #define SYSTEM_NTP_STATUS_UPTIME                        "uptime"
 
 /************************************* NTP END ****************************************/
+
+/* CoPP Statistics Column */
+#define SYSTEM_COPP_STATISTICS_MAP_TOTAL_PKTS_PASSED      "total_packets_passed"
+#define SYSTEM_COPP_STATISTICS_MAP_TOTAL_BYTES_PASSED     "total_bytes_passed"
+#define SYSTEM_COPP_STATISTICS_MAP_TOTAL_PKTS_DROPPED     "total_packets_dropped"
+#define SYSTEM_COPP_STATISTICS_MAP_TOTAL_BYTES_DROPPED    "total_bytes_dropped"
 
 #endif /* OPENSWITCH_IDL_HEADER */

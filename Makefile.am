@@ -7,7 +7,11 @@
 
 AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
+if OPS
+SUBDIRS = libltdl
+else
 SUBDIRS = datapath libltdl
+endif
 
 AM_CPPFLAGS = $(SSL_CFLAGS)
 AM_LDFLAGS = $(SSL_LDFLAGS)
@@ -105,6 +109,7 @@ EXTRA_DIST = \
 	boot.sh \
 	build-aux/cccl \
 	build-aux/cksum-schema-check \
+	build-aux/calculate-schema-cksum \
 	build-aux/dist-docs \
 	build-aux/sodepends.pl \
 	build-aux/soexpand.pl \
@@ -380,6 +385,9 @@ include lib/automake.mk
 include ofproto/automake.mk
 include utilities/automake.mk
 include include/automake.mk
+if OVS_VSWITCHD
 include vswitchd/automake.mk
+endif
 include ovsdb/automake.mk
 include python/automake.mk
+include vtep/automake.mk

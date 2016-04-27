@@ -69,7 +69,11 @@ struct ofproto_sflow_options {
     uint32_t polling_interval;
     uint32_t header_len;
     uint32_t sub_id;
-    char *agent_device;
+    char *agent_device; /* interface name */
+#ifdef OPS
+    char agent_ip[INET6_ADDRSTRLEN];     /* ip (v4 or v6) of interface */
+    uint32_t max_datagram;               /* Maximum datagram size */
+#endif
     char *control_ip;
 };
 
@@ -267,6 +271,7 @@ struct ofproto_route {
 #define OFPROTO_ECMP_HASH_DSTPORT        0x2     /* source L4 port */
 #define OFPROTO_ECMP_HASH_SRCIP          0x4     /* source IP v4/v6 */
 #define OFPROTO_ECMP_HASH_DSTIP          0x8     /* source IP v4/v6 */
+#define OFPROTO_ECMP_HASH_RESILIENT      0x10    /* resilient hashing */
 
 enum ofproto_host_action {
     OFPROTO_HOST_ADD,
@@ -464,6 +469,9 @@ enum port_option_args {
 
     /* hw_config driven mostly by l3portd */
     PORT_HW_CONFIG,
+
+    /* other_config. Used by sflow */
+    PORT_OTHER_CONFIG,
 
     /* Array size */
     PORT_OPT_MAX
