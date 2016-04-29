@@ -54,8 +54,11 @@
 
 #define OVSREC_PORT_ERROR_ADMIN_DOWN                    "port_admin_down"
 
-/************************** UDP BROADCAST SERVER TABLE***********************/
+/************************** UDP BROADCAST SERVER TABLE ***********************/
 #define SYSTEM_OTHER_CONFIG_MAP_UDP_BCAST_FWD_ENABLED   "udp_bcast_forwarder_enabled"
+
+/************************** DNS CLIENT TABLE *******************************/
+#define SYSTEM_OTHER_CONFIG_MAP_DNS_CLIENT_DISABLED     "dns_client_disabled"
 
 enum ovsrec_interface_error_e {
     INTERFACE_ERROR_UNINITIALIZED,
