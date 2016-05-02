@@ -19,47 +19,24 @@ COMMON_MACROS_AT = \
 
 TESTSUITE_AT = \
 	tests/testsuite.at \
-	tests/completion.at \
 	tests/library.at \
-	tests/heap.at \
 	tests/bundle.at \
-	tests/classifier.at \
+	tests/heap.at \
 	tests/check-structs.at \
 	tests/daemon.at \
 	tests/daemon-py.at \
-	tests/ofp-actions.at \
-	tests/ofp-print.at \
-	tests/ofp-util.at \
-	tests/ofp-errors.at \
-	tests/ovs-ofctl.at \
 	tests/odp.at \
-	tests/mpls-xlate.at \
 	tests/multipath.at \
-	tests/bfd.at \
-	tests/cfm.at \
-	tests/lacp.at \
 	tests/lib.at \
-	tests/learn.at \
 	tests/vconn.at \
 	tests/file_name.at \
 	tests/aes128.at \
-	tests/unixctl-py.at \
 	tests/uuid.at \
 	tests/json.at \
 	tests/jsonrpc.at \
 	tests/jsonrpc-py.at \
-	tests/tunnel.at \
-	tests/tunnel-push-pop.at \
-	tests/tunnel-push-pop-ipv6.at \
 	tests/lockfile.at \
 	tests/reconnect.at \
-	tests/ovs-vswitchd.at \
-	tests/dpif-netdev.at \
-	tests/dpctl.at \
-	tests/ofproto-dpif.at \
-	tests/bridge.at \
-	tests/vlan-splinters.at \
-	tests/ofproto.at \
 	tests/ovsdb.at \
 	tests/ovsdb-log.at \
 	tests/ovsdb-types.at \
@@ -77,21 +54,45 @@ TESTSUITE_AT = \
 	tests/ovsdb-tool.at \
 	tests/ovsdb-server.at \
 	tests/ovsdb-monitor.at \
-	tests/ovsdb-idl.at \
 	tests/ovs-vsctl.at \
 	tests/ovs-monitor-ipsec.at \
 	tests/ovs-xapi-sync.at \
-	tests/stp.at \
-	tests/rstp.at \
-	tests/interface-reconfigure.at \
-	tests/vlog.at \
 	tests/vtep-ctl.at \
-	tests/auto-attach.at \
-	tests/ovn.at \
-	tests/ovn-nbctl.at \
-	tests/ovn-sbctl.at \
-	tests/ovn-controller.at \
-	tests/ovn-controller-vtep.at
+	tests/vlog.at \
+	tests/auto-attach.at
+#	tests/ovsdb-idl.at \
+#	tests/ovn.at \
+#	tests/ovn-nbctl.at \
+#	tests/ovn-sbctl.at \
+#	tests/ovn-controller.at \
+#	tests/ovn-controller-vtep.at
+#	tests/ofp-actions.at \
+#	tests/ofp-print.at \
+#	tests/ofp-util.at \
+#	tests/ofp-errors.at \
+#	tests/ovs-ofctl.at \
+#	tests/ovs-vswitchd.at \
+#	tests/ofproto-dpif.at \
+#	tests/ofproto.at \
+#	tests/stp.at \
+#	tests/rstp.at \
+#	tests/interface-reconfigure.at \
+#	ttests/vlan-splinters.at \
+#	tests/dpif-netdev.at \
+#	tests/dpctl.at \
+#	tests/bridge.at \
+#	tests/tunnel.at \
+#	tests/tunnel-push-pop.at \
+#	tests/tunnel-push-pop-ipv6.at \
+#	tests/bfd.at \
+#	tests/completion.at \
+#	tests/cfm.at \
+#	tests/lacp.at \
+#	tests/mpls-xlate.at \
+#	tests/learn.at \
+#   tests/classifier.at \
+#	tests/unixctl-py.at \
+#
 
 SYSTEM_KMOD_TESTSUITE_AT = \
 	tests/system-common-macros.at \
@@ -111,8 +112,10 @@ TESTSUITE_PATCH = $(srcdir)/tests/testsuite.patch
 SYSTEM_KMOD_TESTSUITE = $(srcdir)/tests/system-kmod-testsuite
 SYSTEM_USERSPACE_TESTSUITE = $(srcdir)/tests/system-userspace-testsuite
 DISTCLEANFILES += tests/atconfig tests/atlocal
+TESTSUITE_LIB= /ws/lutza/ops-build/src/ops-openvswitch/build/lib/.libs:/ws/lutza/ops-build/src/ops-openvswitch/build/ovsdb
 
-AUTOTEST_PATH = utilities:vswitchd:ovsdb:vtep:tests:$(PTHREAD_WIN32_DIR_DLL):ovn:ovn/controller-vtep:ovn/northd:ovn/utilities:ovn/controller
+AUTOTEST_PATH = utilities:vswitchd:ovsdb:vtep:tests:$(PTHREAD_WIN32_DIR_DLL):$(abs_top_srcdir)/mybuild/bin:$(abs_top_srcdir)/mybuild/sbin
+#	:ovn:ovn/controller-vtep:ovn/northd:ovn/utilities:ovn/controller
 
 check-local: tests/atconfig tests/atlocal $(TESTSUITE)
 	$(SHELL) '$(TESTSUITE)' -C tests AUTOTEST_PATH=$(AUTOTEST_PATH) $(TESTSUITEFLAGS)
@@ -257,12 +260,12 @@ noinst_PROGRAMS += tests/test-ovsdb
 tests_test_ovsdb_SOURCES = tests/test-ovsdb.c
 nodist_tests_test_ovsdb_SOURCES = tests/idltest.c tests/idltest.h
 EXTRA_DIST += tests/uuidfilt.pl tests/ovsdb-monitor-sort.pl
-tests_test_ovsdb_LDADD = ovsdb/libovsdb.la lib/libopenvswitch.la
+tests_test_ovsdb_LDADD = ovsdb/libovsdb.la lib/libopenvswitch.la lib/.libs/libovscommon.la
 
 noinst_PROGRAMS += tests/test-lib
 tests_test_lib_SOURCES = \
 	tests/test-lib.c
-tests_test_lib_LDADD = lib/libopenvswitch.la
+tests_test_lib_LDADD = lib/libopenvswitch.la lib/.libs/libovscommon.la
 
 # idltest schema and IDL
 OVSIDL_BUILT += tests/idltest.c tests/idltest.h tests/idltest.ovsidl
@@ -305,7 +308,6 @@ tests_ovstest_SOURCES = \
 	tests/test-netflow.c \
 	tests/test-odp.c \
 	tests/test-ofpbuf.c \
-	tests/test-ovn.c \
 	tests/test-packets.c \
 	tests/test-random.c \
 	tests/test-reconnect.c \
@@ -319,17 +321,21 @@ tests_ovstest_SOURCES = \
 	tests/test-vconn.c \
 	tests/test-aa.c
 
+#tests/test-ovn.c \#
+
 if !WIN32
 tests_ovstest_SOURCES += \
 	tests/test-unix-socket.c
 endif
 
 if LINUX
-tests_ovstest_SOURCES += \
-	tests/test-netlink-conntrack.c
+#tests_ovstest_SOURCES += \
+#	tests/test-netlink-conntrack.c
 endif
 
-tests_ovstest_LDADD = lib/libopenvswitch.la ovn/lib/libovn.la
+tests_ovstest_LDADD = lib/libopenvswitch.la lib/.libs/libovscommon.la
+#ovn/lib/libovn.la
+
 dist_check_SCRIPTS = tests/flowgen.pl
 
 noinst_PROGRAMS += tests/test-strtok_r
