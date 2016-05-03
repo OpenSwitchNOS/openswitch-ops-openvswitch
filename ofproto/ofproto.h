@@ -73,6 +73,7 @@ struct ofproto_sflow_options {
 #ifdef OPS
     char agent_ip[INET6_ADDRSTRLEN];     /* ip (v4 or v6) of interface */
     uint32_t max_datagram;               /* Maximum datagram size */
+    struct sset ports;  /* port names on which sFlow is disabled */
 #endif
     char *control_ip;
 };
