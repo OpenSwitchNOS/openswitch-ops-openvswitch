@@ -1552,11 +1552,7 @@ ovsdb_idl_first_row(const struct ovsdb_idl *idl,
 {
     struct ovsdb_idl_table *table
         = ovsdb_idl_table_from_class(idl, table_class);
-    struct ovsdb_idl_row * temp
-        = next_real_row(table, hmap_first(&table->rows));
-    if (temp == NULL)
-        VLOG_INFO("DEBUG first row is missing from table class %s", table_class->name);
-    return temp;
+    return next_real_row(table, hmap_first(&table->rows));
 }
 
 /* Returns a row following 'row' within its table, or a null pointer if 'row'
