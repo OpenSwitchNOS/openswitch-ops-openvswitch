@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2009, 2010, 2011, 2012, 2013, 2014, 2015 Nicira, Inc.
- * Copyright (C) 2015-2016 Hewlett-Packard Enterprise Development Company, L.P.
+ * Copyright (c) 2015-2016 Hewlett Packard Enterprise Development LP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -328,6 +328,23 @@ struct ofproto_mlearn_hmap {
     struct hmap table;                             /* hmap of (ofproto_mlearn_hmap_node)*/
     struct ofproto_mlearn_hmap_node_buffer buffer; /* buffer */
 };
+
+enum ofp_l2_mac_tbl_action {
+    OFP_MAC_TBL_ACTION_UNDEF,   /* undefined action */
+    OFP_MAC_TBL_ADD,            /* add MAC table entry */
+    OFP_MAC_TBL_DELETE,         /* delete MAC table entry */
+    OFP_MAC_TBL_UPDATE          /* update MAC table entry */
+};
+
+struct ofproto_l2_mac_tbl_update_entry {
+    struct ovs_list node;                 /* MUST be first element */
+    struct eth_addr mac;                  /* MAC address */
+    uint32_t vlan;                        /* VLAN ID */
+    enum ofp_l2_mac_tbl_action action;    /* MAC table entry update action */
+    ofp_port_t port;                      /* Destination interface (port, vxlan tunnel etc.) */
+    int macFlags;                         /* Properties of MAC entry */
+};
+
 
 enum ofproto_logical_switch_action {
     OFPROTO_LOG_SWITCH_ACTION_UNDEF,   /* undefined action */
