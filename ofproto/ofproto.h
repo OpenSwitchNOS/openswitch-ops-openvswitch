@@ -575,12 +575,16 @@ struct ofproto_mirror_settings {
     void **dsts;                /* A set of registered ofbundle handles. */
     size_t n_dsts;
 
+#ifdef RSPAN
     /* VLANs of packets to select for mirroring. */
     unsigned long *src_vlans;   /* vlan_bitmap, NULL selects all VLANs. */
+#endif
 
     /* Output (mutually exclusive). */
     void *out_bundle;           /* A registered ofbundle handle or NULL. */
+#ifdef RSPAN
     uint16_t out_vlan;          /* Output VLAN, only if out_bundle is NULL. */
+#endif
 };
 
 int ofproto_mirror_register(struct ofproto *, void *aux,
