@@ -467,6 +467,10 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 
 #define PORT_CONFIG_ADMIN_DOWN                          "down"
 
+/* Definitions for LACP Fallback*/
+#define PORT_LACP_FALLBACK_MODE_PRIORITY                "priority"
+#define PORT_LACP_FALLBACK_MODE_ALL_ACTIVE              "all_active"
+
 /* DHCP-Relay statistics */
 #define PORT_DHCP_RELAY_STATISTICS_MAP_VALID_V4CLIENT_REQUESTS \
                                    "valid_v4client_requests"
