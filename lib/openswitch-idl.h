@@ -435,6 +435,11 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define PORT_OTHER_CONFIG_LACP_FALLBACK                 "lacp-fallback-ab"
 #define PORT_OTHER_CONFIG_LACP_FALLBACK_ENABLED         "true"
 
+#define PORT_OTHER_CONFIG_LACP_FALLBACK_MODE_PRIORITY   "priority"
+#define PORT_OTHER_CONFIG_LACP_FALLBACK_MODE_ALL_ACTIVE "all_active"
+#define PORT_OTHER_CONFIG_MAP_LACP_FALLBACK_TIMEOUT     "lacp_fallback_timeout"
+#define PORT_OTHER_CONFIG_MAP_LACP_FALLBACK_MODE        "lacp_fallback_mode"
+
 #define PORT_OTHER_CONFIG_LACP_TIME_SLOW                "slow"
 #define PORT_OTHER_CONFIG_LACP_TIME_FAST                "fast"
 
