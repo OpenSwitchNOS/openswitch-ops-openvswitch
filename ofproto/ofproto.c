@@ -1,18 +1,19 @@
 /*
+ * (c) Copyright 2015-2016 Hewlett Packard Enterprise Development LP
  * Copyright (c) 2009-2015 Nicira, Inc.
- * Copyright (C) 2015-2016 Hewlett-Packard Enterprise Development Company, L.P.
+ * All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at:
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  */
 
 #include <config.h>
@@ -63,7 +64,6 @@
 #include "bundles.h"
 #ifdef OPS
 #include "vlan-bitmap.h"
-#include "plugins.h"
 #endif
 
 VLOG_DEFINE_THIS_MODULE(ofproto);
@@ -74,10 +74,6 @@ COVERAGE_DEFINE(ofproto_queue_req);
 COVERAGE_DEFINE(ofproto_recv_openflow);
 COVERAGE_DEFINE(ofproto_reinit_ports);
 COVERAGE_DEFINE(ofproto_update_port);
-
-#ifdef OPS
-static struct seq *mlearn_trigger_seq = NULL;
-#endif
 
 /* Default fields to use for prefix tries in each flow table, unless something
  * else is configured. */
@@ -376,8 +372,6 @@ ofproto_init(const struct shash *iface_hints)
 #ifndef OPS_TEMP
     ofproto_class_register(&ofproto_dpif_class);
 #endif
-
-    plugins_ofproto_register();
 
     /* Make a local copy, since we don't own 'iface_hints' elements. */
     SHASH_FOR_EACH(node, iface_hints) {
@@ -8007,36 +8001,6 @@ ofproto_port_set_realdev(struct ofproto *ofproto, ofp_port_t vlandev_ofp_port,
 }
 
 #ifdef OPS
-
-/*
- * Provides a global seq for mac learning trigger notifications.
- * mac learning module in plugin should call seq_change() on the returned
- * object whenever the event trigger notification from the callback is called.
- *
- * seq_wait() monitor on this object will get trigger notification changes to
- * collect the MAC learning notifications.
- */
-struct seq *
-mac_learning_trigger_seq_get(void)
-OVS_REQUIRES(mlearn_mutex)
-{
-    static struct ovsthread_once once = OVSTHREAD_ONCE_INITIALIZER;
-
-    if (ovsthread_once_start(&once)) {
-        mlearn_trigger_seq = seq_create();
-        ovsthread_once_done(&once);
-    }
-
-    return mlearn_trigger_seq;
-}/* mac_learning_trigger_seq_get */
-
-void
-mac_learning_trigger_callback(void)
-OVS_REQUIRES(mlearn_mutex)
-{
-    seq_change(mac_learning_trigger_seq_get());
-}
-
 /* Function to add l3 host entry */
 int
 ofproto_add_l3_host_entry(struct ofproto *ofproto, void *aux,
@@ -8136,20 +8100,4 @@ ofproto_l3_ecmp_hash_set(struct ofproto *ofproto, unsigned int hash, bool enable
 
     return rc;
 }
-
-/* Function to get MAC entries from hardware */
-int
-ofproto_mac_learning_get(struct ofproto *ofproto, struct ofproto_mlearn_hmap **mhmap)
-{
-    int rc;
-
-    rc = ofproto->ofproto_class->get_mac_learning_hmap ?
-         ofproto->ofproto_class->get_mac_learning_hmap(mhmap) :
-         EOPNOTSUPP;
-
-    VLOG_DBG("%s rc (%d)", __func__, rc);
-
-    return (rc);
-}
-
 #endif

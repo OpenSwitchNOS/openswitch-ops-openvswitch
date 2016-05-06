@@ -71,3 +71,13 @@ OvsDpInterface.h
 /build
 /libltdl/
 plugins/libplugins.pc
+vswitchd/configdb.ovsschema
+vswitchd/dhcp_leases.extschema
+vswitchd/dhcp_leases.ovsschema
+vswitchd/dhcp_leases.xml
+vswitchd/vswitch.extschema
+vswitchd/vswitch.ovsschema
+vswitchd/vswitch.xml
+vswitchd/vtep.ovsschema
+vswitchd/vtep.xml
+manpages.mk
