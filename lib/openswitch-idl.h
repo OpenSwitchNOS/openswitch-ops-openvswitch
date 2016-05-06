@@ -423,6 +423,7 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define PORT_OTHER_CONFIG_MAP_LACP_TIME                 "lacp-time"
 
 #define PORT_OTHER_CONFIG_LACP_FALLBACK                 "lacp-fallback-ab"
+#define PORT_OTHER_CONFIG_LACP_FALLBACK_ENABLED         "true"
 
 #define PORT_OTHER_CONFIG_LACP_TIME_SLOW                "slow"
 #define PORT_OTHER_CONFIG_LACP_TIME_FAST                "fast"
@@ -430,10 +431,17 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define PORT_OTHER_CONFIG_MAP_LACP_SYSTEM_PRIORITY      "lacp-system-priority"
 #define PORT_OTHER_CONFIG_MAP_LACP_SYSTEM_ID            "lacp-system-id"
 
+#define PORT_OTHER_CONFIG_SFLOW_PER_INTERFACE_KEY_STR       "sflow-enabled"
+#define PORT_OTHER_CONFIG_SFLOW_PER_INTERFACE_VALUE_TRUE    "true"
+#define PORT_OTHER_CONFIG_SFLOW_PER_INTERFACE_VALUE_FALSE   "false"
+
 #define PORT_OTHER_CONFIG_MAP_BOND_MODE                 "bond_mode"
 
 #define PORT_OTHER_CONFIG_MAP_PROXY_ARP_ENABLED         "proxy_arp_enabled"
 #define PORT_OTHER_CONFIG_MAP_PROXY_ARP_ENABLED_TRUE    "true"
+
+#define PORT_OTHER_CONFIG_MAP_LOCAL_PROXY_ARP_ENABLED       "local_proxy_arp_enabled"
+#define PORT_OTHER_CONFIG_MAP_LOCAL_PROXY_ARP_ENABLED_TRUE  "true"
 
 #define PORT_LACP_STATUS_MAP_BOND_SPEED                 "bond_speed"
 #define PORT_LACP_STATUS_MAP_BOND_STATUS                "bond_status"
@@ -444,6 +452,24 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define PORT_LACP_STATUS_BOND_STATUS_DEFAULTED          "defaulted"
 
 #define PORT_CONFIG_ADMIN_DOWN                          "down"
+
+/* DHCP-Relay statistics */
+#define PORT_DHCP_RELAY_STATISTICS_MAP_VALID_V4CLIENT_REQUESTS \
+                                   "valid_v4client_requests"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_DROPPED_V4CLIENT_REQUESTS \
+                                   "dropped_v4client_requests"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_VALID_V4SERVER_RESPONSES \
+                                   "valid_v4server_responses"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_DROPPED_V4SERVER_RESPONSES \
+                                   "dropped_v4server_responses"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_VALID_V4CLIENT_REQUESTS_WITH_OPTION82 \
+                                   "valid_v4client_requests_with_option82"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_DROPPED_V4CLIENT_REQUESTS_WITH_OPTION82 \
+                                   "dropped_v4client_requests_with_option82"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_VALID_V4SERVER_RESPONSES_WITH_OPTION82 \
+                                   "valid_v4server_responses_with_option82"
+#define PORT_DHCP_RELAY_STATISTICS_MAP_DROPPED_V4SERVER_RESPONSES_WITH_OPTION82 \
+                                   "dropped_v4server_responses_with_option82"
 
 enum ovsrec_port_config_admin_e {
     PORT_ADMIN_CONFIG_DOWN,
@@ -524,8 +550,21 @@ enum ovsrec_port_config_admin_e {
 #define SYSTEM_OTHER_CONFIG_MAP_TFTP_SOURCE          "tftp_source"
 #define SYSTEM_OTHER_CONFIG_MAP_PROTOCOLS_SOURCE     "protocols_source"
 
-/*DHCP-Relay global configuration key */
-#define SYSTEM_OTHER_CONFIG_MAP_DHCP_RELAY_DISABLED    "dhcp_relay_disabled"
+/* DHCP Configuration keys */
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_DISABLED    "v4relay_disabled"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_ENABLED                \
+                                       "v4relay_option82_enabled"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_POLICY                 \
+                                       "v4relay_option82_policy"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_VALIDATION_ENABLED     \
+                                       "v4relay_option82_validation_enabled"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_OPTION82_REMOTE_ID              \
+                                       "v4relay_option82_remote_id"
+#define SYSTEM_DHCP_CONFIG_MAP_V4RELAY_HOP_COUNT_INCREMENT_DISABLED    \
+                                       "v4relay_hop_count_increment_disabled"
+
+/* DHCP BOOTP-Gateway Configuration key */
+#define DHCP_RELAY_OTHER_CONFIG_MAP_BOOTP_GATEWAY    "bootp_gateway"
 
 /* lacp global configuration parameters */
 #define SYSTEM_LACP_CONFIG_MAP_LACP_SYSTEM_ID        "lacp-system-id"
@@ -624,6 +663,17 @@ enum ovsrec_port_config_admin_e {
 #define SYSTEM_MGMT_INTF_MAP_DHCP_HOSTNAME        "dhcp_hostname"
 #define SYSTEM_MGMT_INTF_MAP_DOMAIN_NAME          "domain_name"
 #define SYSTEM_MGMT_INTF_MAP_DHCP_DOMAIN_NAME     "dhcp_domain_name"
+
+/* BroadView Configuration column */
+#define SYSTEM_BROADVIEW_CONFIG_MAP_ENABLED      "enabled"
+#define SYSTEM_BROADVIEW_CONFIG_MAP_CLIENT_IP    "client_ip"
+#define SYSTEM_BROADVIEW_CONFIG_MAP_CLIENT_PORT  "client_port"
+#define SYSTEM_BROADVIEW_CONFIG_MAP_AGENT_PORT   "agent_port"
+
+#define SYSTEM_BROADVIEW_CONFIG_MAP_ENABLED_DEFAULT      false
+#define SYSTEM_BROADVIEW_CONFIG_MAP_AGENT_PORT_DEFAULT   8080
+#define SYSTEM_BROADVIEW_CONFIG_MAP_CLIENT_IP_DEFAULT    "127.0.0.1"
+#define SYSTEM_BROADVIEW_CONFIG_MAP_CLIENT_PORT_DEFAULT  9070
 
 /* buffer monitoring statistics config table (bufmon)*/
 #define BUFMON_CONFIG_MAP_ENABLED                               "enabled"
@@ -892,5 +942,11 @@ enum ospf_nbr_statistics_e {
 #define SYSTEM_NTP_STATUS_UPTIME                        "uptime"
 
 /************************************* NTP END ****************************************/
+
+/* CoPP Statistics Column */
+#define SYSTEM_COPP_STATISTICS_MAP_TOTAL_PKTS_PASSED      "total_packets_passed"
+#define SYSTEM_COPP_STATISTICS_MAP_TOTAL_BYTES_PASSED     "total_bytes_passed"
+#define SYSTEM_COPP_STATISTICS_MAP_TOTAL_PKTS_DROPPED     "total_packets_dropped"
+#define SYSTEM_COPP_STATISTICS_MAP_TOTAL_BYTES_DROPPED    "total_bytes_dropped"
 
 #endif /* OPENSWITCH_IDL_HEADER */

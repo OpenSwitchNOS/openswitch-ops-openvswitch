@@ -1811,8 +1811,6 @@ struct ofproto_class {
     int (*l3_ecmp_hash_set)(const struct ofproto *ofproto, unsigned int hash,
                             bool enable);
 
-    /* Get MAC table entries learnt from hardware */
-    int (*get_mac_learning_hmap)(struct ofproto_mlearn_hmap **mhmap);
     /* Add/Delete/Modify logical switch */
     int (*set_logical_switch)(const struct ofproto *ofproto, void *aux,
                               enum ofproto_logical_switch_action action,
