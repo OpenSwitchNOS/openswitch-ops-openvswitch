@@ -446,7 +446,10 @@ VRF Port commands:\n\
   list-vrf-ports VRF          print the names of all the ports on VRF\n\
   add-vrf-port VRF PORT       add network device PORT to VRF\n\
   del-vrf-port [VRF] PORT     delete PORT from VRF\n\
-  port-to-vrf PORT            print name of vrf that contains PORT\n");
+  port-to-vrf PORT            print name of vrf that contains PORT\n\
+MAC commands:\n\
+  add-mac MAC VID PORT FROM   add mac with given details\n\
+  del-mac MAC VID PORT FROM   delete mac having given details\n");
 #endif
     vlog_usage();
     printf("\
@@ -1978,6 +1981,28 @@ pre_get_vlan_info(struct ctl_context *ctx)
 }
 
 static void
+pre_get_mac_info(struct ctl_context *ctx)
+{
+
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_open_vswitch_col_bridges);
+    ovsdb_idl_add_table(ctx->idl, &ovsrec_table_bridge);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_name);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_ports);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_vlans);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_port_col_name);
+
+    ovsdb_idl_add_table(ctx->idl, &ovsrec_table_mac);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_bridge);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_mac_addr);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_tunnel_key);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_mac_vlan);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_port);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_from);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_status);
+
+}
+
+static void
 bridge_insert_vlan(struct ovsrec_bridge *br, struct ovsrec_vlan *vlan)
 {
     struct ovsrec_vlan **vlans;
@@ -2131,6 +2156,105 @@ cmd_del_vlan(struct ctl_context *ctx)
                   vid, bridge->br_cfg->name);
 
     bridge_delete_vlan(bridge->br_cfg, vlan);
+}
+
+static void
+cmd_add_mac(struct ctl_context *ctx)
+{
+    struct vsctl_context *vsctl_ctx = vsctl_context_cast(ctx);
+    int i, vid;
+    char *br_name = "bridge_normal";
+    char *mac_addr;
+    char *port_name;
+    char *from;
+    struct vsctl_bridge *bridge = NULL;
+    struct ovsrec_mac *mac = NULL;
+    const struct ovsrec_port *port_cfg = NULL;
+
+    mac_addr = ctx->argv[1];
+    vid = atoi(ctx->argv[2]);
+    port_name = ctx->argv[3];
+    from = ctx->argv[4];
+
+    vsctl_context_populate_cache(ctx);
+
+    bridge = find_bridge(vsctl_ctx, br_name, true);
+    if(!bridge) {
+       ds_put_format(&ctx->output, "no bridge\n");
+       return;
+    }
+
+    for (i=0; i < bridge->br_cfg->n_ports; i++) {
+        if (strcmp(port_name, bridge->br_cfg->ports[i]->name) == 0) {
+            port_cfg = bridge->br_cfg->ports[i];
+            break;
+        }
+
+    }
+
+    if (!port_cfg) {
+        ds_put_format(&ctx->output, "port name not found\n");
+        return;
+    }
+
+    mac = ovsrec_mac_insert(ctx->txn);
+    ovsrec_mac_set_bridge(mac, bridge->br_cfg);
+    ovsrec_mac_set_mac_vlan(mac, ovs_vsctl_get_vlan_row(bridge->br_cfg, vid));
+    ovsrec_mac_set_mac_addr(mac, mac_addr);
+    ovsrec_mac_set_port(mac, port_cfg);
+    ovsrec_mac_set_from(mac, from);
+}
+
+static void
+cmd_del_mac(struct ctl_context *ctx)
+{
+    struct vsctl_context *vsctl_ctx = vsctl_context_cast(ctx);
+    int i, vid;
+    char *br_name = "bridge_normal";
+    char *mac_addr;
+    char *port_name;
+    char *from;
+    struct vsctl_bridge *bridge = NULL;
+    const struct ovsrec_port *port_cfg = NULL;
+    struct ovsrec_mac *mac_e = NULL;
+
+
+    mac_addr = ctx->argv[1];
+    vid = atoi(ctx->argv[2]);
+    port_name = ctx->argv[3];
+    from = ctx->argv[4];
+
+    vsctl_context_populate_cache(ctx);
+
+    bridge = find_bridge(vsctl_ctx, br_name, true);
+    if(!bridge) {
+       ds_put_format(&ctx->output, "no bridge\n");
+       return;
+    }
+
+    for (i=0; i < bridge->br_cfg->n_ports; i++) {
+        if (strcmp(port_name, bridge->br_cfg->ports[i]->name) == 0) {
+            port_cfg = bridge->br_cfg->ports[i];
+            break;
+        }
+
+    }
+
+    if (!port_cfg) {
+        ds_put_format(&ctx->output, "port name not found\n");
+        return;
+    }
+
+    OVSREC_MAC_FOR_EACH(mac_e, ctx->idl) {
+        if ((strcmp(mac_addr, mac_e->mac_addr) == 0) &&
+            (strcmp(from, mac_e->from) == 0) &&
+            (vid == mac_e->mac_vlan->id) &&
+            (mac_e->bridge == bridge->br_cfg) &&
+            (mac_e->port == port_cfg)) {
+            ovsrec_mac_delete(mac_e);
+            break;
+        }
+    }
 }
 
 static void
@@ -3923,6 +4047,10 @@ static const struct ctl_command_syntax vsctl_commands[] = {
      "--may-exist", RW},
     {"del-vlan", 2, 2, "", pre_get_vlan_info, cmd_del_vlan, NULL, "--if-exists",
      RW},
+
+    /* MAC commands. */
+    {"add-mac", 4, 4, "", pre_get_mac_info, cmd_add_mac, NULL, "", RW},
+    {"del-mac", 4, 4, "", pre_get_mac_info, cmd_del_mac, NULL, "", RW},
 
     /* VRF commands */
     {"list-vrf", 0, 0, "", pre_get_vrf_info, cmd_list_vrf, NULL, "", RO},
