@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2008, 2009, 2010, 2011, 2012, 2014 Nicira, Inc.
- * Copyright (C) 2015, 2016 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,11 +189,7 @@ parse_command_line(int argc, char *argv[])
                   "(use --help for help)");
     }
 
-#ifdef OPS
-    return target ? target : "ops-switchd";
-#else
     return target ? target : "ovs-vswitchd";
-#endif
 }
 
 static struct jsonrpc *

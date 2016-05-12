@@ -7,11 +7,7 @@
 
 AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
-if OPS
-SUBDIRS = libltdl
-else
-SUBDIRS = datapath libltdl
-endif
+SUBDIRS = datapath
 
 AM_CPPFLAGS = $(SSL_CFLAGS)
 AM_LDFLAGS = $(SSL_LDFLAGS)
@@ -30,12 +26,10 @@ AM_CPPFLAGS += -I $(top_srcdir)/include
 AM_CPPFLAGS += -I $(top_builddir)/include
 AM_CPPFLAGS += -I $(top_srcdir)/lib
 AM_CPPFLAGS += -I $(top_builddir)/lib
-AM_CPPFLAGS += -I $(top_srcdir)/libltdl
-AM_CPPFLAGS += -I $(top_builddir)/libltdl
 
 AM_CPPFLAGS += $(SSL_INCLUDES)
 
-AM_CFLAGS = -Wstrict-prototypes -DOPS -DOPS_TEMP
+AM_CFLAGS = -Wstrict-prototypes
 AM_CFLAGS += $(WARNING_FLAGS)
 AM_CFLAGS += $(OVS_CFLAGS)
 
@@ -109,7 +103,6 @@ EXTRA_DIST = \
 	boot.sh \
 	build-aux/cccl \
 	build-aux/cksum-schema-check \
-	build-aux/calculate-schema-cksum \
 	build-aux/dist-docs \
 	build-aux/sodepends.pl \
 	build-aux/soexpand.pl \
@@ -148,7 +141,6 @@ SUFFIXES =
 check_DATA =
 check_SCRIPTS =
 pkgconfig_DATA =
-FLAKE8_PYFILES =
 
 scriptsdir = $(pkgdatadir)/scripts
 completiondir = $(sysconfdir)/bash_completion.d
@@ -218,20 +210,20 @@ CLEAN_LOCAL += clean-pycov
 # distribute, requires GNU make extensions.
 if GNU_MAKE
 #ALL_LOCAL += dist-hook-git
-#dist-hook-git: distfiles
-#	@if test -e $(srcdir)/.git && (git --version) >/dev/null 2>&1; then \
-#	  (cd datapath && $(MAKE) distfiles);				    \
-#	  (cat distfiles; sed 's|^|datapath/|' datapath/distfiles) |	    \
-#	    LC_ALL=C sort -u > all-distfiles;				    \
-#	  (cd $(srcdir) && git ls-files) | grep -v '\.gitignore$$' |	    \
-#	    LC_ALL=C sort -u > all-gitfiles;				    \
-#	  LC_ALL=C comm -1 -3 all-distfiles all-gitfiles > missing-distfiles; \
-#	  if test -s missing-distfiles; then				    \
-#	    echo "The following files are in git but not the distribution:"; \
-#	    cat missing-distfiles;					    \
-#	    exit 1;							    \
-#	  fi;								    \
-#	fi
+dist-hook-git: distfiles
+	@if test -e $(srcdir)/.git && (git --version) >/dev/null 2>&1; then \
+	  (cd datapath && $(MAKE) distfiles);				    \
+	  (cat distfiles; sed 's|^|datapath/|' datapath/distfiles) |	    \
+	    LC_ALL=C sort -u > all-distfiles;				    \
+	  (cd $(srcdir) && git ls-files) | grep -v '\.gitignore$$' |	    \
+	    LC_ALL=C sort -u > all-gitfiles;				    \
+	  LC_ALL=C comm -1 -3 all-distfiles all-gitfiles > missing-distfiles; \
+	  if test -s missing-distfiles; then				    \
+	    echo "The following files are in git but not the distribution:"; \
+	    cat missing-distfiles;					    \
+	    exit 1;							    \
+	  fi;								    \
+	fi
 CLEANFILES += all-distfiles all-gitfiles missing-distfiles
 # The following is based on commands for the Automake "distdir" target.
 distfiles: Makefile
@@ -247,17 +239,17 @@ endif
 .PHONY: dist-hook-git
 
 # Check that every .c file includes <config.h>.
-#ALL_LOCAL += config-h-check
-#config-h-check:
-#	@cd $(srcdir); \
-#	if test -e .git && (git --version) >/dev/null 2>&1 && \
-#	   git --no-pager grep -L '#include <config\.h>' `git ls-files | grep '\.c$$' | \
-#               grep -vE '^datapath|^lib/sflow|^third-party|^datapath-windows'`; \
-#	then \
-#	    echo "See above for list of violations of the rule that"; \
-#	    echo "every C source file must #include <config.h>."; \
-#	    exit 1; \
-#	fi
+ALL_LOCAL += config-h-check
+config-h-check:
+	@cd $(srcdir); \
+	if test -e .git && (git --version) >/dev/null 2>&1 && \
+	   git --no-pager grep -L '#include <config\.h>' `git ls-files | grep '\.c$$' | \
+               grep -vE '^datapath|^lib/sflow|^third-party|^datapath-windows'`; \
+	then \
+	    echo "See above for list of violations of the rule that"; \
+	    echo "every C source file must #include <config.h>."; \
+	    exit 1; \
+	fi
 .PHONY: config-h-check
 
 # Check for printf() type modifiers that MSVC doesn't support.
@@ -317,19 +309,19 @@ check-endian:
 	 fi
 .PHONY: check-endian
 
-#ALL_LOCAL += thread-safety-check
-#thread-safety-check:
-#	@cd $(srcdir); \
-#	if test -e .git && (git --version) >/dev/null 2>&1 && \
-#	   grep -n -f build-aux/thread-safety-blacklist \
-#	       `git ls-files | grep '\.[ch]$$' \
-#                | $(EGREP) -v '^datapath|^lib/sflow|^third-party'` /dev/null \
-#	       | $(EGREP) -v ':[ 	]*/?\*'; \
-#	then \
-#	    echo "See above for list of calls to functions that are"; \
-#	    echo "blacklisted due to thread safety issues"; \
-#	    exit 1; \
-#	fi
+ALL_LOCAL += thread-safety-check
+thread-safety-check:
+	@cd $(srcdir); \
+	if test -e .git && (git --version) >/dev/null 2>&1 && \
+	   grep -n -f build-aux/thread-safety-blacklist \
+	       `git ls-files | grep '\.[ch]$$' \
+                | $(EGREP) -v '^datapath|^lib/sflow|^third-party'` /dev/null \
+	       | $(EGREP) -v ':[ 	]*/?\*'; \
+	then \
+	    echo "See above for list of calls to functions that are"; \
+	    echo "blacklisted due to thread safety issues"; \
+	    exit 1; \
+	fi
 EXTRA_DIST += build-aux/thread-safety-blacklist
 .PHONY: thread-safety-check
 
@@ -358,6 +350,19 @@ $(srcdir)/manpages.mk: $(MAN_ROOTS) build-aux/sodepends.pl
 	fi
 CLEANFILES += manpage-dep-check
 
+if VSTUDIO_DDK
+ALL_LOCAL += ovsext_make
+ovsext_make: datapath-windows/ovsext.sln
+	MSBuild.exe datapath-windows/ovsext.sln /target:Build /property:Configuration="Win8$(VSTUDIO_CONFIG)"
+	MSBuild.exe datapath-windows/ovsext.sln /target:Build /property:Configuration="Win8.1$(VSTUDIO_CONFIG)"
+
+CLEAN_LOCAL += ovsext_clean
+ovsext_clean: datapath-windows/ovsext.sln
+	MSBuild.exe datapath-windows/ovsext.sln /target:Clean /property:Configuration="Win8$(VSTUDIO_CONFIG)"
+	MSBuild.exe datapath-windows/ovsext.sln /target:Clean /property:Configuration="Win8.1$(VSTUDIO_CONFIG)"
+.PHONY: ovsext_make
+endif
+
 dist-hook: $(DIST_HOOKS)
 all-local: $(ALL_LOCAL)
 clean-local: $(CLEAN_LOCAL)
@@ -374,20 +379,23 @@ dist-docs:
 	VERSION=$(VERSION) $(srcdir)/build-aux/dist-docs $(srcdir) $(docs)
 .PHONY: dist-docs
 
-if OPS
-nodist_ovslibincludedir = $(includedir)/ovs
-nodist_ovslibinclude_HEADERS = config.h
-#nodist_ovslibinclude_HEADERS += include/odp-netlink.h
-endif
-
+include Documentation/automake.mk
 include m4/automake.mk
 include lib/automake.mk
 include ofproto/automake.mk
 include utilities/automake.mk
+include tests/automake.mk
 include include/automake.mk
-if OVS_VSWITCHD
+include third-party/automake.mk
+include debian/automake.mk
 include vswitchd/automake.mk
-endif
 include ovsdb/automake.mk
+include rhel/automake.mk
+include xenserver/automake.mk
 include python/automake.mk
+include tutorial/automake.mk
 include vtep/automake.mk
+include datapath-windows/automake.mk
+include datapath-windows/include/automake.mk
+include windows/automake.mk
+include ovn/automake.mk

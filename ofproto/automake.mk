@@ -4,17 +4,6 @@
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.  This file is offered as-is,
 # without warranty of any kind.
-if OPS
-ovsofprotolibincludedir = $(includedir)/ovs/ofproto
-ovsofprotolibinclude_HEADERS = \
-       ofproto/bond.h \
-       ofproto/fail-open.h \
-       ofproto/netflow.h \
-       ofproto/ofproto.h \
-       ofproto/ofproto-provider.h \
-       ofproto/collectors.h \
-       ofproto/tunnel.h
-endif
 
 lib_LTLIBRARIES += ofproto/libofproto.la
 ofproto_libofproto_la_LDFLAGS = \
