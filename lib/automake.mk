@@ -106,6 +106,7 @@ ovslibinclude_HEADERS = \
 	lib/ovsdb-error.h \
 	lib/ovsdb-idl.h \
 	lib/ovsdb-idl-provider.h \
+	lib/ovsdb-map-op.h \
 	lib/ovsdb-parser.h \
 	lib/ovsdb-types.h \
 	lib/ovs-lldp.h \
@@ -137,6 +138,8 @@ ovslibinclude_HEADERS = \
 	lib/shash.h \
 	lib/signals.h \
 	lib/simap.h \
+	lib/skiplist.c \
+	lib/skiplist.h \
 	lib/smap.h \
 	lib/socket-util.h \
 	lib/sort.h \
@@ -285,6 +288,8 @@ lib_libovscommon_la_SOURCES = \
         lib/shash.h \
         lib/simap.c \
         lib/simap.h \
+	lib/skiplist.c \
+	lib/skiplist.h \
         lib/smap.c \
         lib/smap.h \
         lib/socket-util.c \
@@ -343,6 +348,8 @@ lib_libovscommon_la_SOURCES = \
         lib/ovsdb-error.c \
         lib/ovsdb-error.h \
         lib/ovsdb-idl-provider.h \
+        lib/ovsdb-map-op.c \
+        lib/ovsdb-map-op.h \
         lib/ovsdb-types.c \
         lib/ovsdb-types.h \
         lib/table.c \
@@ -785,4 +792,3 @@ lib-install-data-local:
 	$(MKDIR_P) $(DESTDIR)$(PKIDIR)
 	$(MKDIR_P) $(DESTDIR)$(LOGDIR)
 	$(MKDIR_P) $(DESTDIR)$(DBDIR)
-
