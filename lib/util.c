@@ -151,6 +151,20 @@ xstrdup(const char *s)
     return xmemdup0(s, strlen(s));
 }
 
+#ifdef OPS
+
+char *
+xstrndup(const char *s, size_t len)
+{
+    int slen = strlen(s);
+
+    if (slen < len) len = slen;
+    return xmemdup0(s, len);
+
+}
+
+#endif
+
 char *
 xvasprintf(const char *format, va_list args)
 {
