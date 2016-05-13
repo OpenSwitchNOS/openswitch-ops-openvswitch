@@ -190,7 +190,8 @@ static inline bool
 ovsdb_base_type_is_weak_ref(const struct ovsdb_base_type *base)
 {
     return (ovsdb_base_type_is_ref(base)
-            && base->u.uuid.refType == OVSDB_REF_WEAK);
+            && (base->u.uuid.refType == OVSDB_REF_WEAK ||
+                base->u.uuid.refType == OVSDB_REF_WEAKGC));
 }
 
 static inline bool ovsdb_type_is_scalar(const struct ovsdb_type *type)
