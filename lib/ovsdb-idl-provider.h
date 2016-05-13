@@ -20,6 +20,7 @@
 #include "hmap.h"
 #include "list.h"
 #include "ovsdb-idl.h"
+#include "ovsdb-map-op.h"
 #include "ovsdb-types.h"
 #include "shash.h"
 #include "uuid.h"
@@ -37,6 +38,9 @@ struct ovsdb_idl_row {
     unsigned long int *prereqs; /* Bitmap of columns to verify in "old". */
     unsigned long int *written; /* Bitmap of columns from "new" to write. */
     struct hmap_node txn_node;  /* Node in ovsdb_idl_txn's list. */
+    unsigned long int *map_op_written; /* Bitmap of columns with pending map
+                                        * operations. */
+    struct map_op_list **map_op_lists; /* List of lists of map operations. */
 #ifdef OPS
     unsigned int insert_seqno;
     unsigned int modify_seqno;
@@ -54,6 +58,7 @@ struct ovsdb_idl_column {
     bool mutable;
     void (*parse)(struct ovsdb_idl_row *, const struct ovsdb_datum *);
     void (*unparse)(struct ovsdb_idl_row *);
+    int (*compare)(const void *, const void *); /* Perform a comparison over ovsrec_* */
 #ifdef OPS
     unsigned int modify_seqno;
 #endif
@@ -82,6 +87,7 @@ struct ovsdb_idl_table {
     unsigned int delete_seqno;
 #endif
     unsigned int change_seqno[OVSDB_IDL_CHANGE_MAX];
+    struct shash indexes;    /* Contains "struct ovsdb_idl_index"s */
     struct ovs_list track_list; /* Tracked rows (ovsdb_idl_row.track_node). */
 };
 
