@@ -36,6 +36,7 @@
 #define DEFAULT_VRF_NAME                      "vrf_default"
 /* Default bridge name used during system bootup */
 #define DEFAULT_BRIDGE_NAME                   "bridge_normal"
+#define DEFAULT_BRIDGE_NAME_LEN               strlen(DEFAULT_BRIDGE_NAME)
 
 /****************************** INTERFACE TABLE ******************************/
 
