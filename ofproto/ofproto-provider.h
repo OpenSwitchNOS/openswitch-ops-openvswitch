@@ -1811,11 +1811,6 @@ struct ofproto_class {
     /* Enable/Disable ECMP hash config */
     int (*l3_ecmp_hash_set)(const struct ofproto *ofproto, unsigned int hash,
                             bool enable);
-
-    /* Add/Delete/Modify logical switch */
-    int (*set_logical_switch)(const struct ofproto *ofproto, void *aux,
-                              enum ofproto_logical_switch_action action,
-                              struct ofproto_logical_switch *log_switch);
 #endif
 };
 
