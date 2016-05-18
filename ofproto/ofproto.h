@@ -291,25 +291,6 @@ struct ofproto_l3_host {
     char *mac;                        /* These are for neighbor, mac */
     int  l3_egress_id;                /* Egress ID in case if we need */
 };
-
-enum ofproto_logical_switch_action {
-    OFPROTO_LOG_SWITCH_ACTION_UNDEF,   /* undefined action */
-    OFPROTO_LOG_SWITCH_ACTION_ADD,     /* add logical switch */
-    OFPROTO_LOG_SWITCH_ACTION_DEL,     /* delete logical switch */
-    OFPROTO_LOG_SWITCH_ACTION_MOD      /* modify logical switch */
-};
-
-enum ofproto_logical_switch_type {
-    OFPROTO_LOG_SWITCH_TYPE_UNDEF,     /* undefined type */
-    OFPROTO_LOG_SWITCH_TYPE_VXLAN,     /* Vxlan type logical switch */
-};
-
-struct ofproto_logical_switch {
-    char *name;                        /* Logical Switch Name */
-    char *description;                 /* Description of the Switch */
-    int  tunnel_key;                   /* Key used for overlay tunnels */
-    enum ofproto_logical_switch_type type;  /* logical switch type */
-};
 #endif
 
 void ofproto_enumerate_types(struct sset *types);
@@ -584,10 +565,6 @@ int ofproto_l3_route_action(struct ofproto *ofproto,
 int ofproto_l3_ecmp_set(struct ofproto *ofproto, bool enable);
 int ofproto_l3_ecmp_hash_set(struct ofproto *ofproto, unsigned int hash,
                              bool enable);
-
-int ofproto_set_logical_switch(const struct ofproto *ofproto, void *aux,
-                               enum ofproto_logical_switch_action action,
-                               struct ofproto_logical_switch *log_switch);
 #endif
 
 /* Configuration of mirrors. */
