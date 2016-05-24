@@ -274,4 +274,10 @@ void ovsdb_idl_loop_destroy(struct ovsdb_idl_loop *);
 struct ovsdb_idl_txn *ovsdb_idl_loop_run(struct ovsdb_idl_loop *);
 void ovsdb_idl_loop_commit_and_wait(struct ovsdb_idl_loop *);
 
+struct ovsdb_idl_txn *
+get_idl_txn(struct ovsdb_idl *idl);
+
+struct ovsdb_idl_txn *
+ovsdb_idl_txn_create_bgp(struct ovsdb_idl *idl);
+
 #endif /* ovsdb-idl.h */
