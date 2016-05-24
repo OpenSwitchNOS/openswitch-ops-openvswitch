@@ -2951,3 +2951,40 @@ ovsdb_idl_loop_commit_and_wait(struct ovsdb_idl_loop *loop)
 
     ovsdb_idl_wait(loop->idl);
 }
+
+struct ovsdb_idl_txn *
+get_idl_txn(struct ovsdb_idl *idl){
+
+    if(idl->txn){
+        return idl->txn;
+    }
+    return NULL;
+}
+
+/* Starts a new transaction on 'idl'
+*This API is specific to BGP use.
+*/
+struct ovsdb_idl_txn *
+ovsdb_idl_txn_create_bgp(struct ovsdb_idl *idl)
+{
+    if(idl->txn){
+        return idl->txn;
+    }
+    struct ovsdb_idl_txn *txn;
+
+    idl->txn = txn = xmalloc(sizeof *txn);
+    txn->request_id = NULL;
+    txn->idl = idl;
+    hmap_init(&txn->txn_rows);
+    txn->status = TXN_UNCOMMITTED;
+    txn->error = NULL;
+    txn->dry_run = false;
+    ds_init(&txn->comment);
+
+    txn->inc_table = NULL;
+    txn->inc_column = NULL;
+
+    hmap_init(&txn->inserted_rows);
+
+    return txn;
+}
