@@ -2215,7 +2215,7 @@ ovsdb_idl_txn_commit(struct ovsdb_idl_txn *txn)
             }
         }
 
-        /* Add Map Operation (Partial Map Updates). */
+        /* Add mutate operation, for partial map updates. */
         if (row->map_op_written) {
             struct json *op, *mutations;
             bool any_mutations;
@@ -3057,7 +3057,7 @@ ovsdb_idl_txn_add_map_op(struct ovsdb_idl_row *row,
     class = row->table->class;
     column_idx = column - class->columns;
 
-    /* Check if a Map Operation List exist for this column */
+    /* Check if a map operation list exists for this column. */
     if (!row->map_op_written) {
         row->map_op_written = bitmap_allocate(class->n_columns);
         row->map_op_lists = xzalloc(class->n_columns *
@@ -3067,16 +3067,37 @@ ovsdb_idl_txn_add_map_op(struct ovsdb_idl_row *row,
         row->map_op_lists[column_idx] = map_op_list_create();
     }
 
-    /* Add a Map Operation to the corresponding list */
+    /* Add a map operation to the corresponding list. */
     map_op = map_op_create(datum, op_type);
     bitmap_set1(row->map_op_written, column_idx);
     map_op_list_add(row->map_op_lists[column_idx], map_op, &column->type);
 
-    /* Add this row to transaction's list of rows */
+    /* Add this row to transaction's list of rows. */
     if (hmap_node_is_null(&row->txn_node)) {
         hmap_insert(&row->table->idl->txn->txn_rows, &row->txn_node,
                     uuid_hash(&row->uuid));
     }
+}
+
+static bool
+is_valid_partial_update(const struct ovsdb_idl_row *row,
+                        const struct ovsdb_idl_column *column,
+                        struct ovsdb_datum *datum)
+{
+    /* Verify that this column is being monitored. */
+    unsigned int column_idx = column - row->table->class->columns;
+    if (!(row->table->modes[column_idx] & OVSDB_IDL_MONITOR)) {
+        VLOG_WARN("cannot partially update non-monitored column");
+        return false;
+    }
+
+    /* Verify that the update affects a single element. */
+    if (datum->n != 1) {
+        VLOG_WARN("invalid datum for partial update");
+        return false;
+    }
+
+    return true;
 }
 
 /* Inserts the key-value specified in 'datum' into the map in 'column' in
@@ -3094,36 +3115,20 @@ ovsdb_idl_txn_write_partial_map(const struct ovsdb_idl_row *row_,
     struct ovsdb_idl_row *row = CONST_CAST(struct ovsdb_idl_row *, row_);
     enum ovsdb_atomic_type key_type;
     enum map_op_type op_type;
-    unsigned int column_idx, pos;
-    struct ovsdb_datum *old_datum;
+    unsigned int pos;
+    const struct ovsdb_datum *old_datum;
 
-    /* Verify that this column is being monitored */
-    column_idx = column - row->table->class->columns;
-    if (!(row->table->modes[column_idx] & OVSDB_IDL_MONITOR)) {
-        VLOG_WARN("ovsdb_idl_txn_write_partial_map(): Trying to update a non"
-                  "-monitored column.");
+    if (!is_valid_partial_update(row, column, datum)) {
         ovsdb_datum_destroy(datum, &column->type);
         return;
     }
 
-    if (datum->n != 1) {
-        VLOG_WARN("ovsdb_idl_txn_write_partial_map(): Trying to set an invalid"
-                  " datum.");
-        ovsdb_datum_destroy(datum, &column->type);
-        return;
-    }
-
-    /* Find out if this is an insert or an update */
+    /* Find out if this is an insert or an update. */
     key_type = column->type.key.type;
     old_datum = ovsdb_idl_read(row, column);
     pos = ovsdb_datum_find_key(old_datum, &datum->keys[0], key_type);
-    if (pos == UINT_MAX) {
-        /* Insert operation */
-        op_type = MAP_OP_INSERT;
-    } else {
-        /* Update operation */
-        op_type = MAP_OP_UPDATE;
-    }
+    op_type = pos == UINT_MAX ? MAP_OP_INSERT : MAP_OP_UPDATE;
+
     ovsdb_idl_txn_add_map_op(row, column, datum, op_type);
 }
 
@@ -3140,28 +3145,13 @@ ovsdb_idl_txn_delete_partial_map(const struct ovsdb_idl_row *row_,
                                  struct ovsdb_datum *datum)
 {
     struct ovsdb_idl_row *row = CONST_CAST(struct ovsdb_idl_row *, row_);
-    unsigned int column_idx;
 
-    /* Verify that this column is being monitored */
-    column_idx = column - row->table->class->columns;
-    if (!(row->table->modes[column_idx] & OVSDB_IDL_MONITOR)) {
-        VLOG_WARN("ovsdb_idl_txn_delete_partial_map(): Trying to update a non"
-                  "-monitored column.");
+    if (!is_valid_partial_update(row, column, datum)) {
         struct ovsdb_type type_ = column->type;
         type_.value.type = OVSDB_TYPE_VOID;
         ovsdb_datum_destroy(datum, &type_);
         return;
     }
-
-    if (datum->n != 1) {
-        VLOG_WARN("ovsdb_idl_txn_delete_partial_map(): Trying to delete using"
-                  " an invalid datum.");
-        struct ovsdb_type type_ = column->type;
-        type_.value.type = OVSDB_TYPE_VOID;
-        ovsdb_datum_destroy(datum, &type_);
-        return;
-    }
-
     ovsdb_idl_txn_add_map_op(row, column, datum, MAP_OP_DELETE);
 }
 

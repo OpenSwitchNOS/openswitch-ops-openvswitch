@@ -33,18 +33,18 @@ struct map_op; /* Map Operation: a Partial Map Update */
 struct map_op_list; /* List of Map Operations */
 
 /* Map Operation functions */
-struct map_op* map_op_create(struct ovsdb_datum *, enum map_op_type);
+struct map_op *map_op_create(struct ovsdb_datum *, enum map_op_type);
 void map_op_destroy(struct map_op *, const struct ovsdb_type *);
-struct ovsdb_datum* map_op_datum(const struct map_op*);
+struct ovsdb_datum *map_op_datum(const struct map_op*);
 enum map_op_type map_op_type(const struct map_op*);
 
 /* Map Operation List functions */
-struct map_op_list* map_op_list_create(void);
+struct map_op_list *map_op_list_create(void);
 void map_op_list_destroy(struct map_op_list *, const struct ovsdb_type *);
 void map_op_list_add(struct map_op_list *, struct map_op *,
                      const struct ovsdb_type *);
-struct map_op* map_op_list_first(struct map_op_list *);
-struct map_op* map_op_list_next(struct map_op_list *, struct map_op *);
+struct map_op *map_op_list_first(struct map_op_list *);
+struct map_op *map_op_list_next(struct map_op_list *, struct map_op *);
 
 #ifdef  __cplusplus
 }

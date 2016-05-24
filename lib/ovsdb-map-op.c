@@ -33,7 +33,7 @@ struct map_op_list {
 };
 
 static void map_op_destroy_datum(struct map_op *, const struct ovsdb_type *);
-static struct map_op* map_op_list_find(struct map_op_list *, struct map_op *,
+static struct map_op *map_op_list_find(struct map_op_list *, struct map_op *,
                                        const struct ovsdb_type *, size_t);
 
 struct map_op*
@@ -80,7 +80,7 @@ map_op_type(const struct map_op *map_op)
 }
 
 struct map_op_list*
-map_op_list_create()
+map_op_list_create(void)
 {
     struct map_op_list *list = xmalloc(sizeof *list);
     hmap_init(&list->hmap);
