@@ -3120,6 +3120,7 @@ ovsdb_idl_txn_write_partial_map(const struct ovsdb_idl_row *row_,
 
     if (!is_valid_partial_update(row, column, datum)) {
         ovsdb_datum_destroy(datum, &column->type);
+        free(datum);
         return;
     }
 
@@ -3150,6 +3151,7 @@ ovsdb_idl_txn_delete_partial_map(const struct ovsdb_idl_row *row_,
         struct ovsdb_type type_ = column->type;
         type_.value.type = OVSDB_TYPE_VOID;
         ovsdb_datum_destroy(datum, &type_);
+        free(datum);
         return;
     }
     ovsdb_idl_txn_add_map_op(row, column, datum, MAP_OP_DELETE);
