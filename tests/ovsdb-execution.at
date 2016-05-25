@@ -67,7 +67,21 @@ weak_schema () {
            "b2a": {"type": {"key": {"type": "uuid",
                                     "refTable": "a",
                                     "refType": "weak"},
-                            "min": 0, "max": "unlimited"}}}}}}
+                            "min": 0, "max": "unlimited"}}}},
+       "c": {
+         "columns": {
+           "c": {"type": "integer"},
+           "c2d": {"type": {"key": {"type": "uuid",
+                                    "refTable": "d",
+                                    "refType": "weak_gc"}}},
+           "c2d1": {"type": {"key": {"type": "uuid",
+                                    "refTable": "d",
+                                    "refType": "weak_gc"},
+                            "min": 0, "max": "unlimited"}}},
+                            "indexes": [["c2d1"]]},
+       "d": {
+         "columns": {
+           "d": {"type": "integer"}}}}}
 EOF
 }
 
@@ -108,7 +122,21 @@ gc_schema () {
                                      "refTable": "a",
                                      "refType": "weak"},
                              "min": 0, "max": "unlimited"}}},
-         "isRoot": false}}}
+         "isRoot": false},
+       "c": {
+         "columns": {
+           "c": {"type": "integer"},
+           "c2db": {"type": {"key": {"type": "uuid",
+                                     "refTable": "d",
+                                     "refType": "weak"},
+                             "value": {"type": "uuid",
+                                       "refTable": "b"},
+                             "min": 0, "max": "unlimited"}}},
+         "isRoot": true},
+       "d": {
+         "columns": {
+           "d": {"type": "integer"}},
+         "isRoot": true}}}
 EOF
 }
 
@@ -903,7 +931,106 @@ OVSDB_CHECK_EXECUTION([weak references],
        "table": "b",
        "where": [],
        "columns": ["_uuid", "b", "b2a"],
-       "sort": ["b"]}]]]],
+       "sort": ["b"]}]]],
+   dnl Delete the row that is referenced by a weak_gc column with min = 1
+   dnl constraint and check that the referencing row gets garbage collected.
+   [[["weak",
+      {"op": "insert",
+       "table": "c",
+       "row": {"c": 5,
+               "c2d": ["named-uuid", "row6"]},
+       "uuid-name": "row5"},
+      {"op": "insert",
+       "table": "d",
+       "row": {"d": 6},
+       "uuid-name": "row6"}]]],
+   [[["weak",
+      {"op": "delete",
+       "table": "d",
+       "where": [["d", "==", 6]]}]]],
+   [[["weak",
+      {"op": "select",
+       "table": "c",
+       "where": [],
+       "columns": ["c"],
+       "sort": ["c"]}]]],
+   dnl Delete the row that is referenced by a weak_gc column with index
+   dnl constraint and check that the referencing row gets garbage collected.
+   [[["weak",
+      {"op": "insert",
+       "table": "c",
+       "row": {"c": 5,
+               "c2d": ["named-uuid", "row7"],
+               "c2d1": ["named-uuid", "row8"]},
+       "uuid-name": "row5"},
+      {"op": "insert",
+       "table": "c",
+       "row": {"c": 6,
+               "c2d": ["named-uuid", "row9"],
+               "c2d1": ["named-uuid", "row10"]},
+       "uuid-name": "row6"},
+      {"op": "insert",
+       "table": "d",
+       "row": {"d": 7},
+       "uuid-name": "row7"},
+      {"op": "insert",
+       "table": "d",
+       "row": {"d": 8},
+       "uuid-name": "row8"},
+      {"op": "insert",
+       "table": "d",
+       "row": {"d": 9},
+       "uuid-name": "row9"},
+      {"op": "insert",
+       "table": "d",
+       "row": {"d": 10},
+       "uuid-name": "row10"}]]],
+   [[["weak",
+      {"op": "select",
+       "table": "c",
+       "where": [],
+       "columns": ["c"],
+       "sort": ["c"]}]]],
+   [[["weak",
+      {"op": "select",
+       "table": "d",
+       "where": [],
+       "columns": ["d"],
+       "sort": ["d"]}]]],
+   [[["weak",
+      {"op": "delete",
+       "table": "d",
+       "where": [["d", "==", 8]]}]]],
+   [[["weak",
+      {"op": "select",
+       "table": "c",
+       "where": [],
+       "columns": ["c"],
+       "sort": ["c"]}]]],
+   [[["weak",
+      {"op": "select",
+       "table": "d",
+       "where": [],
+       "columns": ["d"],
+       "sort": ["d"]}]]],
+   [[["weak",
+      {"op": "delete",
+       "table": "d",
+       "where": [["d", "==", 10]]}]]],
+   dnl The weak_gc ref c2d1 from c=6 to d=10 is now NULL. row c=6 should
+   dnl now be deleted since row c=5 already has a weak_gc c2d1 ref = NULL.
+   [[["weak",
+      {"op": "select",
+       "table": "c",
+       "where": [],
+       "columns": ["c"],
+       "sort": ["c"]}]]],
+   [[["weak",
+      {"op": "select",
+       "table": "d",
+       "where": [],
+       "columns": ["d"],
+       "sort": ["d"]}]]]],
   [[[{"uuid":["uuid","<0>"]},{"uuid":["uuid","<1>"]},{"uuid":["uuid","<2>"]},{"uuid":["uuid","<3>"]},{"uuid":["uuid","<4>"]}]
 [{"rows":[{"_uuid":["uuid","<0>"],"a2a":["set",[["uuid","<0>"],["uuid","<1>"]]],"a2a1":["uuid","<0>"],"a2b":["uuid","<3>"]},{"_uuid":["uuid","<1>"],"a2a":["set",[["uuid","<0>"],["uuid","<1>"]]],"a2a1":["uuid","<1>"],"a2b":["uuid","<3>"]},{"_uuid":["uuid","<2>"],"a2a":["set",[["uuid","<0>"],["uuid","<1>"]]],"a2a1":["uuid","<1>"],"a2b":["uuid","<4>"]}]}]
 [{"rows":[{"_uuid":["uuid","<3>"],"b":2,"b2a":["uuid","<0>"]},{"_uuid":["uuid","<4>"],"b":3,"b2a":["uuid","<1>"]}]}]
@@ -919,6 +1046,18 @@ OVSDB_CHECK_EXECUTION([weak references],
 [{"count":1}]
 [{"rows":[]}]
 [{"rows":[{"_uuid":["uuid","<3>"],"b":2,"b2a":["set",[]]},{"_uuid":["uuid","<4>"],"b":3,"b2a":["set",[]]}]}]
+[{"uuid":["uuid","<6>"]},{"uuid":["uuid","<7>"]}]
+[{"count":1}]
+[{"rows":[]}]
+[{"uuid":["uuid","<8>"]},{"uuid":["uuid","<9>"]},{"uuid":["uuid","<10>"]},{"uuid":["uuid","<11>"]},{"uuid":["uuid","<12>"]},{"uuid":["uuid","<13>"]}]
+[{"rows":[{"c":5},{"c":6}]}]
+[{"rows":[{"d":7},{"d":8},{"d":9},{"d":10}]}]
+[{"count":1}]
+[{"rows":[{"c":5},{"c":6}]}]
+[{"rows":[{"d":7},{"d":9},{"d":10}]}]
+[{"count":1}]
+[{"rows":[{"c":5}]}]
+[{"rows":[{"d":7},{"d":9}]}]
 ]])
 
 OVSDB_CHECK_EXECUTION([immutable columns],
@@ -1080,7 +1219,39 @@ OVSDB_CHECK_EXECUTION([garbage collection],
       {"op": "select",
        "table": "a",
        "where": [],
-       "columns": ["a"]}]]]],
+       "columns": ["a"]}]]],
+   dnl Check that deleting the weak-key of a weak-key:strong-value causes the
+   dnl row pointed to by the strong-value to get deleted.
+   [[["gc",
+      {"op": "insert",
+       "table": "c",
+       "row": {"c": 1,
+               "c2db": ["map", [[["named-uuid", "row1"],
+                                 ["named-uuid", "row2"]]]]}},
+      {"op": "insert",
+       "table": "d",
+       "row": {"d": 2},
+       "uuid-name": "row1"},
+      {"op": "insert",
+       "table": "b",
+       "row": {"b": 3},
+       "uuid-name": "row2"}]]],
+   [[["gc",
+      {"op": "delete",
+       "table": "d",
+       "where": [["d", "==", 2]]}]]],
+   [[["gc",
+      {"op": "select",
+       "table": "b",
+       "where": [],
+       "columns": ["b"],
+       "sort": ["b"]},
+      {"op": "select",
+       "table": "c",
+       "where": [],
+       "columns": ["c"],
+       "sort": ["c"]}
+       ]]]],
   [[[{"uuid":["uuid","<0>"]}]
 [{"rows":[]}]
 [{"uuid":["uuid","<1>"]},{"uuid":["uuid","<2>"]},{"uuid":["uuid","<3>"]},{"uuid":["uuid","<4>"]}]
@@ -1097,6 +1268,9 @@ OVSDB_CHECK_EXECUTION([garbage collection],
 [{"rows":[]}]
 [{"uuid":["uuid","<13>"]}]
 [{"rows":[]}]
+[{"uuid":["uuid","<14>"]},{"uuid":["uuid","<15>"]},{"uuid":["uuid","<16>"]}]
+[{"count":1}]
+[{"rows":[]},{"rows":[{"c":1}]}]
 ]])])
 
 EXECUTION_EXAMPLES
