@@ -678,6 +678,7 @@ add_vrf_to_cache(struct vsctl_context *ctx,
     struct vsctl_vrf *vrf = xmalloc(sizeof *vrf);
     vrf->vrf_cfg = vrf_cfg;
     vrf->name = xstrdup(name);
+    ovs_assert(vrf->name);
     list_init(&vrf->ports);
     shash_add(&ctx->vrfs, vrf->name, vrf);
     return vrf;
