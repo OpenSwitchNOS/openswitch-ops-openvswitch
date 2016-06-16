@@ -99,6 +99,7 @@ enum ovsrec_interface_pm_info_cable_technology_e {
 #define OVSREC_INTERFACE_PM_INFO_CONNECTOR_SFP_DAC              "SFP_DAC"
 #define OVSREC_INTERFACE_PM_INFO_CONNECTOR_SFP_FC               "SFP_FC"
 #define OVSREC_INTERFACE_PM_INFO_CONNECTOR_SFP_LR               "SFP_LR"
+#define OVSREC_INTERFACE_PM_INFO_CONNECTOR_SFP_ER               "SFP_ER"
 #define OVSREC_INTERFACE_PM_INFO_CONNECTOR_SFP_LRM              "SFP_LRM"
 #define OVSREC_INTERFACE_PM_INFO_CONNECTOR_SFP_LX               "SFP_LX"
 #define OVSREC_INTERFACE_PM_INFO_CONNECTOR_SFP_RJ45             "SFP_RJ45"
