@@ -4172,11 +4172,11 @@ static const struct ctl_command_syntax vsctl_commands[] = {
     {"port-to-vrf", 1, 1, "", pre_get_vrf_info, cmd_port_to_vrf, NULL, "", RO},
 
     /* Logical Switch commands. */
-    {"list-log-switches", 0, 0, pre_get_log_switch_info, cmd_list_log_switch,
+    {"list-log-switches", 0, 0, "", pre_get_log_switch_info, cmd_list_log_switch,
             NULL, "", RO},
-    {"add-log-switch", 4, 4, pre_get_log_switch_info, cmd_add_log_switch,
+    {"add-log-switch", 4, 4, "", pre_get_log_switch_info, cmd_add_log_switch,
             NULL, "", RW},
-    {"del-log-switch", 2, 2, pre_get_log_switch_info, cmd_del_log_switch,
+    {"del-log-switch", 2, 2, "", pre_get_log_switch_info, cmd_del_log_switch,
             NULL, "", RW},
 #endif
     /* Port commands. */
