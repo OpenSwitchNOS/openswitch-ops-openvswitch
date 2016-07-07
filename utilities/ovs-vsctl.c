@@ -134,6 +134,16 @@ static struct uuid *neoteric_ifaces;
 static size_t n_neoteric_ifaces;
 static size_t allocated_neoteric_ifaces;
 
+void vsctl_port_set_vlan_tag(strcut ovsrec_bridge *bridge, int vlan)
+{
+    for (int i = 0; i < bridge->n_vlans; i++) {
+        if (bridge->vlans[i]->id == vlan) {
+            ovsrec_port_set_vlan_tag(port, bridge->vlans[i]);
+            break;
+        }
+    }
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -650,8 +660,8 @@ static bool
 port_is_fake_bridge(const struct ovsrec_port *port_cfg)
 {
     return (port_cfg->fake_bridge
-            && port_cfg->tag
-            && *port_cfg->tag >= 0 && *port_cfg->tag <= 4095);
+            && port_cfg->vlan_tag
+            && port_cfg->vlan_tag->id >= 0 && port_cfg->vlan_tag->id <= 4095);
 }
 #endif
 
@@ -707,11 +717,11 @@ add_port_to_cache(struct vsctl_context *vsctl_ctx, struct vsctl_bridge *parent,
 {
     struct vsctl_port *port;
 
-    if (port_cfg->tag
-        && *port_cfg->tag >= 0 && *port_cfg->tag <= 4095) {
+    if (port_cfg->vlan_tag
+        && port_cfg->vlan_tag->id >= 0 && port_cfg->vlan_tag->id <= 4095) {
         struct vsctl_bridge *vlan_bridge;
 
-        vlan_bridge = find_vlan_bridge(parent, *port_cfg->tag);
+        vlan_bridge = find_vlan_bridge(parent, port_cfg->vlan_tag->id);
         if (vlan_bridge) {
             parent = vlan_bridge;
         }
@@ -840,12 +850,13 @@ pre_get_info(struct ctl_context *ctx)
     ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_fail_mode);
 #endif
     ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_ports);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_vlans);
 
     ovsdb_idl_add_column(ctx->idl, &ovsrec_port_col_name);
 #ifndef OPS_TEMP
     ovsdb_idl_add_column(ctx->idl, &ovsrec_port_col_fake_bridge);
 #endif
-    ovsdb_idl_add_column(ctx->idl, &ovsrec_port_col_tag);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_port_col_vlan_tag);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_port_col_interfaces);
 
     ovsdb_idl_add_column(ctx->idl, &ovsrec_interface_col_name);
@@ -921,7 +932,7 @@ vsctl_context_populate_cache(struct ctl_context *ctx)
             if (port_is_fake_bridge(port_cfg)
                 && sset_add(&bridges, port_cfg->name)) {
                 add_bridge_to_cache(vsctl_ctx, NULL, port_cfg->name, br,
-                                    *port_cfg->tag);
+                                    port_cfg->vlan_tag->id);
             }
 #endif
         }
@@ -1314,8 +1325,8 @@ static struct cmd_show_table cmd_show_tables[] = {
 #endif
     {&ovsrec_table_port,
      &ovsrec_port_col_name,
-     {&ovsrec_port_col_tag,
-      &ovsrec_port_col_trunks,
+     {&ovsrec_port_col_vlan_tag,
+      &ovsrec_port_col_vlan_trunks,
       &ovsrec_port_col_interfaces},
      {NULL, NULL, NULL}
     },
@@ -1703,7 +1714,6 @@ cmd_add_br(struct ctl_context *ctx)
         struct vsctl_bridge *parent;
         struct ovsrec_port *port;
         struct ovsrec_bridge *br;
-        int64_t tag = vlan;
 
         parent = find_bridge(vsctl_ctx, parent_name, false);
         if (parent && parent->parent) {
@@ -1727,7 +1737,7 @@ cmd_add_br(struct ctl_context *ctx)
         ovsrec_port_set_name(port, br_name);
         ovsrec_port_set_interfaces(port, &iface, 1);
         ovsrec_port_set_fake_bridge(port, true);
-        ovsrec_port_set_tag(port, &tag, 1);
+        vsctl_port_set_vlan_tag(br, vlan);
 
         bridge_insert_port(br, port);
     }
@@ -2666,8 +2676,7 @@ add_port(struct ctl_context *ctx,
 #endif
 
     if (bridge->parent) {
-        int64_t tag = bridge->vlan;
-        ovsrec_port_set_tag(port, &tag, 1);
+        vsctl_port_set_vlan_tag(bridge->br_cfg, bridge_vlan);
     }
 
     for (i = 0; i < n_settings; i++) {
