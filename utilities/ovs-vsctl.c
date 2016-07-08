@@ -1988,6 +1988,7 @@ pre_get_mac_info(struct ctl_context *ctx)
     ovsdb_idl_add_table(ctx->idl, &ovsrec_table_bridge);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_name);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_ports);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_bridge_col_vlans);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_port_col_name);
 
     ovsdb_idl_add_table(ctx->idl, &ovsrec_table_mac);
@@ -1995,9 +1996,13 @@ pre_get_mac_info(struct ctl_context *ctx)
     ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_mac_addr);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_tunnel_key);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_vlan);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_mac_vlan);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_port);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_from);
     ovsdb_idl_add_column(ctx->idl, &ovsrec_mac_col_status);
+
+    ovsdb_idl_add_table(ctx->idl, &ovsrec_table_mac);
+    ovsdb_idl_add_column(ctx->idl, &ovsrec_vlan_col_id);
 
 }
 
@@ -2169,6 +2174,7 @@ cmd_add_mac(struct ctl_context *ctx)
     struct vsctl_bridge *bridge = NULL;
     struct ovsrec_mac *mac = NULL;
     const struct ovsrec_port *port_cfg = NULL;
+    struct ovsrec_vlan *vlan_row = NULL;
 
     mac_addr = ctx->argv[1];
     vid = atoi(ctx->argv[2]);
@@ -2199,6 +2205,13 @@ cmd_add_mac(struct ctl_context *ctx)
     mac = ovsrec_mac_insert(ctx->txn);
     ovsrec_mac_set_bridge(mac, bridge->br_cfg);
     ovsrec_mac_set_vlan(mac, vid);
+    for (i = 0; i < bridge->br_cfg->n_vlans; i++) {
+        if (bridge->br_cfg->vlans[i]->id == vid) {
+            vlan_row = bridge->br_cfg->vlans[i];
+            break;
+        }
+    }
+    ovsrec_mac_set_mac_vlan(mac, vlan_row);
     ovsrec_mac_set_mac_addr(mac, mac_addr);
     ovsrec_mac_set_port(mac, port_cfg);
     ovsrec_mac_set_from(mac, from);
@@ -2247,7 +2260,7 @@ cmd_del_mac(struct ctl_context *ctx)
     OVSREC_MAC_FOR_EACH(mac_e, ctx->idl) {
         if ((strcmp(mac_addr, mac_e->mac_addr) == 0) &&
             (strcmp(from, mac_e->from) == 0) &&
-            (vid == mac_e->vlan) &&
+            (vid == mac_e->mac_vlan->id) &&
             (mac_e->bridge == bridge->br_cfg) &&
             (mac_e->port == port_cfg)) {
             ovsrec_mac_delete(mac_e);
