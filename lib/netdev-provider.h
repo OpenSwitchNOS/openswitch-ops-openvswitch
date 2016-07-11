@@ -428,6 +428,10 @@ struct netdev_class {
      * (UINT64_MAX). */
     int (*get_stats)(const struct netdev *netdev, struct netdev_stats *);
 
+    /* Clears current device stats for 'netdev'. */
+
+    int (*clear_stats)(struct netdev *netdev);
+
     /* Stores the features supported by 'netdev' into each of '*current',
      * '*advertised', '*supported', and '*peer'.  Each value is a bitmap of
      * NETDEV_F_* bits.

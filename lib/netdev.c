@@ -1431,6 +1431,18 @@ netdev_get_stats(const struct netdev *netdev, struct netdev_stats *stats)
     return error;
 }
 
+/* Clears current device stats for 'netdev'. */
+int
+netdev_clear_stats(struct netdev *netdev)
+{
+    int error;
+    error = (netdev->netdev_class->clear_stats
+             ? netdev->netdev_class->clear_stats(netdev)
+             : EOPNOTSUPP);
+    return error;
+}
+
+
 /* Attempts to set input rate limiting (policing) policy, such that up to
  * 'kbits_rate' kbps of traffic is accepted, with a maximum accumulative burst
  * size of 'kbits' kb. */

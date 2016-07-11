@@ -310,6 +310,7 @@ struct netdev *netdev_find_dev_by_in4(const struct in_addr *);
 
 /* Statistics. */
 int netdev_get_stats(const struct netdev *, struct netdev_stats *);
+int netdev_clear_stats(struct netdev *netdev);
 
 /* Quality of service. */
 struct netdev_qos_capabilities {
