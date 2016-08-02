@@ -786,3 +786,16 @@ lib-install-data-local:
 	$(MKDIR_P) $(DESTDIR)$(LOGDIR)
 	$(MKDIR_P) $(DESTDIR)$(DBDIR)
 
+# vswitch schema documentation
+EXTRA_DIST += vswitchd/vswitch.xml
+DISTCLEANFILES += vswitchd/openswitch.conf.db.8
+man_MANS += vswitchd/openswitch.conf.db.8
+vswitchd/openswitch.conf.db.8: \
+	ovsdb/ovsdb-doc vswitchd/vswitch.xml vswitchd/vswitch.ovsschema \
+	$(VSWITCH_PIC)
+	$(AM_V_GEN)$(OVSDB_DOC) \
+		$(VSWITCH_DOT_DIAGRAM_ARG) \
+		--version=$(VERSION) \
+		$(srcdir)/vswitchd/vswitch.ovsschema \
+		$(srcdir)/vswitchd/vswitch.xml > $@.tmp && \
+	mv $@.tmp $@
