@@ -54,11 +54,8 @@
 
 #define OVSREC_PORT_ERROR_ADMIN_DOWN                    "port_admin_down"
 
-/************************** UDP BROADCAST SERVER TABLE ***********************/
+/************************** UDP BROADCAST SERVER TABLE***********************/
 #define SYSTEM_OTHER_CONFIG_MAP_UDP_BCAST_FWD_ENABLED   "udp_bcast_forwarder_enabled"
-
-/************************** DNS CLIENT TABLE *******************************/
-#define SYSTEM_OTHER_CONFIG_MAP_DNS_CLIENT_DISABLED     "dns_client_disabled"
 
 enum ovsrec_interface_error_e {
     INTERFACE_ERROR_UNINITIALIZED,
@@ -403,14 +400,6 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define INTERFACE_LACP_STATUS_MAP_PARTNER_KEY           "partner_key"
 #define INTERFACE_LACP_STATUS_MAP_PARTNER_STATE         "partner_state"
 
-/* Definitions for bond_status column */
-#define INTERFACE_BOND_STATUS_MAP_STATE                 "state"
-#define INTERFACE_BOND_STATUS_ENABLED_FALSE             "false"
-#define INTERFACE_BOND_STATUS_ENABLED_TRUE              "true"
-#define INTERFACE_BOND_STATUS_UP                        "up"
-#define INTERFACE_BOND_STATUS_BLOCKED                   "blocked"
-#define INTERFACE_BOND_STATUS_DOWN                      "down"
-
 #define INTERFACE_LACP_STATUS_STATE_ACTIVE              "Activ"
 #define INTERFACE_LACP_STATUS_STATE_TIMEOUT             "TmOut"
 #define INTERFACE_LACP_STATUS_STATE_AGGREGATION         "Aggr"
@@ -419,31 +408,6 @@ enum ovsrec_interface_hw_bond_config_enabled_e {
 #define INTERFACE_LACP_STATUS_STATE_DISTRIBUTING        "Dist"
 #define INTERFACE_LACP_STATUS_STATE_DEFAULTED           "Def"
 #define INTERFACE_LACP_STATUS_STATE_EXPIRED             "Exp"
-
-/* Interface Forwarding State column */
-#define INTERFACE_FORWARDING_STATE_MAP_FORWARDING       "forwarding"
-#define INTERFACE_FORWARDING_STATE_MAP_INTERFACE_AGGREGATION_FORWARDING      \
-            "interface_aggregation_forwarding"
-#define INTERFACE_FORWARDING_STATE_MAP_INTERFACE_AGGREGATION_BLOCKED_REASON  \
-            "interface_aggregation_blocked_reason"
-
-#define INTERFACE_FORWARDING_STATE_FORWARDING_TRUE      "true"
-#define INTERFACE_FORWARDING_STATE_FORWARDING_FALSE     "false"
-
-#define INTERFACE_FORWARDING_STATE_PROTOCOL_LACP        "lacp"
-
-/* Enumeration of various forwarding layers of an interface.
- * Defined in "decreasing" order of precedence. */
-enum ovsrec_interface_forwarding_state_layer_e {
-    INTERFACE_FORWARDING_STATE_LAYER_AGGREGATION
-};
-
-/* Enumeration of all protocols operating at an
- * interface level in "decreasing" order of precedence */
-enum ovsrec_interface_forwarding_state_proto_e {
-    INTERFACE_FORWARDING_STATE_PROTO_LACP,
-    INTERFACE_FORWARDING_STATE_PROTO_NONE,
-};
 
 /****************************** PORT TABLE *******************************/
 
@@ -460,11 +424,6 @@ enum ovsrec_interface_forwarding_state_proto_e {
 
 #define PORT_OTHER_CONFIG_LACP_FALLBACK                 "lacp-fallback-ab"
 #define PORT_OTHER_CONFIG_LACP_FALLBACK_ENABLED         "true"
-
-#define PORT_OTHER_CONFIG_LACP_FALLBACK_MODE_PRIORITY   "priority"
-#define PORT_OTHER_CONFIG_LACP_FALLBACK_MODE_ALL_ACTIVE "all_active"
-#define PORT_OTHER_CONFIG_MAP_LACP_FALLBACK_TIMEOUT     "lacp_fallback_timeout"
-#define PORT_OTHER_CONFIG_MAP_LACP_FALLBACK_MODE        "lacp_fallback_mode"
 
 #define PORT_OTHER_CONFIG_LACP_TIME_SLOW                "slow"
 #define PORT_OTHER_CONFIG_LACP_TIME_FAST                "fast"
@@ -492,14 +451,6 @@ enum ovsrec_interface_forwarding_state_proto_e {
 #define PORT_LACP_STATUS_BOND_STATUS_DOWN               "down"
 #define PORT_LACP_STATUS_BOND_STATUS_DEFAULTED          "defaulted"
 
-/* Definitions for bond_status column */
-#define PORT_BOND_STATUS_MAP_STATE                      "state"
-#define PORT_BOND_STATUS_ENABLED_FALSE                  "false"
-#define PORT_BOND_STATUS_ENABLED_TRUE                   "true"
-#define PORT_BOND_STATUS_UP                             "up"
-#define PORT_BOND_STATUS_BLOCKED                        "blocked"
-#define PORT_BOND_STATUS_DOWN                           "down"
-
 #define PORT_CONFIG_ADMIN_DOWN                          "down"
 
 /* DHCP-Relay statistics */
@@ -523,38 +474,6 @@ enum ovsrec_interface_forwarding_state_proto_e {
 enum ovsrec_port_config_admin_e {
     PORT_ADMIN_CONFIG_DOWN,
     PORT_ADMIN_CONFIG_UP
-};
-
-/* Port Forwarding State column */
-#define PORT_FORWARDING_STATE_MAP_FORWARDING            "forwarding"
-#define PORT_FORWARDING_STATE_MAP_PORT_AGGREGATION_FORWARDING              \
-            "port_aggregation_forwarding"
-#define PORT_FORWARDING_STATE_MAP_PORT_AGGREGATION_BLOCKED_REASON          \
-            "port_aggregation_blocked_reason"
-#define PORT_FORWARDING_STATE_MAP_PORT_LOOP_PROTECTION_FORWARDING          \
-            "port_loop_protection_forwarding"
-#define PORT_FORWARDING_STATE_MAP_PORT_LOOP_PROTECTION_BLOCKED_REASON      \
-            "port_loop_protection_blocked_reason"
-
-#define PORT_FORWARDING_STATE_FORWARDING_TRUE           "true"
-#define PORT_FORWARDING_STATE_FORWARDING_FALSE          "false"
-
-#define PORT_FORWARDING_STATE_PROTOCOL_LACP             "lacp"
-#define PORT_FORWARDING_STATE_PROTOCOL_MSTP             "mstp"
-
-/* Enumeration of various forwarding layers of a port.
- * Defined in "decreasing" order of precedence. */
-enum ovsrec_port_forwarding_state_layer_e {
-    PORT_FORWARDING_STATE_LAYER_AGGREGATION,
-    PORT_FORWARDING_STATE_LAYER_LOOP_PROTECTION
-};
-
-/* Enumeration of all protocols operating at a port level
- * in "decreasing" order of precedence */
-enum ovsrec_port_forwarding_state_proto_e {
-    PORT_FORWARDING_STATE_PROTO_LACP,
-    PORT_FORWARDING_STATE_PROTO_MSTP,
-    PORT_FORWARDING_STATE_PROTO_NONE,
 };
 
 /****************************** SUBSYSTEM TABLE *******************************/
