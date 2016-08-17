@@ -963,7 +963,7 @@ enum ospf_nbr_statistics_e {
 #define NTP_ASSOC_ATTRIB_PREFER_DEFAULT                 "false"
 #define NTP_ASSOC_ATTRIB_PREFER_DEFAULT_VAL             false
 
-#define NTP_ASSOC_ATTRIB_VERSION                        "version"
+#define NTP_ASSOC_ATTRIB_VERSION                        "ntp_version"
 #define NTP_ASSOC_ATTRIB_VERSION_3                      "3"
 #define NTP_ASSOC_ATTRIB_VERSION_4                      "4"
 #define NTP_ASSOC_ATTRIB_VERSION_DEFAULT                NTP_ASSOC_ATTRIB_VERSION_3
