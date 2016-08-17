@@ -2738,13 +2738,13 @@ cmd_del_vrf(struct ctl_context *ctx)
 }
 
 static void
-check_logical_switch_conflicts(const struct hmap *hmap,
+check_logical_switch_conflicts(const struct shash *lwshash,
                                const char *br_name,
                                const int key, char *msg)
 {
     char hash_str[LSWITCH_HASH_STR_SIZE];
 
-    if (!hmap || !br_name) {
+    if (!lwshash || !br_name) {
         if (NULL != msg) {
             free(msg);
             return;
@@ -2755,7 +2755,7 @@ check_logical_switch_conflicts(const struct hmap *hmap,
 
     logical_switch_hash(hash_str, sizeof(hash_str), br_name, key);
 
-    if (shash_find(hmap, hash_str)) {
+    if (shash_find(lwshash, hash_str)) {
         ctl_fatal("%s because a logical switch with key %d already exists",
                   msg, key);
     }
@@ -2830,11 +2830,11 @@ cmd_add_log_switch(struct ctl_context *ctx)
         !log_switch_desc || (0 == tunnel_key)){
         ctl_fatal("usage: add-log-switch BRIDGE NAME DESC KEY");
     }
-
-    check_logical_switch_conflicts(&vsctl_ctx->log_switches,
-        bridge_name, tunnel_key,
-        xasprintf("cannot create a logical switch "));
-
+    if (vsctl_ctx->cache_valid == true) {
+        check_logical_switch_conflicts(&vsctl_ctx->log_switches,
+                  bridge_name, tunnel_key,
+                  xasprintf("cannot create a logical switch "));
+    }
     vsctl_context_populate_cache(ctx);
 
     bridge = find_bridge(ctx, bridge_name, true);
