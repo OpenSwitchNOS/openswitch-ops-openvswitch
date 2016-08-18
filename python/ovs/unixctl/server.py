@@ -185,8 +185,7 @@ class UnixctlServer(object):
         if path is not None:
             path = "punix:%s" % ovs.util.abs_file_name(ovs.dirs.RUNDIR, path)
         else:
-            path = "punix:%s/%s.%d.ctl" % (ovs.dirs.RUNDIR,
-                                           ovs.util.PROGRAM_NAME, os.getpid())
+            path = "punix:%s/%s.ctl" % (ovs.dirs.RUNDIR, ovs.util.PROGRAM_NAME)
 
         if version is None:
             version = ovs.version.VERSION

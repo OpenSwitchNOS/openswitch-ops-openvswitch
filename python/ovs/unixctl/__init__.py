@@ -72,12 +72,6 @@ def socket_name_from_target(target):
 
     if target.startswith("/"):
         return 0, target
-
-    pidfile_name = "%s/%s.pid" % (ovs.dirs.RUNDIR, target)
-    pid = ovs.daemon.read_pidfile(pidfile_name)
-    if pid < 0:
-        return -pid, "cannot read pidfile \"%s\"" % pidfile_name
-
-    return 0, "%s/%s.%d.ctl" % (ovs.dirs.RUNDIR, target, pid)
+    return 0, "%s/%s.ctl" % (ovs.dirs.RUNDIR, target)
 
 command_register("help", "", 0, 0, _unixctl_help, None)

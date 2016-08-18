@@ -229,12 +229,7 @@ unixctl_server_create(const char *path, struct unixctl_server **serverp)
         punix_path = xasprintf("punix:%s", abs_path);
         free(abs_path);
     } else {
-#ifndef _WIN32
-        punix_path = xasprintf("punix:%s/%s.%ld.ctl", ovs_rundir(),
-                               program_name, (long int) getpid());
-#else
         punix_path = xasprintf("punix:%s/%s.ctl", ovs_rundir(), program_name);
-#endif
     }
 
     error = pstream_open(punix_path, &listener, 0);

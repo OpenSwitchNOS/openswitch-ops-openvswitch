@@ -206,23 +206,10 @@ connect_to_target(const char *target)
 
 #ifndef _WIN32
     if (target[0] != '/') {
-        char *pidfile_name;
-        pid_t pid;
-
-        pidfile_name = xasprintf("%s/%s.pid", ovs_rundir(), target);
-        pid = read_pidfile(pidfile_name);
-        if (pid < 0) {
-            ovs_fatal(-pid, "cannot read pidfile \"%s\"", pidfile_name);
-        }
-        free(pidfile_name);
-        socket_name = xasprintf("%s/%s.%ld.ctl",
-                                ovs_rundir(), target, (long int) pid);
 #else
-    /* On windows, if the 'target' contains ':', we make an assumption that
-     * it is an absolute path. */
     if (!strchr(target, ':')) {
-        socket_name = xasprintf("%s/%s.ctl", ovs_rundir(), target);
 #endif
+        socket_name = xasprintf("%s/%s.ctl", ovs_rundir(), target);
     } else {
         socket_name = xstrdup(target);
     }
